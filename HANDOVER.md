@@ -114,3 +114,16 @@ done whose edits had never been written to disk. It is worth continuing.
     (`Tourney.ResolveNow` removes it afterwards if it is still registered);
   - whether `PlayerEliminatedFromTournament`'s round number is 0- or 1-based
     (`OnEliminated` treats round <= 1 as "early").
+
+## v2.3.2 — verified against the player's own TaleWorlds.CampaignSystem.dll
+
+- `Clan.PlayerClan` is `Campaign.PlayerDefaultFaction`: set once at character creation,
+  saved (`SaveableProperty(17)`), never changed by `ChangePlayerCharacterAction`. Switching
+  the player onto another clan's leader requires setting it first (`Bastard.Become`).
+- `CharacterObject.CreateFrom` copies `HiddenInEncyclopedia` from the template; ROT has
+  hidden lord characters. `Baseborn.Visible` clears it on everything the mod creates.
+- `Hero.Father`/`Mother` setters DO append to the parent's `_children` (the v2.3.1 note
+  saying otherwise was wrong; the extra write is guarded and harmless).
+- `TournamentManager.ResolveTournament` removes the tournament itself and fires
+  `TournamentCancelled` when the town is under siege. `PlayerEliminatedFromTournament`
+  rounds are 0-based.

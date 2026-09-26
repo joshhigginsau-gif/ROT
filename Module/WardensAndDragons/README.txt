@@ -1,14 +1,49 @@
-Wardens & Dragons  v2.3.1  -  THE LISTS
+Wardens & Dragons  v2.3.2  -  THE LISTS
+
+
+v2.3.2 - READ FROM THE GAME ITSELF
+
+  Everything in this version was checked against the game's own code
+  (TaleWorlds.CampaignSystem 1.4.8) rather than guessed at.
+
+  WHY THE CHILDREN HAD NO PAGE AND NO PARENTS
+
+    The game makes a new hero as a copy of an existing character, and the
+    copy inherits that character's "hidden in encyclopedia" flag. Realm of
+    Thrones keeps hidden lord characters, and the children and their other
+    parents were being copied from them. A hidden hero gets no page, and is
+    skipped in every family section - so your own page did not show your
+    child, and theirs did not show their mother.
+
+    New children and parents are made visible, prefer characters that were
+    never hidden in the first place, and everyone already in your save is
+    made visible the next time you load it.
+
+  TAKING UP THE BANNER NOW WORKS
+
+    Bannerlord has exactly one player clan for a whole campaign. It is set
+    when you make your character and is saved with the game, and the
+    game's own character switch only ever moves you to another member of
+    that clan - which is all an heir ever is. Moving onto the head of the
+    bastard's house broke that, and the game crashed building your party.
+
+    Now the player's clan is handed to the bastard's house first. Your old
+    house carries on as an ordinary house under your heir, who keeps their
+    own party and goes back to making their own decisions.
+
+  SMALLER
+
+    Unhorsed "early" in your own tourney now means the first round only.
+
 
 
 v2.3.1 - FAMILY, CULTURE AND STYLE
 
   BASTARDS NOW HAVE PARENTS
 
-    A baseborn child's father and mother were set on the child, but the
-    encyclopedia draws a parent's page from the parent's own list of
-    children, and that list was never written. So the children arrived with
-    no line back to either parent. Both lists are now written directly.
+    (This paragraph guessed wrong. The real cause is in v2.3.2 above: the
+    family lines were always there, but the heroes were hidden from the
+    encyclopedia. Writing the parents' lists directly is harmless and stays.)
 
     They also had no page to speak of. Every baseborn child now has a
     written life: where they were got, who raised them, when they came to

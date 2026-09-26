@@ -5,6 +5,7 @@ using System.Reflection;
 using HarmonyLib;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
+using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
@@ -527,7 +528,7 @@ namespace WardensAndDragons
 				try
 				{
 					him.EncyclopediaText = new TextObject("{=!}" + Story(him, dead, seat, given, surname), (Dictionary<string, object>)null);
-					him.IsKnownToPlayer = true;
+					Baseborn.Visible(him);
 				}
 				catch
 				{
@@ -1027,27 +1028,100 @@ namespace WardensAndDragons
 		// Play on as the bastard.
 		private static void Become(Hero him)
 		{
+			// Bannerlord has one player clan for the whole campaign.
+			//
+			// Clan.PlayerClan is Campaign.PlayerDefaultFaction, set once at
+			// character creation and saved with the game. The game's own
+			// ChangePlayerCharacterAction only ever moves the player to another
+			// member of that same clan - an heir, when a ruler dies - and never
+			// touches it. Moving onto the head of a DIFFERENT clan left the
+			// game building a player party for a hero whose clan it did not
+			// consider the player's, and it threw in WarPartyComponent while
+			// registering that party (the log from the first play-through).
+			//
+			// So the player's clan is handed to the bastard's house first, and
+			// the old house becomes an ordinary house under your heir.
+			Clan old = Clan.PlayerClan;
+			Hero was = Hero.MainHero;
+			MobileParty oldParty = MobileParty.MainParty;
+			PropertyInfo faction = AccessTools.Property(typeof(Campaign), "PlayerDefaultFaction");
+			bool moved = false;
 			try
 			{
 				if (him == null || !him.IsAlive)
 				{
 					return;
 				}
-				MethodInfo m = AccessTools.Method("TaleWorlds.CampaignSystem.Actions.ChangePlayerCharacterAction:Apply", (Type[])null, (Type[])null);
-				if (m == null)
+				Clan house = him.Clan ?? House;
+				if (house == null)
 				{
-					Log.Write("this build will not let the player change character");
+					Log.Write("taking up the banner: " + him.Name + " has no house to take up");
+					Flow.Notify("There is no house for you to lead.");
+					return;
+				}
+				if (him.Clan != house)
+				{
+					Log.Write("taking up the banner: " + him.Name + " was not in their own house; putting them back");
+					him.Clan = house;
+				}
+				if (house.Leader != him)
+				{
+					house.SetLeader(him);
+				}
+				if (faction == null || faction.GetSetMethod(true) == null)
+				{
+					Log.Write("this build has no way to change the player's house");
 					Flow.Notify("You cannot take up the banner on this build.");
 					return;
 				}
-				m.Invoke(null, new object[1] { him });
-				Log.Write("you took up the bastard's banner as " + him.Name);
+				Log.Write("taking up the banner: " + him.Name + " of " + house.Name + ", leaving " + ((was != null) ? was.Name.ToString() : "?") +
+					" at the head of " + ((old != null) ? old.Name.ToString() : "?"));
+
+				faction.SetValue(Campaign.Current, house, null);
+				moved = true;
+				ChangePlayerCharacterAction.Apply(him);
+
+				// The game hands the old main party to the new player (it
+				// expects the old one to be dead). Yours is not: give it back
+				// to the heir who is leading it, and let it think for itself.
+				try
+				{
+					if (oldParty != null && oldParty != MobileParty.MainParty && oldParty.IsActive && was != null && was.IsAlive
+						&& oldParty.LeaderHero == was && oldParty.LordPartyComponent != null)
+					{
+						MethodInfo owner = AccessTools.Method(typeof(TaleWorlds.CampaignSystem.Party.PartyComponents.LordPartyComponent), "ChangePartyOwner", (Type[])null, (Type[])null);
+						if (owner != null)
+						{
+							owner.Invoke(oldParty.LordPartyComponent, new object[1] { was });
+						}
+						oldParty.Ai.EnableAi();
+					}
+				}
+				catch (Exception pe)
+				{
+					Log.Write("the old party would not go back to " + ((was != null) ? was.Name.ToString() : "your heir") + ": " + pe.Message);
+				}
+
+				Titles.Invalidate();
+				Log.Write("you took up the bastard's banner as " + him.Name + "; your house is now " + Clan.PlayerClan.Name);
 				Store.AddDeed(Standing.Date() + "  You took up the banner yourself.");
 			}
 			catch (Exception e)
 			{
-				// Invoke wraps the real failure; the wrapper's message says
-				// nothing. Log the inner exception with its stack.
+				// Put the player's house back if the switch itself failed, so
+				// a half-done change does not leave you leading a clan you are
+				// not in.
+				if (moved && Hero.MainHero == was && faction != null && old != null)
+				{
+					try
+					{
+						faction.SetValue(Campaign.Current, old, null);
+						Log.Write("the player's house was put back to " + old.Name);
+					}
+					catch
+					{
+					}
+				}
 				Log.Write("taking up the banner failed: " + ((e.InnerException != null) ? e.InnerException.ToString() : e.ToString()));
 				Flow.Notify("You could not take up the banner - the log says why.");
 			}

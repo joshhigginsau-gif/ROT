@@ -567,7 +567,9 @@ namespace WardensAndDragons
 				{
 					return;
 				}
-				if (Store.Get(TownKey) == ((MBObjectBase)town.Settlement).StringId && round <= 1)
+				// Rounds count from 0: the game's own quests compare round + 1
+				// against a round goal (LadysKnightOutIssueBehavior).
+				if (Store.Get(TownKey) == ((MBObjectBase)town.Settlement).StringId && round == 0)
 				{
 					Standing.Change(0, -2, "Unhorsed early in your own tourney");
 				}

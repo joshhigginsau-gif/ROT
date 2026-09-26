@@ -385,7 +385,7 @@ namespace WardensAndDragons
 					// outright rather than trusting what we drew.
 					other.SetNewOccupation(Occupation.Lord);
 					EnterSettlementAction.ApplyForCharacterOnly(other, here);
-					other.IsKnownToPlayer = true;
+					Visible(other);
 				}
 				catch (Exception se)
 				{
@@ -428,7 +428,14 @@ namespace WardensAndDragons
 				CultureObject culture = (here != null) ? here.Culture : null;
 				List<CharacterObject> all = CharacterObject.All.Where((CharacterObject c) =>
 					c != null && c.IsHero && c.Culture == culture && c.IsFemale == wantFemale
-					&& c.Occupation == Occupation.Lord).ToList();
+					&& c.Occupation == Occupation.Lord && !c.HiddenInEncyclopedia).ToList();
+				if (all.Count == 0)
+				{
+					all = CharacterObject.All.Where((CharacterObject c) =>
+						c != null && c.IsHero && c.IsFemale == wantFemale && c.Occupation == Occupation.Lord && !c.HiddenInEncyclopedia).ToList();
+				}
+				// Hidden characters are still allowed as a last resort: Visible()
+				// clears the flag on the copy either way.
 				if (all.Count == 0)
 				{
 					all = CharacterObject.All.Where((CharacterObject c) =>
@@ -543,7 +550,7 @@ namespace WardensAndDragons
 					child.ChangeState(Hero.CharacterStates.Active);
 					child.SetNewOccupation(Occupation.Lord);
 					EnterSettlementAction.ApplyForCharacterOnly(child, where);
-					child.IsKnownToPlayer = true;
+					Visible(child);
 				}
 				catch (Exception se)
 				{
@@ -856,16 +863,48 @@ namespace WardensAndDragons
 				Hero other = OtherOf(k) ?? Hero.DeadOrDisabledHeroes.FirstOrDefault((Hero h) => ((MBObjectBase)h).StringId == k.Other);
 				Settlement where = Place(k.Where);
 				child.EncyclopediaText = new TextObject("{=!}" + Lore.Baseborn(child, parent, other, where, k.Legit, k.Night), (Dictionary<string, object>)null);
-				child.IsKnownToPlayer = true;
+				Visible(child);
 				if (other != null && other.IsAlive)
 				{
 					other.EncyclopediaText = new TextObject("{=!}" + Lore.OtherParent(other, parent, child, where), (Dictionary<string, object>)null);
-					other.IsKnownToPlayer = true;
+					Visible(other);
 				}
 			}
 			catch (Exception e)
 			{
 				Log.Once("kidwrite", "the child's page would not take: " + e.Message);
+			}
+		}
+
+		// Give them a page in the encyclopedia.
+		//
+		// This is why the children had no page and no family line. A hero
+		// made by CreateSpecialHero is a copy of the template character, and
+		// CharacterObject.CreateFrom copies the template's
+		// HiddenInEncyclopedia flag with it. Realm of Thrones keeps hidden
+		// lord characters, so a child or parent drawn from one of those was
+		// invisible: the encyclopedia refuses them a page
+		// (DefaultEncyclopediaHeroPage.IsValidEncyclopediaItem), and every
+		// family section skips them - which is why you could not see your
+		// own child from your page, or their mother from theirs.
+		internal static void Visible(Hero h)
+		{
+			try
+			{
+				if (h == null)
+				{
+					return;
+				}
+				if (h.CharacterObject != null && h.CharacterObject.HiddenInEncyclopedia)
+				{
+					h.CharacterObject.HiddenInEncyclopedia = false;
+				}
+				h.HiddenInEncyclopedia = false;
+				h.IsKnownToPlayer = true;
+			}
+			catch (Exception e)
+			{
+				Log.Once("kidvisible", "a page could not be opened in the encyclopedia: " + e.Message);
 			}
 		}
 
@@ -883,12 +922,21 @@ namespace WardensAndDragons
 					Hero parent = Parent(k);
 					Hero other = OtherOf(k) ?? Hero.DeadOrDisabledHeroes.FirstOrDefault((Hero h) => ((MBObjectBase)h).StringId == k.Other);
 					Family(child, parent, other);
+					Visible(child);
+					Visible(other);
 					if (child.EncyclopediaText == null || string.IsNullOrEmpty(child.EncyclopediaText.ToString()))
 					{
 						Write(k);
 					}
 					n++;
 				}
+				// And whoever never came to the gate yet: their other parent
+				// already exists, drawn from the same hidden characters.
+				foreach (Kid k in All())
+				{
+					Visible(OtherOf(k));
+				}
+				Visible(global::WardensAndDragons.Bastard.Head);
 				if (n > 0)
 				{
 					Log.Write("baseborn children checked on load: " + n);
