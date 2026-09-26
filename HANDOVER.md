@@ -145,3 +145,19 @@ done whose edits had never been written to disk. It is worth continuing.
 - Untested in game: the 7-v-7 spacing in real arenas (fighters are placed 1.4 m apart
   along the spawn frame's side axis), and whether every ROT town arena has two or more
   `sp_arena` frames (the trial logs and aborts the staging if not).
+
+## v2.5.0 — the Kingsguard
+
+- `Guard.cs` (records in `kg:*`), `GuardMenu.cs`.
+- Bodyguards use the game's own mechanism (SandBox `ClanMemberRolesCampaignBehavior`):
+  `LocationCharacter.CreateBodyguardHero(hero, MainParty, SandBoxManager.Instance.AgentBehaviorManager.AddFirstCompanionBehavior)`
+  + `PlayerEncounter.LocationEncounter.AddAccompanyingCharacter(lc, true)` on
+  `BeforeMissionOpenedEvent`. Vanilla allows one follower; this adds every sworn knight in the
+  party. The arena is deliberately excluded (trials are staged there).
+- Nobles, wards and baseborn children leave their house (`hero.Clan = PlayerClan`);
+  companions stay companions (`AddCompanionAction` only sets `CompanionOf`, which would leave
+  a noble counted in their birth house). Knighted soldiers are new Lord-occupation heroes.
+- `Guard.Abandon` is called from `Bastard.Become` so the daily vow check does not read the
+  whole order as oathbreakers when the player clan changes.
+- Errands are abstract (knight + men removed, teleported to the nearest town, resolved on
+  return from `Law.Rating` against bandit man count / the quarry's party).

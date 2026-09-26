@@ -207,6 +207,11 @@ namespace WardensAndDragons
 				{
 					return true;
 				}
+				// A baseborn child in the white cloak renounced every claim.
+				if (Guard.IsSworn(h))
+				{
+					return true;
+				}
 				Clan mine = Clan.PlayerClan;
 				return mine != null && mine.Leader == h;
 			}

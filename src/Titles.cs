@@ -212,6 +212,13 @@ namespace WardensAndDragons
 				_plain[id] = plain;
 				string style = StyleOf(__instance);
 				string text = Compose(style, plain);
+				// The white cloak reads after the name, the way the books
+				// write it: "Ser Criston Cole of the Kingsguard".
+				string cloak = Guard.StyleOf(__instance);
+				if (cloak != null && plain.IndexOf(cloak.TrimStart(',', ' '), StringComparison.OrdinalIgnoreCase) < 0)
+				{
+					text = plain.TrimStart(' ', '\t', '\u200B') + cloak;
+				}
 				if (text == null)
 				{
 					_titled[id] = null;

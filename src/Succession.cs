@@ -148,6 +148,11 @@ namespace WardensAndDragons
 					{
 						continue;
 					}
+					// The white cloak gives up every claim.
+					if (Guard.IsSworn(h))
+					{
+						continue;
+					}
 					list.Add(h);
 				}
 				list = list.OrderByDescending((Hero h) => h.Age).ToList();

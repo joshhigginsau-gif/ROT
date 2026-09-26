@@ -57,6 +57,8 @@ public class CourtBehavior : CampaignBehaviorBase
 			Law.Settle();
 		});
 		CampaignEvents.HourlyTickEvent.AddNonSerializedListener((object)this, (Action)Law.Settle);
+		// The white cloaks walk in with you.
+		CampaignEvents.BeforeMissionOpenedEvent.AddNonSerializedListener((object)this, (Action)Guard.Bodyguards);
 	}
 
 	public override void SyncData(IDataStore ds)
@@ -125,6 +127,7 @@ public class CourtBehavior : CampaignBehaviorBase
 			}
 			Tourney.Reset();
 			Law.Reset();
+			Guard.Reset();
 			Menus.Register(starter);
 			Dialogue.Add(starter);
 			Log.Write("warden dialogue registered");
@@ -159,6 +162,7 @@ public class CourtBehavior : CampaignBehaviorBase
 				Baseborn.Daily();
 				Tourney.Daily();
 				Law.Daily();
+				Guard.Daily();
 				SettleTheDead();
 				Titles.Invalidate();
 				if (num - Store.LastDriftDay >= Cfg.DaysPerSeason)

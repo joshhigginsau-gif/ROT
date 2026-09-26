@@ -432,6 +432,14 @@ namespace WardensAndDragons
 				float share = Math.Min(0.9f, Blade.Share(how) + Tourney.ShareBonus(him));
 				int gone = Defect(yours, realm, house, share);
 
+				// And the white cloaks split, as they did in the Dance.
+				List<string> cloaks = Guard.Split(house, him);
+				if (cloaks.Count > 0)
+				{
+					Log.Write("  white cloaks who went over: " + string.Join(", ", cloaks.ToArray()));
+					Flow.Notify(string.Join(", ", cloaks.ToArray()) + " tore off the white cloak and went over to " + him.Name + ".");
+				}
+
 				// 7. And a war, if the claim is one that can carry a war.
 				if ((already == null) ? Cfg.BastardWar : (Blade.Declares(how) || (champion && Cfg.BastardWar)))
 				{
@@ -1080,6 +1088,7 @@ namespace WardensAndDragons
 				faction.SetValue(Campaign.Current, house, null);
 				moved = true;
 				ChangePlayerCharacterAction.Apply(him);
+				Guard.Abandon(old);
 
 				// The game hands the old main party to the new player (it
 				// expects the old one to be dead). Yours is not: give it back

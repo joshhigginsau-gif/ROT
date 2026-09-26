@@ -59,6 +59,19 @@ namespace WardensAndDragons
 				{
 				}
 
+				// --- the white cloaks ---
+				try
+				{
+					string kg = Guard.Attention();
+					if (kg != null)
+					{
+						list.Add(kg);
+					}
+				}
+				catch
+				{
+				}
+
 				// --- the lists ---
 				try
 				{

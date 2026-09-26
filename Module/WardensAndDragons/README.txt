@@ -1,4 +1,69 @@
-Wardens & Dragons  v2.4.0  -  THE KING'S JUSTICE
+Wardens & Dragons  v2.5.0  -  THE WHITE CLOAKS
+
+
+v2.5.0 - THE KINGSGUARD
+
+  Court -> The white cloaks.
+
+  Seven knights sworn for life to guard your person. The Kingsguard (or
+  Queensguard) when you rule a realm; your house's Sworn Shields when you
+  do not. They hold no lands, take no wives and father no heirs, and they
+  serve until they die. The White Book on that page records every one of
+  them: where they came from, how long they have worn the cloak, and what
+  they have done in it.
+
+  WHO CAN WEAR IT
+
+    Grown, unmarried, not the head of a house and not your heir.
+
+    A champion         a sword of your household, or anyone who has won a
+                       tourney
+    A common soldier   any tier 4+ soldier in your party, knighted in the
+                       field. +2 Honour; the lords like it a little less
+    A ward             raised at your court. Their house takes it as an
+                       honour
+    A younger son or   of a house of your realm that likes you. They may
+    daughter           refuse. If they accept, they leave their house and
+                       give up their inheritance
+    Your baseborn      in the white cloak they renounce every claim - the
+    child              banner can never rise for them
+
+  WHAT THEY DO
+
+    Guard you     Every sworn knight in your party walks with you through the
+                  streets, into the tavern and into your hall - not just the
+                  one companion the game allows. In battle they fight at your
+                  side, as heroes of your party always have.
+
+    Champion you  The Lord Commander, then the other white cloaks, are first
+                  in line when the King's Justice needs a champion.
+
+    Clear the     Pick a knight and 0, 10, 25 or 50 of your best men, and
+    outlaw camps  they ride to the nearest outlaw camps. They come back in a
+                  few days with plunder, renown and a report - or carried,
+                  with fewer men, and 10% of the time not at all.
+
+    Hunt the      A lord with a charge waiting who fled beyond your realm.
+    fugitive      Brought back in chains, they become your prisoner and the
+                  charge can be heard.
+
+  THE VOWS ARE REAL
+
+    A knight who marries or leaves your house is an oathbreaker, and the
+    King's Justice can try them for it. Taking a cloak back yourself costs
+    5 Honour - the cloak is for life. When a bastard rises against your heir,
+    a knight who likes the claimant better than you may tear off the cloak
+    and go over, as the white cloaks did in the Dance. And if you take up
+    the bastard's banner yourself, the white cloaks stay with the house you
+    left.
+
+  TESTING
+
+      wad.kg                  the White Book, and who is away
+      wad.kg_swear <name>     swear anyone, skipping the vows' checks
+      wad.kg_knight           knight your best soldier and swear them
+      wad.kg_return           every knight away comes home now
+
 
 
 v2.4.0 - THE KING'S JUSTICE

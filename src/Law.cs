@@ -78,6 +78,7 @@ namespace WardensAndDragons
 		internal const string Kinslaying = "kinslaying";
 		internal const string Execution = "execution";
 		internal const string Tyranny = "tyranny";
+		internal const string Oathbreaking = "oathbreaking";
 
 		private const string Prefix = "lw:c:";
 		private const string TrialKey = "lw:trial";
@@ -173,6 +174,7 @@ namespace WardensAndDragons
 				return 3;
 			case Murder:
 			case Execution:
+			case Oathbreaking:
 				return 2;
 			default:
 				return 1;
@@ -193,6 +195,8 @@ namespace WardensAndDragons
 				return "The killing of a captive";
 			case Tyranny:
 				return "Tyranny";
+			case Oathbreaking:
+				return "Oathbreaking";
 			default:
 				return kind;
 			}
@@ -1679,7 +1683,10 @@ namespace WardensAndDragons
 			catch
 			{
 			}
-			return list.OrderByDescending((Hero h) => Rating(h.CharacterObject)).Take(8).ToList();
+			// The white cloaks first: the Lord Commander, then the sworn
+			// brothers. They are the crown's champions.
+			return list.OrderByDescending((Hero h) => (Guard.Of(h) != null) ? (Guard.Of(h).Rank + 1) : 0)
+				.ThenByDescending((Hero h) => Rating(h.CharacterObject)).Take(8).ToList();
 		}
 
 		// Your six: the best heroes in your party, then its best men.

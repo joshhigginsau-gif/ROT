@@ -54,6 +54,12 @@ namespace WardensAndDragons
 				"  wad.accuse_me [kind]        a lord of your realm accuses you",
 				"  wad.trial                   fight the waiting trial in this town's arena",
 				"",
+				"THE WHITE CLOAKS",
+				"  wad.kg                      the White Book, and who is away",
+				"  wad.kg_swear <name>         swear anyone, skipping the vows' checks",
+				"  wad.kg_knight               knight your best soldier and swear them",
+				"  wad.kg_return               every knight away comes home now",
+				"",
 				"YOUR HOUSE",
 				"  wad.culture list            every culture your mods define",
 				"  wad.culture <name> [holdings]  your house (and holdings) take that culture",
@@ -438,6 +444,70 @@ namespace WardensAndDragons
 			}
 			string why;
 			return Law.Fight(out why) ? "Into the arena." : ("Not now: " + why + ".");
+		}
+
+		// ------------------------------------------------------------------
+		// the white cloaks
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("kg", "wad")]
+		public static string KgBook(List<string> args)
+		{
+			return (Campaign.Current == null) ? "Load a campaign first." : Guard.Book();
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("kg_swear", "wad")]
+		public static string KgSwear(List<string> args)
+		{
+			if (Campaign.Current == null)
+			{
+				return "Load a campaign first.";
+			}
+			string part = string.Join(" ", (args ?? new List<string>()).ToArray()).Trim().ToLowerInvariant();
+			if (part.Length == 0)
+			{
+				return "Usage: wad.kg_swear <part of a name>   - swears any living hero, skipping the vows' checks";
+			}
+			Hero h = Hero.AllAliveHeroes.FirstOrDefault((Hero x) => x != Hero.MainHero && x.Name.ToString().ToLowerInvariant() == part)
+				?? Hero.AllAliveHeroes.FirstOrDefault((Hero x) => x != Hero.MainHero && x.Name.ToString().ToLowerInvariant().Contains(part));
+			if (h == null)
+			{
+				return "Nobody matches '" + part + "'.";
+			}
+			string why;
+			return Guard.Swear(h, (h.CompanionOf == Clan.PlayerClan) ? "champion" : "noble", true, out why) ? (h.Name + " is sworn.") : ("Not sworn: " + why + ".");
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("kg_knight", "wad")]
+		public static string KgKnight(List<string> args)
+		{
+			if (Campaign.Current == null)
+			{
+				return "Load a campaign first.";
+			}
+			CharacterObject best = Guard.Soldiers().FirstOrDefault();
+			if (best == null)
+			{
+				return "No soldier in your party is tier " + Cfg.KgCommonerTier + " or better.";
+			}
+			Hero h = Guard.KnightSoldier(best);
+			string why;
+			return (h != null && Guard.Swear(h, "commoner", true, out why)) ? (h.Name + ", once " + best.Name + ", is knighted and sworn.") : "It did not take - see the log.";
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("kg_return", "wad")]
+		public static string KgReturn(List<string> args)
+		{
+			if (Campaign.Current == null)
+			{
+				return "Load a campaign first.";
+			}
+			int n = 0;
+			foreach (Knight k in Guard.All().Where((Knight x) => x.State == "away").ToList())
+			{
+				Guard.Return(k);
+				n++;
+			}
+			return (n == 0) ? "Nobody is away." : (n + " knight(s) came home. Close the console to hear how it went.");
 		}
 
 		// ------------------------------------------------------------------
