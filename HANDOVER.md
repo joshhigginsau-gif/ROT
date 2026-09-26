@@ -1,0 +1,99 @@
+# Wardens & Dragons — handover
+
+A Game of Thrones political-layer mod for Mount & Blade II: Bannerlord, built
+to sit alongside Realm of Thrones, Bellum Civile and RoT Dynasty & Succession.
+Currently v2.2.0. About 13,700 lines across 43 C# files.
+
+## Building
+
+`build.sh` compiles `src/*.cs` with Mono's `mcs` against every DLL in a `refs/`
+folder, and writes the result to both `bin/Win64_Shipping_Client` and
+`bin/Gaming.Desktop.x64_Shipping_Client`. It prints BUILD OK or BUILD FAILED.
+
+`refs/` is NOT in this zip — copy these 14 out of your game and mod folders:
+
+  TaleWorlds.CampaignSystem.dll, TaleWorlds.CampaignSystem.ViewModelCollection.dll,
+  TaleWorlds.Core.dll, TaleWorlds.Library.dll, TaleWorlds.Localization.dll,
+  TaleWorlds.MountAndBlade.dll, TaleWorlds.ObjectSystem.dll, 0Harmony.dll,
+  BellumCivile.dll, RoTDynastyAndSuccession.dll, NavalDLC.dll,
+  NavalDLC.CustomBattle.dll, NavalDLC.ViewModelCollection.dll, HoldCourt.dll
+
+Edit the three paths at the top of build.sh to match where you put things.
+
+## What it does
+
+Dragons (bonding, eggs, claims, a twilight that dims as dragons die),
+titles shown in dialogue and the encyclopedia, Harrenhal's curse, wardens and
+oaths and client realms, hostages and wards, Honour and Dread, an heir you can
+name against your culture's law and who actually inherits — and the Bastard's
+Banner, which is the endgame.
+
+## The two rules that matter
+
+**Postfix-only Harmony.** Every patch is a postfix, with exactly one deliberate
+prefix: `Laws.Listen` records the player's answer on the heir screen, and it has
+to be a prefix because the body of that method kills the player. It returns void
+and only reads.
+
+**Everything optional stays optional.** Bellum Civile, RoT Dynasty and Warsails
+are all reached by reflection, never referenced directly, so the mod runs with
+any combination of them absent.
+
+## Things that are true and non-obvious
+
+Verify against IL before trusting a method name. Most of the serious bugs in
+this project came from reasoning about what an API sounded like. `ikdasm x.dll > x.il`
+then grep.
+
+- **The game picks the new clan leader before any mod hears about the death.**
+  Scoring gives +10 for male, +5 oldest, +5 best skills, and nothing stops a
+  spouse who married in — so a husband beats a daughter. And `Kingdom.Leader`
+  IS `RulingClan.Leader`, so the clan is the crown. `Succession.Install` corrects
+  it afterwards via `ChangeClanLeaderAction.ApplyWithSelectedNewLeader`.
+
+- **Banner "secondary" is not the sigil.** Entry [0] is the background with two
+  colour slots; the device is at [1]+. A clan in a kingdom has both background
+  slots forced to one colour. Reverse ground against charge, not primary
+  against secondary.
+
+- **RoT decides bastardy by SURNAME** — Snow, Stone, Rivers, Storm, Hill,
+  Flowers, Sand, Waters, Pyke (`Surnames.cs`). No register API exists. Naming a
+  hero Snow makes RoT call them a bastard; renaming them off it makes RoT call
+  them legitimised, but only if RoT was asked about them at least once while the
+  bastard name was still on them — hence `Baseborn.Observe`.
+
+- **Never create these children through a real birth.** RoT hooks the birth event
+  and files newborns permanently; that verdict outranks everything and would make
+  acknowledging them impossible to display. They are made with
+  `HeroCreator.CreateSpecialHero`.
+
+- **`CreateSpecialHero` returns a NotSpawned hero.** Always follow with
+  `ChangeState(Active)` and `SetNewOccupation(Occupation.Lord)`. A wanderer-
+  occupation hero gets culled by vanilla's companion behaviour within a campaign.
+
+- **Bellum does not hide other heirs; it force-selects its own.** Five separate
+  patches converge on that screen and one is UIExtenderEx, which Harmony cannot
+  stand down. `Laws.Unlock` answers the two questions they all ask
+  (`TryResolveLegalPlayerHeir` → false, `CanConfirmSelectedPlayerHeir` → true)
+  instead of chasing the patches.
+
+## How this was worked on
+
+Every substantial change went to a fresh subagent to verify against IL before
+shipping. That caught, among others: a save-corrupting path where the player
+rose in rebellion against themselves, a feature that was inert because heroes
+were never activated, a migration that was dead code, and a fix I reported as
+done whose edits had never been written to disk. It is worth continuing.
+
+## Known open items
+
+- The README inside the v2.2.0 zip still has a v2.1.0 header. Cosmetic.
+- Config keys added after a section already exists won't appear in an existing
+  `config.txt` — `AppendSection` works per section, not per key. Defaults match,
+  so behaviour is identical, but the keys are undiscoverable without deleting
+  the file.
+- The Bastard's Banner has been played through once. Its failure paths (no lord
+  template, kingdom founder refusing, clan creation failing) are verified by
+  reading IL, not by having happened.
+- Harrenhal's curse ticks ~0.095/day and in testing has never reached a stage
+  where anything visible happens. Worth shortening or giving it beats.

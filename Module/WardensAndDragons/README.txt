@@ -1,4 +1,75 @@
-Wardens & Dragons  v2.1.0  -  THE BLADE AND THE BANNER
+Wardens & Dragons  v2.2.0  -  CHILDREN OF YOUR OWN
+
+
+v2.2.0 - THE BASTARD IS SOMEONE YOU RAISED
+
+  Until now the claimant was invented at the graveside, which left the mod
+  explaining how a stranger came to be holding your ancestral sword. He is
+  not a stranger any more. He is a child you had, years ago, and whatever he
+  carries at the end you put in his hand yourself.
+
+  THE NIGHT
+
+    In a town or a village: "Take a room for the night." It costs a little
+    coin and carries a cooldown. Nothing happens tonight. If you are married
+    there is a chance it is talked about, and your spouse will hear.
+
+  THE CHILD
+
+    Three years later someone comes to your gate from that town, and they do
+    not come alone. The child is already of an age to matter, and carries the
+    bastard surname of where they were got - Snow, Stone, Rivers, Storm,
+    Hill, Flowers, Sand, Waters, Pyke. Up to four of them over a reign.
+
+    They are created as heroes outright, never born. That is deliberate. RoT
+    Dynasty & Succession hooks the game's birth event and files every newborn
+    as bastard-or-trueborn permanently, and that verdict outranks everything
+    else it knows - so a child born the ordinary way could be acknowledged by
+    you and RoT's encyclopedia would still call them a bastard for the rest
+    of the campaign.
+
+  AND RoT AGREES WITH US, FOR FREE
+
+    RoT decides bastardy by reading a hero's SURNAME against exactly those
+    nine words. So naming a child Snow is the whole handshake: its hero page
+    says "Legitimacy: Bastard" with nothing registered and nothing called.
+
+    Acknowledge them and we rename them into your house, RoT stops reading a
+    bastard surname, and its page flips to "Legitimized" by itself. The two
+    mods never contradict each other, because they read the same thing.
+
+  ACKNOWLEDGING
+
+    Court -> House and heirs -> "Acknowledge a child of yours". It gives them
+    your name and a claim, and puts them in the heir list. It costs 20
+    relation with each of your trueborn kin and 10 standing with the realm,
+    because it should.
+
+  THE BLADE IS A BEQUEST NOW
+
+    Court -> House and heirs -> "Put the blade in someone's hand". Any child:
+    your heir, a younger son, or the one from the gate. Whoever holds it when
+    you die is the one the realm will say you chose.
+
+  AND YOUR DEATH IS WHATEVER YOU BUILT
+
+    What you did                 Fief  Kingdom  Vassals  War
+    -------------------------------------------------------
+    Never had one                the stranger at the gate, or nothing
+    Had one, ignored them          -      -       10%      -
+    Acknowledged them            yes      -       20%      -
+    Gave them the blade          yes     yes      33%     yes
+    Both                         yes     yes      50%     yes
+
+    Only a child you wrote into the book takes the sword's name - which is
+    the historical order, since Daemon was legitimised before he became
+    Daemon Blackfyre. One you armed but never acknowledged rises as what he
+    is, under the name he was born with.
+
+  Config: the whole baseborn section, plus share_ignored / share_acknowledged
+  / share_armed / share_both, and bastard_stranger to turn off the invented
+  claimant entirely.
+
 
 
 v2.1.0 - THE SWORD IS THE ARGUMENT
