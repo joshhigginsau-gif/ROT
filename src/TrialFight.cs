@@ -83,7 +83,13 @@ namespace WardensAndDragons
 					return false;
 				}
 				string scene = arena.GetSceneName(here.Town.GetWallLevel());
-				MissionState.OpenNew("WadTrial", SandBoxMissions.CreateSandBoxMissionInitializerRecord(scene, "", false, (DecalAtlasGroup)3),
+				// The mission's NAME is what SandBox.View looks up to build its
+				// screens ([ViewMethod("ArenaDuelMission")] in SandBoxMission
+				// Views): the equipment controller that draws weapons and runs
+				// the weapon wheel, the health bars, the crowd, the spectator
+				// camera. Opened under a name of our own it had none of them,
+				// and the player could not so much as draw a sword.
+				MissionState.OpenNew("ArenaDuelMission", SandBoxMissions.CreateSandBoxMissionInitializerRecord(scene, "", false, (DecalAtlasGroup)3),
 					(InitializeMissionBehaviorsDelegate)((Mission mission) => new MissionBehavior[]
 					{
 						new MissionOptionsComponent(),

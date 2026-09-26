@@ -1,4 +1,15 @@
-Wardens & Dragons  v2.5.0  -  THE WHITE CLOAKS
+Wardens & Dragons  v2.5.1  -  THE WHITE CLOAKS
+
+
+v2.5.1 - A SWORD YOU CAN DRAW
+
+  In a trial by combat or a trial of seven you could not draw a weapon or
+  open the weapon wheel. The game builds a mission's screens - the weapon
+  controls, the health bars, the crowd - by the mission's name, and the
+  trial was opened under a name of its own, so it had none of them. It now
+  opens as the game's own arena duel and gets all of them, including the
+  camera to watch the rest of a trial of seven after you fall.
+
 
 
 v2.5.0 - THE KINGSGUARD
