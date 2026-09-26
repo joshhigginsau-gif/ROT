@@ -46,6 +46,19 @@ namespace WardensAndDragons
 					}
 				}
 
+				// --- the lists ---
+				try
+				{
+					string lists = Tourney.Attention();
+					if (lists != null)
+					{
+						list.Add(lists);
+					}
+				}
+				catch
+				{
+				}
+
 				// --- dragons ---
 				try
 				{

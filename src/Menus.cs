@@ -107,6 +107,11 @@ internal static class Menus
 			() => "The children of other houses, held at your court.");
 		AddBranch(s, "wad_court", "wad_opt_realm", "{=WAD_Realm}Realm affairs", "wad_realm", 4,
 			() => "Your standing, your chronicle, Harrenhal and the dragons.");
+		if (Cfg.Tourneys)
+		{
+			AddBranch(s, "wad_court", "wad_opt_lists", "{=WAD_Lists}The lists", "wad_lists", 6,
+				() => "Call a tourney, and see what the last ones cost.");
+		}
 		s.AddGameMenuOption("wad_court", "wad_leave", "{=WAD_Leave}Leave the court", (GameMenuOption.OnConditionDelegate)delegate(MenuCallbackArgs a)
 		{
 			//IL_0003: Unknown result type (might be due to invalid IL or missing references)
@@ -161,6 +166,7 @@ internal static class Menus
 		WardensMenu.AddOptions(s);
 		WardMenu.Register(s);
 		HouseMenu.Register(s);
+		TourneyMenu.Register(s);
 		s.AddGameMenu("wad_realm", "{=!}{WAD_REALM}", (OnInitDelegate)delegate
 		{
 			SetRealmText();

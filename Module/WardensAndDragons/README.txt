@@ -1,4 +1,100 @@
-Wardens & Dragons  v2.2.0  -  CHILDREN OF YOUR OWN
+Wardens & Dragons  v2.3.0  -  THE LISTS
+
+
+v2.3.0 - THE LISTS
+
+  A tourney in Westeros is politics with lances. Lords come together, debts
+  are paid in public, young men die in the lists, and the winner chooses
+  whose lap the roses land in - which is how Rhaegar Targaryen started a war.
+  Bannerlord already has the arena. This is everything around it.
+
+  CALLING ONE
+
+    Court -> The lists -> "Call a tourney here", in a town your house holds.
+    Once a year.
+
+      Modest     5,000 purse     guests +3 each, renown +20, Honour +1
+      Great     20,000 purse     guests +6 each, renown +40, Honour +2
+      Lavish    50,000 purse     guests +9 each, renown +60, Honour +3
+
+    The feast costs 40% on top of the purse. Then you choose who of your
+    blood rides - your baseborn children included, which is the dangerous
+    part. Up to eight houses of your realm come, and their young lords are
+    brought to the town so they are actually in the lists to be fought.
+
+    It is the game's own tournament. Go to the arena and ride in it, or stay
+    away and it is decided without you when its time runs out.
+
+  THE LISTS ARE NOT SAFE
+
+    At a tourney you host or ride in, each lord riding has a 2% chance of
+    being killed and 8% of being carried off badly hurt - one of each at most.
+    You never die in them, and neither do your companions. When the death is
+    at YOUR tourney, the dead man's house holds the host to account.
+
+    Unhorsed in the first round of your own tourney costs you Dread.
+
+  WINNING
+
+    Win any tourney and you gain Honour, and the herald hands you the wreath.
+
+      Your spouse               safe, and kind
+      An unmarried lady         her house is flattered, your spouse is not -
+                                and there is a feast afterwards
+      Another man's wife        in front of him. He will not forgive it
+
+    Go with her after the feast and a child may come of it, in the usual
+    three years - and there is a 40% chance her house finds out.
+
+    Win your own tourney and you choose what to do with your own purse:
+    keep it (Honour -2) or give it to the smallfolk (Honour +2).
+
+  WHO ELSE WINS MATTERS
+
+    Your heir         every guest house thinks better of them
+    A guest           they take the purse, and like you for it
+    An enemy          you paid them anyway, in front of everyone (+1 Honour)
+    A baseborn child  the crowd is on its feet for a face that is yours and
+                      a name that is not
+
+  THE BASTARD IN THE LISTS
+
+    Every tourney a baseborn child of yours wins - anywhere, not only yours -
+    takes 5% more of your sworn houses with them if they ever rise (three
+    wins at most). Two wins and the crowds would crown them: they found a
+    kingdom and declare war even if you never gave them the sword or your
+    name. The reckoning at your funeral says so.
+
+  TESTING THE BANNER WITHOUT WAITING TWENTY YEARS
+
+    Open the console (Alt + ~) and type wad.cheats for the list. Save first:
+    these run the real thing.
+
+      wad.bastard                what would happen if you died today, and why
+      wad.child_new [count]      a baseborn child comes to the gate now
+      wad.child_now              every child on the road arrives today
+      wad.age <years> <name>     grow a child up so they can be acknowledged
+      wad.acknowledge <name>     give them your name
+      wad.blade <name> | none    put the blade in their hand
+      wad.bastard_rise [force]   the death question, now, without dying
+      wad.bastard_reset          forget the last answer
+      wad.die yes                die for real, for the end-to-end path
+
+      wad.tourney_status         your tourney, its guests, every champion
+      wad.tourney_here [1-3]     call one in this town, free
+      wad.tourney_resolve        decide it now
+      wad.tourney_win <n> <name> give someone wins
+
+    A fast run: stand in a town, wad.child_new, wad.age 20 <name>,
+    wad.blade <name>, wad.bastard to read the verdict, save, wad.bastard_rise.
+
+  CONFIG
+
+    A new Tourneys section is added to your config.txt on load. And keys
+    added to an existing section in a newer version are now added too,
+    under "Added by a newer version" - until now they only ever reached a
+    fresh config file.
+
 
 
 v2.2.0 - THE BASTARD IS SOMEONE YOU RAISED

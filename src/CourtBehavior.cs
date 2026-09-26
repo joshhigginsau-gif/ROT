@@ -5,6 +5,8 @@ using TaleWorlds.CampaignSystem;
 using TaleWorlds.ObjectSystem;
 using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.CampaignSystem.Settlements;
+using TaleWorlds.CampaignSystem.GameMenus;
+using TaleWorlds.Core;
 using TaleWorlds.Library;
 
 namespace WardensAndDragons
@@ -34,6 +36,19 @@ public class CourtBehavior : CampaignBehaviorBase
 			Dragons.OnBirth(kids);
 		});
 		CampaignEvents.HeroComesOfAgeEvent.AddNonSerializedListener((object)this, (Action<Hero>)Dragons.OnComesOfAge);
+		// The lists. The game runs the tournament; we read what happened in it.
+		CampaignEvents.TournamentFinished.AddNonSerializedListener((object)this, (Action<CharacterObject, MBReadOnlyList<CharacterObject>, Town, ItemObject>)Tourney.OnFinished);
+		CampaignEvents.OnPlayerJoinedTournamentEvent.AddNonSerializedListener((object)this, (Action<Town, bool>)Tourney.OnJoined);
+		CampaignEvents.PlayerEliminatedFromTournament.AddNonSerializedListener((object)this, (Action<int, Town>)Tourney.OnEliminated);
+		CampaignEvents.TournamentCancelled.AddNonSerializedListener((object)this, (Action<Town>)Tourney.OnCancelled);
+		// And settle it once the arena is behind us: the town menu opening
+		// after the mission is the first safe moment, and the hourly tick
+		// catches the ones decided on the map without the player.
+		CampaignEvents.GameMenuOpened.AddNonSerializedListener((object)this, (Action<MenuCallbackArgs>)delegate
+		{
+			Tourney.Settle();
+		});
+		CampaignEvents.HourlyTickEvent.AddNonSerializedListener((object)this, (Action)Tourney.Settle);
 	}
 
 	public override void SyncData(IDataStore ds)
@@ -100,6 +115,7 @@ public class CourtBehavior : CampaignBehaviorBase
 				}
 				Log.Write("first session: Honour " + Store.Honour + ", Dread " + Store.Dread);
 			}
+			Tourney.Reset();
 			Menus.Register(starter);
 			Dialogue.Add(starter);
 			Log.Write("warden dialogue registered");
@@ -129,6 +145,7 @@ public class CourtBehavior : CampaignBehaviorBase
 				Harrenhal.Daily(num);
 				Oaths.Yearly(num);
 				Baseborn.Daily();
+				Tourney.Daily();
 				SettleTheDead();
 				Titles.Invalidate();
 				if (num - Store.LastDriftDay >= Cfg.DaysPerSeason)

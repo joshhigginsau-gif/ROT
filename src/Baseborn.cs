@@ -257,8 +257,9 @@ namespace WardensAndDragons
 				Hero you = Hero.MainHero;
 				Settlement here = Settlement.CurrentSettlement;
 
-				Hero other = Beget(here, you);
-				if (other == null)
+				Kid k = Conceive(null, here);
+				Hero other = OtherOf(k);
+				if (k == null || other == null)
 				{
 					Flow.Notify("The night passed quietly and alone.");
 					return;
@@ -266,15 +267,6 @@ namespace WardensAndDragons
 
 				you.ChangeHeroGold(-Cfg.BaseNightCost);
 				Store.SetI("bb:last", CourtBehavior.Today());
-
-				Kid k = new Kid();
-				k.Id = Next();
-				k.Other = ((MBObjectBase)other).StringId;
-				k.Where = ((MBObjectBase)here).StringId;
-				k.Night = CourtBehavior.Today();
-				k.Parent = ((MBObjectBase)you).StringId;
-				Save(k);
-				Log.Write("a night at " + here.Name + " with " + other.Name + " (record " + k.Id + ")");
 
 				// And the whisper, if you are married and unlucky.
 				Whisper(you, here);
@@ -289,6 +281,83 @@ namespace WardensAndDragons
 			{
 				Log.Write("the night failed: " + e.Message);
 			}
+		}
+
+		// Write the night down. Nothing else: no cost, no cooldown, no whisper -
+		// the callers own those, because a room above the common hall and a
+		// night after a tourney feast are paid for in different coin.
+		//
+		// With no other parent given, one is invented at the place. With one
+		// given - the lady you crowned in the lists - it is her, and she is the
+		// one who will come to your gate.
+		internal static Kid Conceive(Hero other, Settlement here)
+		{
+			try
+			{
+				Hero you = Hero.MainHero;
+				if (you == null || here == null)
+				{
+					return null;
+				}
+				if (other == null)
+				{
+					other = Beget(here, you);
+				}
+				if (other == null)
+				{
+					return null;
+				}
+				Kid k = new Kid();
+				k.Id = Next();
+				k.Other = ((MBObjectBase)other).StringId;
+				k.Where = ((MBObjectBase)here).StringId;
+				k.Night = CourtBehavior.Today();
+				k.Parent = ((MBObjectBase)you).StringId;
+				Save(k);
+				Log.Write("a night at " + here.Name + " with " + other.Name + " (record " + k.Id + ")");
+				return k;
+			}
+			catch (Exception e)
+			{
+				Log.Write("the night could not be written down: " + e.Message);
+				return null;
+			}
+		}
+
+		// Is there room for one more? Only the cap - the cheats and the tourney
+		// feast skip the cost and the cooldown, but not the number of children
+		// the mod will keep track of.
+		internal static bool HasRoom()
+		{
+			return Cfg.Baseborn && All().Count < Cfg.BaseMax;
+		}
+
+		// Every child still on the road arrives today. For testing: the three
+		// years are the point in play, and the whole problem when testing.
+		internal static int HurryAll()
+		{
+			int n = 0;
+			try
+			{
+				foreach (Kid k in All())
+				{
+					if (k.Known)
+					{
+						continue;
+					}
+					Arrive(k);
+					Kid now = All().FirstOrDefault((Kid x) => x.Id == k.Id);
+					if (now != null && now.Known)
+					{
+						n++;
+					}
+				}
+			}
+			catch (Exception e)
+			{
+				Log.Write("hurrying the children failed: " + e.Message);
+			}
+			return n;
 		}
 
 		// The other parent. Invented, but real from here on: she lives in the

@@ -97,3 +97,20 @@ done whose edits had never been written to disk. It is worth continuing.
   reading IL, not by having happened.
 - Harrenhal's curse ticks ~0.095/day and in testing has never reached a stage
   where anything visible happens. Worth shortening or giving it beats.
+
+## v2.3.0 — the lists, and test commands (added in the Claude Code session)
+
+- `Tourney.cs` / `TourneyMenu.cs`: hosted tourneys and their consequences. The game's
+  `TournamentFinished` can fire while the arena mission is still running, so it only
+  writes a pending record; `Tourney.Settle()` does the killing, paying and popups from
+  `GameMenuOpened` / the hourly tick, and never while `Mission.Current` is set.
+- `Cheats.cs`: `wad.cheats` lists every test command.
+- `Cfg.AppendMissingKeys` closes the open item above: keys added to an existing section
+  are now appended to an existing `config.txt`.
+- Built with `dotnet build` against BUTR's 1.4.8 reference assemblies, which carry
+  signatures but no method bodies. Two vanilla behaviours were assumed rather than
+  read from IL, and are worth confirming in play:
+  - whether `TournamentManager.ResolveTournament` removes the tournament itself
+    (`Tourney.ResolveNow` removes it afterwards if it is still registered);
+  - whether `PlayerEliminatedFromTournament`'s round number is 0- or 1-based
+    (`OnEliminated` treats round <= 1 as "early").

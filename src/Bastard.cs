@@ -97,31 +97,14 @@ namespace WardensAndDragons
 				// Risen alone meant refusing the bastard asked you again on
 				// the next death, which is the opposite of what both this
 				// comment and the config promised.
-				if (!Cfg.Bastard || dead == null || !string.IsNullOrEmpty(Store.Get(RisenKey)))
+				if (dead == null)
 				{
 					return;
 				}
-				Clan mine = Clan.PlayerClan;
-				if (mine == null || mine.Kingdom == null)
+				string why = WhyNot();
+				if (why != null)
 				{
-					return;
-				}
-				// And only to a house that actually rules. A sworn vassal's
-				// death has no realm to divide: the vassals, the castles and
-				// the war would all belong to his liege, and splitting them
-				// would hand a third of somebody else's kingdom - possibly
-				// including their king - to a stranger.
-				if (!Succession.Rules())
-				{
-					Log.Write("the bastard was not offered: your house rules nothing to divide");
-					return;
-				}
-				// Nothing to split. A house with one holding would be handing
-				// over its only seat, and a realm with no vassals has nobody
-				// to take.
-				if (Fiefs().Count < Cfg.BastardMinFiefs)
-				{
-					Log.Write("the bastard was not offered: your house holds too little to divide");
+					Log.Write("the bastard was not offered: " + why);
 					return;
 				}
 				Hero heir = Hero.MainHero;
@@ -166,6 +149,73 @@ namespace WardensAndDragons
 			}
 		}
 
+		// Why the question would not be asked today, or null if it would.
+		//
+		// The same gates Offer has always had, pulled out so wad.bastard can
+		// say which one is closed instead of the player dying to find out.
+		internal static string WhyNot()
+		{
+			try
+			{
+				if (!Cfg.Bastard)
+				{
+					return "bastards_banner is off in the config";
+				}
+				string state = Store.Get(RisenKey);
+				if (!string.IsNullOrEmpty(state))
+				{
+					return "it has already been answered in this campaign (" + state + ")";
+				}
+				Clan mine = Clan.PlayerClan;
+				if (mine == null || mine.Kingdom == null)
+				{
+					return "your house is in no realm";
+				}
+				// And only to a house that actually rules. A sworn vassal's
+				// death has no realm to divide: the vassals, the castles and
+				// the war would all belong to his liege, and splitting them
+				// would hand a third of somebody else's kingdom - possibly
+				// including their king - to a stranger.
+				if (!Succession.Rules())
+				{
+					return "your house rules nothing to divide";
+				}
+				// Nothing to split. A house with one holding would be handing
+				// over its only seat, and a realm with no vassals has nobody
+				// to take.
+				if (Fiefs().Count < Cfg.BastardMinFiefs)
+				{
+					return "your house holds " + Fiefs().Count + " town(s) or castle(s), and bastard_min_fiefs is " + Cfg.BastardMinFiefs;
+				}
+				Blade.Reckoning how;
+				if (Blade.Claimant(out how) == null && !Cfg.BastardStranger)
+				{
+					return "no child of yours is out there, and bastard_stranger is off";
+				}
+				return null;
+			}
+			catch (Exception e)
+			{
+				return "it cannot be read just now: " + e.Message;
+			}
+		}
+
+		// Forget the answer, so the next death asks again. For testing only:
+		// whatever was raised last time stays raised.
+		internal static void ForgetAnswer()
+		{
+			Store.Set(RisenKey, null);
+			Store.Set(HeadKey, null);
+			Store.Set(HouseKey, null);
+			Store.Set(RealmKey, null);
+		}
+
+		// Raise it now, as if the ruler had died this morning. For testing.
+		internal static void OfferNow()
+		{
+			Offer(Hero.MainHero);
+		}
+
 		// A child of yours, and the reckoning for how you treated them.
 		//
 		// This is the case the whole system was rebuilt for. There is no
@@ -189,6 +239,15 @@ namespace WardensAndDragons
 				{
 					sb.Append("And they are carrying ").Append(blade)
 					  .Append(". You put it in their hand. Whatever anybody says about their birth, nobody can say you did not choose them.\n\n");
+				}
+				int wins = Tourney.Wins(him);
+				if (wins > 0)
+				{
+					sb.Append("And the smallfolk know that face. They watched it win ")
+					  .Append((wins == 1) ? "a tourney" : (wins + " tourneys"))
+					  .Append(Tourney.Crowned(him)
+						? ", and a crowd that has cheered a man that often will follow him a long way.\n\n"
+						: ", and they have not forgotten.\n\n");
 				}
 				sb.Append("Men have been riding to them since the day you died.\n\n");
 				sb.Append(armed
@@ -336,7 +395,11 @@ namespace WardensAndDragons
 				// 5. A kingdom, but only for a claim worth the name. A child
 				//    you ignored and never armed takes a castle and whatever
 				//    banners follow, and that is all.
-				Kingdom realm = (already != null && !Blade.Crowns(how)) ? null : Crown(house, him, seat);
+				//    A champion of the lists is the exception: a child the
+				//    crowds have cheered often enough has a following no book
+				//    gave them.
+				bool champion = already != null && Tourney.Crowned(already);
+				Kingdom realm = (already != null && !Blade.Crowns(how) && !champion) ? null : Crown(house, him, seat);
 				if (realm == null)
 				{
 					// Stop here. A clan cannot be joined, so without a kingdom
@@ -352,10 +415,12 @@ namespace WardensAndDragons
 				}
 
 				// 6. And the houses that go with them, as many as you earned.
-				int gone = Defect(yours, realm, house, Blade.Share(how));
+				//    Every tourney they won brings more of them.
+				float share = Math.Min(0.9f, Blade.Share(how) + Tourney.ShareBonus(him));
+				int gone = Defect(yours, realm, house, share);
 
 				// 7. And a war, if the claim is one that can carry a war.
-				if ((already == null) ? Cfg.BastardWar : Blade.Declares(how))
+				if ((already == null) ? Cfg.BastardWar : (Blade.Declares(how) || (champion && Cfg.BastardWar)))
 				{
 					try
 					{

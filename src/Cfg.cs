@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Text;
 
 namespace WardensAndDragons
 {
@@ -157,6 +159,40 @@ internal static class Cfg
 	internal static int BastardMaxAge = 45;
 	// The tier his house starts at.
 	internal static int BastardTier = 3;
+
+	// ---------- Tourneys ----------
+	internal static bool Tourneys = true;
+	// The purse for each of the three sizes of tourney, and what the feast
+	// costs on top of it, as a percentage of the purse.
+	internal static int TourneyPurseModest = 5000;
+	internal static int TourneyPurseGreat = 20000;
+	internal static int TourneyPurseLavish = 50000;
+	internal static int TourneyFeastPercent = 40;
+	internal static int TourneyCooldown = 84;
+	// How many houses come, and how many of their young lords ride.
+	internal static int TourneyGuests = 8;
+	internal static int TourneyGuestRiders = 6;
+	// What hosting earns, per size of tourney (x1, x2, x3).
+	internal static int TourneyHostRelation = 3;
+	internal static int TourneyHostRenown = 20;
+	// The lists are not safe. Percent per lord riding; one death and one
+	// maiming at most, each tourney.
+	internal static int TourneyDeathChance = 2;
+	internal static int TourneyMaimChance = 8;
+	internal static bool TourneyKinCanDie = true;
+	// What a death at YOUR tourney costs with the dead man's house.
+	internal static int TourneyDeathRelation = 20;
+	internal static int TourneyWinHonour = 2;
+	internal static int TourneyHeirRelation = 5;
+	// Crowning a Queen of Love and Beauty, and the chance a night after the
+	// feast is found out by her house.
+	internal static bool TourneyQueen = true;
+	internal static int TourneyScandalChance = 40;
+	// A baseborn child of yours who wins: this much more of your realm goes
+	// with them per win (percent, three wins at most), and this many wins
+	// crowns them even if you never gave them the sword or your name.
+	internal static int TourneyBastardShare = 5;
+	internal static int TourneyBastardCrowning = 2;
 
 	internal static int TwilightPerDeath = 3;
 
@@ -374,7 +410,9 @@ internal static class Cfg
 			AppendSection(path, "wardship_enabled", "# ---------- Hostages and wards", "# ---------- Your heir");
 			AppendSection(path, "succession_enabled", "# ---------- Your heir", "# ---------- Baseborn children");
 			AppendSection(path, "baseborn_children", "# ---------- Baseborn children", "# ---------- The Bastard");
-			AppendSection(path, "bastards_banner", "# ---------- The Bastard's Banner", null);
+			AppendSection(path, "bastards_banner", "# ---------- The Bastard's Banner", "# ---------- Tourneys");
+			AppendSection(path, "tourneys_enabled", "# ---------- Tourneys", null);
+			AppendMissingKeys(path);
 			string[] array = File.ReadAllLines(path);
 			foreach (string text in array)
 			{
@@ -1091,6 +1129,66 @@ internal static class Cfg
 						KnifeTraceChance = Math.Max(0, Math.Min(100, result));
 					}
 					break;
+				case "tourneys_enabled":
+					Tourneys = flag2;
+					break;
+				case "tourney_purse_modest":
+					if (flag) { TourneyPurseModest = Math.Max(0, result); }
+					break;
+				case "tourney_purse_great":
+					if (flag) { TourneyPurseGreat = Math.Max(0, result); }
+					break;
+				case "tourney_purse_lavish":
+					if (flag) { TourneyPurseLavish = Math.Max(0, result); }
+					break;
+				case "tourney_feast_percent":
+					if (flag) { TourneyFeastPercent = Math.Max(0, result); }
+					break;
+				case "tourney_cooldown_days":
+					if (flag) { TourneyCooldown = Math.Max(0, result); }
+					break;
+				case "tourney_guests":
+					if (flag) { TourneyGuests = Math.Max(0, Math.Min(30, result)); }
+					break;
+				case "tourney_guest_riders":
+					if (flag) { TourneyGuestRiders = Math.Max(0, Math.Min(20, result)); }
+					break;
+				case "tourney_host_relation":
+					if (flag) { TourneyHostRelation = Math.Max(0, result); }
+					break;
+				case "tourney_host_renown":
+					if (flag) { TourneyHostRenown = Math.Max(0, result); }
+					break;
+				case "tourney_death_chance":
+					if (flag) { TourneyDeathChance = Math.Max(0, Math.Min(100, result)); }
+					break;
+				case "tourney_maim_chance":
+					if (flag) { TourneyMaimChance = Math.Max(0, Math.Min(100, result)); }
+					break;
+				case "tourney_kin_can_die":
+					TourneyKinCanDie = flag2;
+					break;
+				case "tourney_death_relation":
+					if (flag) { TourneyDeathRelation = Math.Max(0, result); }
+					break;
+				case "tourney_win_honour":
+					if (flag) { TourneyWinHonour = Math.Max(0, result); }
+					break;
+				case "tourney_heir_relation":
+					if (flag) { TourneyHeirRelation = Math.Max(0, result); }
+					break;
+				case "tourney_queen":
+					TourneyQueen = flag2;
+					break;
+				case "tourney_scandal_chance":
+					if (flag) { TourneyScandalChance = Math.Max(0, Math.Min(100, result)); }
+					break;
+				case "tourney_bastard_share":
+					if (flag) { TourneyBastardShare = Math.Max(0, Math.Min(30, result)); }
+					break;
+				case "tourney_bastard_crowning_wins":
+					if (flag) { TourneyBastardCrowning = Math.Max(0, result); }
+					break;
 				case "ship_cost":
 					if (flag)
 					{
@@ -1132,6 +1230,63 @@ internal static class Cfg
 		BastardMaxAge = Math.Max(BastardMinAge, BastardMaxAge);
 	}
 
+	// Keys added to a section that already exists.
+	//
+	// AppendSection works per section: once a section's marker is in the file
+	// it is never touched again, so a key added to it in a later version never
+	// reached anybody's config. The defaults still applied, so nothing broke -
+	// but the setting could not be found without deleting the file. This adds
+	// each missing key with the comment lines that explain it.
+	private static void AppendMissingKeys(string path)
+	{
+		try
+		{
+			string[] have = File.ReadAllLines(path);
+			HashSet<string> keys = new HashSet<string>();
+			foreach (string line in have)
+			{
+				string t = line.Trim().ToLowerInvariant().Replace(" ", "");
+				if (!t.StartsWith("#") && t.IndexOf('=') > 0)
+				{
+					keys.Add(t.Substring(0, t.IndexOf('=')));
+				}
+			}
+			StringBuilder add = new StringBuilder();
+			List<string> comments = new List<string>();
+			foreach (string raw in Default().Split(new string[1] { Environment.NewLine }, StringSplitOptions.None))
+			{
+				string line = raw.Trim();
+				if (line.StartsWith("# ----------") || line.Length == 0)
+				{
+					comments.Clear();
+					continue;
+				}
+				if (line.StartsWith("#"))
+				{
+					comments.Add(line);
+					continue;
+				}
+				int eq = line.IndexOf('=');
+				if (eq > 0 && !keys.Contains(line.Substring(0, eq).ToLowerInvariant()))
+				{
+					foreach (string c in comments)
+					{
+						add.Append(c).Append(Environment.NewLine);
+					}
+					add.Append(line).Append(Environment.NewLine);
+				}
+				comments.Clear();
+			}
+			if (add.Length > 0)
+			{
+				File.AppendAllText(path, Environment.NewLine + "# ---------- Added by a newer version ----------" + Environment.NewLine + add);
+			}
+		}
+		catch
+		{
+		}
+	}
+
 	private static void AppendSection(string path, string marker, string from, string until)
 	{
 		try
@@ -1160,7 +1315,7 @@ internal static class Cfg
 	private static string Default()
 	{
 		string newLine = Environment.NewLine;
-		return "# Wardens & Dragons" + newLine + "" + newLine + "# Where a ruler starts, and where both numbers drift back to." + newLine + "start_honour=50" + newLine + "start_dread=10" + newLine + "" + newLine + "# Seasonal drift. A Bannerlord year is 84 days, so a season is 21." + newLine + "drift_per_season=1" + newLine + "days_per_season=21" + newLine + "" + newLine + "# Executing a captured lord." + newLine + "execute_honour_loss=10" + newLine + "execute_dread_gain=10" + newLine + "" + newLine + "# false = hold court at any settlement your house owns." + newLine + "# true  = only at your house's home seat." + newLine + "court_capital_only=false" + newLine + "" + newLine + "# Show a message whenever Honour or Dread changes." + newLine + "notify_changes=true" + newLine + "" + newLine + "# How many deeds the court remembers." + newLine + "ledger_length=12" + newLine + "" + newLine + "# The court tells you what is actually waiting on a decision, and says" + newLine + "# nothing at all when nothing is." + newLine + "court_attention=true" + newLine + "court_attention_max=6" + newLine + "" + newLine + "# ---------- Harrenhal ----------" + newLine + "# Leave blank to find Harrenhal by name. Set a settlement id if it is not found." + newLine + "harrenhal_settlement_id=" + newLine + "# The curse builds on whoever holds it, 0 to 100, and fades once they let it go." + newLine + "curse_per_year=8" + newLine + "curse_decay_per_year=10" + newLine + "# FOR TESTING ONLY: multiplies how fast the curse builds and fades." + newLine + "# 50 reaches every stage within a few weeks. Put it back to 1 to play." + newLine + "curse_test_speed=1" + newLine + "# Dread gained when you first cannot sleep there." + newLine + "sleepless_dread=5" + newLine + "# At 75 and above, each year: chance (percent) of a death in the family," + newLine + "# and of a fire costing Harrenhal this percent of its prosperity." + newLine + "kin_death_chance=10" + newLine + "fire_chance=30" + newLine + "fire_prosperity_loss_percent=10" + newLine + "# false = the curse never kills members of YOUR house." + newLine + "curse_can_kill_player_family=true" + newLine + "# A Bannerlord year is 84 days." + newLine + "days_per_year=84" + newLine + "" + newLine + "# ---------- Wardens and oaths ----------" + newLine + "# Tribute each year, per fief the house or realm holds." + newLine + "tribute_fealty=1000" + newLine + "tribute_tribute=3000" + newLine + "tribute_marriage=500" + newLine + "tribute_duress=5000" + newLine + "# The most an oath can move a client's liberty, up or down." + newLine + "liberty_cap=40" + newLine + "lighten_honour=2" + newLine + "release_honour=5" + newLine + "revoke_honour_loss=10" + newLine + "revoke_dread_gain=5" + newLine + "# Each dragon rider in your house adds this to a threat, up to the cap." + newLine + "dragon_threat_per_rider=10" + newLine + "dragon_threat_cap=40" + newLine + "# Naming a warden: turn individual steps off if one misbehaves." + newLine + "step_rename=true" + newLine + "step_oath=true" + newLine + "step_vassals=true" + newLine + "allow_revoke=true" + newLine + "# Lets you grant a realm to a house holding no land inside it yet." + newLine + "relax_eligibility=true" + newLine + "# Asking foreign rulers to become your clients." + newLine + "allow_suzerainty=true" + newLine + "suzerainty_always_accepted=false" + newLine + "# Bringing a client realm into your empire." + newLine + "allow_absorb=true" + newLine + "absorb_gold=1000000" + newLine + "absorb_influence=1000" + newLine + "absorb_max_liberty=50" + newLine + "absorb_allow_unknown_liberty=false" + newLine + "" + newLine + "# ---------- Dragons ----------" + newLine + "# Leave blank to find Dragonstone by name." + newLine + "dragonstone_settlement_id=" + newLine + "# Every egg and claim is scaled by (1 - living dragons / this). The Dance" + newLine + "# begins with around 17 dragons, so at 20 the odds start very low and" + newLine + "# rise as the war thins them. Raise it to make dragons easier to get." + newLine + "world_dragon_capacity=20" + newLine + "egg_hatch_chance=30" + newLine + "# Every dragon death permanently dims hatching by this percent, to the floor." + newLine + "twilight_per_death=3" + newLine + "twilight_floor=20" + newLine + "# Chance a dragon falls with a rider killed in battle. A rider who dies in" + newLine + "# bed leaves his dragon riderless instead." + newLine + "dragon_falls_with_rider=60" + newLine + "rideable_age=19" + newLine + "claim_base=35" + newLine + "claim_per_valor=5" + newLine + "claim_riding_per_10=1" + newLine + "claim_killed_penalty=10" + newLine + "claim_wild_penalty=10" + newLine + "claim_death_chance=80" + newLine + "# false = a failed claim can never kill YOU, only your kin." + newLine + "player_claim_can_die=true" + newLine + "claim_dread=5" + newLine + "# Take dragons from anyone not bonded to them, once a week." + newLine + "enforce_bonds=true" + newLine + "seed_dance_riderless=true" + newLine + "# true = AI houses holding Dragonstone get cradle eggs too." + newLine + "eggs_for_all_houses=false" + newLine + "" + newLine + "# ---------- Names and titles ----------" + newLine + "# Put a style in front of a name, in conversation and the encyclopedia." + newLine + "# The name in your save file is never changed - only what is shown." + newLine + "titles_enabled=true" + newLine + "# The head of a house granted a realm wears its style: Warden of the North." + newLine + "title_wardens=true" + newLine + "# Anyone bonded to a dragon is styled Dragon Rider. A warden who also" + newLine + "# rides is styled by his realm, not his dragon." + newLine + "title_dragonriders=true" + newLine + "# ROT already names heroes Lord, Lady, Ser or King. In front of the name," + newLine + "# a lesser rank is replaced by the style - Dragon Rider Daemon Targaryen -" + newLine + "# and a royal one is left alone, because a king is styled by nothing else." + newLine + "# Set this to suffix for the other reading: Lord Daemon Targaryen, Dragon Rider." + newLine + "title_position=prefix" + newLine + "" + newLine + "# ---------- The council's names ----------" + newLine + "# Bellum Civile runs the privy council; this mod no longer adds duties to" + newLine + "# it. All that is left here is the naming: the six seats are shown with" + newLine + "# their Westerosi titles - Hand of the King, Master of Coin, Ships, Laws" + newLine + "# and Whisperers, and the Grand Maester. Only what is shown changes; the" + newLine + "# ids and your save are untouched." + newLine + "council_office_names=true" + newLine + "" + newLine + "# ---------- Hostages and wards ----------" + newLine + "wardship_enabled=true" + newLine + "# Taking a hostage. A ward costs nothing and earns a little." + newLine + "hostage_dread=8" + newLine + "hostage_honour_loss=4" + newLine + "ward_honour=4" + newLine + "ward_xp_per_week=60" + newLine + "# Sending them home." + newLine + "ward_release_honour=6" + newLine + "# The axe. Forfeit means their house broke faith while you held them," + newLine + "# and costs you no Honour at all. Without cause is the other thing." + newLine + "execute_forfeit_dread=15" + newLine + "execute_no_cause_honour_loss=25" + newLine + "" + newLine + "# ---------- Your heir ----------" + newLine + "succession_enabled=true" + newLine + "# Bellum gives every culture a succession law and enforces it on the heir" + newLine + "# screen, which is why most realms only ever offer you your eldest son." + newLine + "# true = you may name anyone of your blood instead. The law still stands;" + newLine + "# you are simply allowed to break it." + newLine + "unlock_heir_choice=true" + newLine + "unlawful_heir_penalty=20" + newLine + "# Changing a name you have already given. Naming one for the first time" + newLine + "# is free." + newLine + "rename_heir_cost=6" + newLine + "# The game picks a new clan leader by score, and gives +10 for being male," + newLine + "# +5 for being oldest and +5 for best skills, with nothing at all to stop a" + newLine + "# spouse who married in. A husband beats a daughter every time, and since a" + newLine + "# kingdom's leader IS its ruling clan's leader, that is the crown as well." + newLine + "# true = the heir you chose takes the seat regardless." + newLine + "enforce_named_heir=true" + newLine + "" + newLine + "# ---------- Baseborn children ----------" + newLine + "# A settlement menu option lets you take a room for the night. Nothing" + newLine + "# happens then; three years later a woman comes to your gate with a child" + newLine + "# who has your face. They are created outright rather than born, on purpose:" + newLine + "# RoT Dynasty files every real newborn as bastard-or-trueborn permanently," + newLine + "# and that verdict outranks everything, so acknowledging them could never show." + newLine + "baseborn_children=true" + newLine + "# The scandal is rather the point, but it can be turned off." + newLine + "baseborn_while_married=true" + newLine + "baseborn_night_cost=500" + newLine + "baseborn_cooldown_days=84" + newLine + "baseborn_max=4" + newLine + "baseborn_years_until=3" + newLine + "baseborn_child_min_age=14" + newLine + "baseborn_child_max_age=20" + newLine + "baseborn_night_min_age=18" + newLine + "# The other parent's age when you meet them." + newLine + "baseborn_other_min_age=20" + newLine + "baseborn_other_max_age=35" + newLine + "# The chance your spouse hears, and what it costs when they do." + newLine + "baseborn_whisper_chance=35" + newLine + "baseborn_whisper_relation=15" + newLine + "baseborn_whisper_honour=3" + newLine + newLine + "# Writing one into the book: what it costs with each of your trueborn" + newLine + "# kin, and with the realm. It gives them a claim your heir must answer for." + newLine + "legitimise_kin_relation=20" + newLine + "legitimise_standing=10" + newLine + newLine + "# How much of your sworn strength goes over when you die, by what you" + newLine + "# actually did for them. Only the last two found a kingdom or start a war." + newLine + "share_ignored=10" + newLine + "share_acknowledged=20" + newLine + "share_armed=33" + newLine + "share_both=50" + newLine + newLine + "# ---------- The Bastard's Banner ----------" + newLine + "# When the ruler of your house dies you are asked, once, whether a child" + newLine + "# they never acknowledged comes out of the dark. Say no and nothing ever" + newLine + "# happens. Say yes and they take one of your castles at random, a share of" + newLine + "# your sworn houses, and found a kingdom flying your arms with the colours" + newLine + "# reversed - and then you choose which of the two you play as." + newLine + "bastards_banner=true" + newLine + "# With no baseborn child at all, a stranger with your face turns up at the" + newLine + "# funeral instead. false = a ruler who never went looking for this simply" + newLine + "# dies, and nothing happens." + newLine + "bastard_stranger=true" + newLine + "# They declare war the morning they are proclaimed." + newLine + "bastard_declares_war=true" + newLine + "# How much of your sworn strength goes over, as a percentage." + newLine + "bastard_vassal_share=33" + newLine + "# Your house must hold at least this many towns or castles to be divided -" + newLine + "# otherwise you would be handing over your only seat." + newLine + "bastard_min_fiefs=2" + newLine + "# How old they are, worked back from the age of the ruler who sired them." + newLine + "bastard_born_years_before=22" + newLine + "bastard_min_age=20" + newLine + "bastard_max_age=45" + newLine + "# The tier their house starts at." + newLine + "bastard_house_tier=3" + newLine;
+		return "# Wardens & Dragons" + newLine + "" + newLine + "# Where a ruler starts, and where both numbers drift back to." + newLine + "start_honour=50" + newLine + "start_dread=10" + newLine + "" + newLine + "# Seasonal drift. A Bannerlord year is 84 days, so a season is 21." + newLine + "drift_per_season=1" + newLine + "days_per_season=21" + newLine + "" + newLine + "# Executing a captured lord." + newLine + "execute_honour_loss=10" + newLine + "execute_dread_gain=10" + newLine + "" + newLine + "# false = hold court at any settlement your house owns." + newLine + "# true  = only at your house's home seat." + newLine + "court_capital_only=false" + newLine + "" + newLine + "# Show a message whenever Honour or Dread changes." + newLine + "notify_changes=true" + newLine + "" + newLine + "# How many deeds the court remembers." + newLine + "ledger_length=12" + newLine + "" + newLine + "# The court tells you what is actually waiting on a decision, and says" + newLine + "# nothing at all when nothing is." + newLine + "court_attention=true" + newLine + "court_attention_max=6" + newLine + "" + newLine + "# ---------- Harrenhal ----------" + newLine + "# Leave blank to find Harrenhal by name. Set a settlement id if it is not found." + newLine + "harrenhal_settlement_id=" + newLine + "# The curse builds on whoever holds it, 0 to 100, and fades once they let it go." + newLine + "curse_per_year=8" + newLine + "curse_decay_per_year=10" + newLine + "# FOR TESTING ONLY: multiplies how fast the curse builds and fades." + newLine + "# 50 reaches every stage within a few weeks. Put it back to 1 to play." + newLine + "curse_test_speed=1" + newLine + "# Dread gained when you first cannot sleep there." + newLine + "sleepless_dread=5" + newLine + "# At 75 and above, each year: chance (percent) of a death in the family," + newLine + "# and of a fire costing Harrenhal this percent of its prosperity." + newLine + "kin_death_chance=10" + newLine + "fire_chance=30" + newLine + "fire_prosperity_loss_percent=10" + newLine + "# false = the curse never kills members of YOUR house." + newLine + "curse_can_kill_player_family=true" + newLine + "# A Bannerlord year is 84 days." + newLine + "days_per_year=84" + newLine + "" + newLine + "# ---------- Wardens and oaths ----------" + newLine + "# Tribute each year, per fief the house or realm holds." + newLine + "tribute_fealty=1000" + newLine + "tribute_tribute=3000" + newLine + "tribute_marriage=500" + newLine + "tribute_duress=5000" + newLine + "# The most an oath can move a client's liberty, up or down." + newLine + "liberty_cap=40" + newLine + "lighten_honour=2" + newLine + "release_honour=5" + newLine + "revoke_honour_loss=10" + newLine + "revoke_dread_gain=5" + newLine + "# Each dragon rider in your house adds this to a threat, up to the cap." + newLine + "dragon_threat_per_rider=10" + newLine + "dragon_threat_cap=40" + newLine + "# Naming a warden: turn individual steps off if one misbehaves." + newLine + "step_rename=true" + newLine + "step_oath=true" + newLine + "step_vassals=true" + newLine + "allow_revoke=true" + newLine + "# Lets you grant a realm to a house holding no land inside it yet." + newLine + "relax_eligibility=true" + newLine + "# Asking foreign rulers to become your clients." + newLine + "allow_suzerainty=true" + newLine + "suzerainty_always_accepted=false" + newLine + "# Bringing a client realm into your empire." + newLine + "allow_absorb=true" + newLine + "absorb_gold=1000000" + newLine + "absorb_influence=1000" + newLine + "absorb_max_liberty=50" + newLine + "absorb_allow_unknown_liberty=false" + newLine + "" + newLine + "# ---------- Dragons ----------" + newLine + "# Leave blank to find Dragonstone by name." + newLine + "dragonstone_settlement_id=" + newLine + "# Every egg and claim is scaled by (1 - living dragons / this). The Dance" + newLine + "# begins with around 17 dragons, so at 20 the odds start very low and" + newLine + "# rise as the war thins them. Raise it to make dragons easier to get." + newLine + "world_dragon_capacity=20" + newLine + "egg_hatch_chance=30" + newLine + "# Every dragon death permanently dims hatching by this percent, to the floor." + newLine + "twilight_per_death=3" + newLine + "twilight_floor=20" + newLine + "# Chance a dragon falls with a rider killed in battle. A rider who dies in" + newLine + "# bed leaves his dragon riderless instead." + newLine + "dragon_falls_with_rider=60" + newLine + "rideable_age=19" + newLine + "claim_base=35" + newLine + "claim_per_valor=5" + newLine + "claim_riding_per_10=1" + newLine + "claim_killed_penalty=10" + newLine + "claim_wild_penalty=10" + newLine + "claim_death_chance=80" + newLine + "# false = a failed claim can never kill YOU, only your kin." + newLine + "player_claim_can_die=true" + newLine + "claim_dread=5" + newLine + "# Take dragons from anyone not bonded to them, once a week." + newLine + "enforce_bonds=true" + newLine + "seed_dance_riderless=true" + newLine + "# true = AI houses holding Dragonstone get cradle eggs too." + newLine + "eggs_for_all_houses=false" + newLine + "" + newLine + "# ---------- Names and titles ----------" + newLine + "# Put a style in front of a name, in conversation and the encyclopedia." + newLine + "# The name in your save file is never changed - only what is shown." + newLine + "titles_enabled=true" + newLine + "# The head of a house granted a realm wears its style: Warden of the North." + newLine + "title_wardens=true" + newLine + "# Anyone bonded to a dragon is styled Dragon Rider. A warden who also" + newLine + "# rides is styled by his realm, not his dragon." + newLine + "title_dragonriders=true" + newLine + "# ROT already names heroes Lord, Lady, Ser or King. In front of the name," + newLine + "# a lesser rank is replaced by the style - Dragon Rider Daemon Targaryen -" + newLine + "# and a royal one is left alone, because a king is styled by nothing else." + newLine + "# Set this to suffix for the other reading: Lord Daemon Targaryen, Dragon Rider." + newLine + "title_position=prefix" + newLine + "" + newLine + "# ---------- The council's names ----------" + newLine + "# Bellum Civile runs the privy council; this mod no longer adds duties to" + newLine + "# it. All that is left here is the naming: the six seats are shown with" + newLine + "# their Westerosi titles - Hand of the King, Master of Coin, Ships, Laws" + newLine + "# and Whisperers, and the Grand Maester. Only what is shown changes; the" + newLine + "# ids and your save are untouched." + newLine + "council_office_names=true" + newLine + "" + newLine + "# ---------- Hostages and wards ----------" + newLine + "wardship_enabled=true" + newLine + "# Taking a hostage. A ward costs nothing and earns a little." + newLine + "hostage_dread=8" + newLine + "hostage_honour_loss=4" + newLine + "ward_honour=4" + newLine + "ward_xp_per_week=60" + newLine + "# Sending them home." + newLine + "ward_release_honour=6" + newLine + "# The axe. Forfeit means their house broke faith while you held them," + newLine + "# and costs you no Honour at all. Without cause is the other thing." + newLine + "execute_forfeit_dread=15" + newLine + "execute_no_cause_honour_loss=25" + newLine + "" + newLine + "# ---------- Your heir ----------" + newLine + "succession_enabled=true" + newLine + "# Bellum gives every culture a succession law and enforces it on the heir" + newLine + "# screen, which is why most realms only ever offer you your eldest son." + newLine + "# true = you may name anyone of your blood instead. The law still stands;" + newLine + "# you are simply allowed to break it." + newLine + "unlock_heir_choice=true" + newLine + "unlawful_heir_penalty=20" + newLine + "# Changing a name you have already given. Naming one for the first time" + newLine + "# is free." + newLine + "rename_heir_cost=6" + newLine + "# The game picks a new clan leader by score, and gives +10 for being male," + newLine + "# +5 for being oldest and +5 for best skills, with nothing at all to stop a" + newLine + "# spouse who married in. A husband beats a daughter every time, and since a" + newLine + "# kingdom's leader IS its ruling clan's leader, that is the crown as well." + newLine + "# true = the heir you chose takes the seat regardless." + newLine + "enforce_named_heir=true" + newLine + "" + newLine + "# ---------- Baseborn children ----------" + newLine + "# A settlement menu option lets you take a room for the night. Nothing" + newLine + "# happens then; three years later a woman comes to your gate with a child" + newLine + "# who has your face. They are created outright rather than born, on purpose:" + newLine + "# RoT Dynasty files every real newborn as bastard-or-trueborn permanently," + newLine + "# and that verdict outranks everything, so acknowledging them could never show." + newLine + "baseborn_children=true" + newLine + "# The scandal is rather the point, but it can be turned off." + newLine + "baseborn_while_married=true" + newLine + "baseborn_night_cost=500" + newLine + "baseborn_cooldown_days=84" + newLine + "baseborn_max=4" + newLine + "baseborn_years_until=3" + newLine + "baseborn_child_min_age=14" + newLine + "baseborn_child_max_age=20" + newLine + "baseborn_night_min_age=18" + newLine + "# The other parent's age when you meet them." + newLine + "baseborn_other_min_age=20" + newLine + "baseborn_other_max_age=35" + newLine + "# The chance your spouse hears, and what it costs when they do." + newLine + "baseborn_whisper_chance=35" + newLine + "baseborn_whisper_relation=15" + newLine + "baseborn_whisper_honour=3" + newLine + newLine + "# Writing one into the book: what it costs with each of your trueborn" + newLine + "# kin, and with the realm. It gives them a claim your heir must answer for." + newLine + "legitimise_kin_relation=20" + newLine + "legitimise_standing=10" + newLine + newLine + "# How much of your sworn strength goes over when you die, by what you" + newLine + "# actually did for them. Only the last two found a kingdom or start a war." + newLine + "share_ignored=10" + newLine + "share_acknowledged=20" + newLine + "share_armed=33" + newLine + "share_both=50" + newLine + newLine + "# ---------- The Bastard's Banner ----------" + newLine + "# When the ruler of your house dies you are asked, once, whether a child" + newLine + "# they never acknowledged comes out of the dark. Say no and nothing ever" + newLine + "# happens. Say yes and they take one of your castles at random, a share of" + newLine + "# your sworn houses, and found a kingdom flying your arms with the colours" + newLine + "# reversed - and then you choose which of the two you play as." + newLine + "bastards_banner=true" + newLine + "# With no baseborn child at all, a stranger with your face turns up at the" + newLine + "# funeral instead. false = a ruler who never went looking for this simply" + newLine + "# dies, and nothing happens." + newLine + "bastard_stranger=true" + newLine + "# They declare war the morning they are proclaimed." + newLine + "bastard_declares_war=true" + newLine + "# How much of your sworn strength goes over, as a percentage." + newLine + "bastard_vassal_share=33" + newLine + "# Your house must hold at least this many towns or castles to be divided -" + newLine + "# otherwise you would be handing over your only seat." + newLine + "bastard_min_fiefs=2" + newLine + "# How old they are, worked back from the age of the ruler who sired them." + newLine + "bastard_born_years_before=22" + newLine + "bastard_min_age=20" + newLine + "bastard_max_age=45" + newLine + "# The tier their house starts at." + newLine + "bastard_house_tier=3" + newLine + "" + newLine + "# ---------- Tourneys ----------" + newLine + "# Call one from your court, in a town your house holds. You choose the purse" + newLine + "# and who rides for your house; guest houses send their young lords. Ride in" + newLine + "# it yourself or let it be decided without you - either way the lists have" + newLine + "# consequences." + newLine + "tourneys_enabled=true" + newLine + "# The purse for a modest, great and lavish tourney, and the feast on top of it." + newLine + "tourney_purse_modest=5000" + newLine + "tourney_purse_great=20000" + newLine + "tourney_purse_lavish=50000" + newLine + "tourney_feast_percent=40" + newLine + "# One a year." + newLine + "tourney_cooldown_days=84" + newLine + "# How many houses come, and how many of their young lords are brought to ride." + newLine + "tourney_guests=8" + newLine + "tourney_guest_riders=6" + newLine + "# What hosting earns with each guest house and in renown, per size (x1, x2, x3)." + newLine + "tourney_host_relation=3" + newLine + "tourney_host_renown=20" + newLine + "# The lists are not safe. Percent chance per lord riding, at a tourney you host" + newLine + "# or ride in yourself. One death and one maiming at most per tourney." + newLine + "tourney_death_chance=2" + newLine + "tourney_maim_chance=8" + newLine + "# false = your own blood is never killed in the lists. Companions never are." + newLine + "tourney_kin_can_die=true" + newLine + "# A death at a tourney YOU hosted: what it costs with the dead man's house." + newLine + "tourney_death_relation=20" + newLine + "# Winning, and your heir winning (relation with every guest house)." + newLine + "tourney_win_honour=2" + newLine + "tourney_heir_relation=5" + newLine + "# Win and you crown a Queen (or King) of Love and Beauty. Crown the wrong one" + newLine + "# and there may be a night after the feast - and a chance her house finds out." + newLine + "tourney_queen=true" + newLine + "tourney_scandal_chance=40" + newLine + "# A baseborn child of yours who wins takes this much more of your realm with" + newLine + "# them per win (percent, three wins at most). This many wins and the crowds" + newLine + "# make them a king even if you never gave them the sword." + newLine + "tourney_bastard_share=5" + newLine + "tourney_bastard_crowning_wins=2" + newLine;
 	}
 }
 }
