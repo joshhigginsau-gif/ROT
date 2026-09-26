@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Module>
+  <Name value="Wardens &amp; Dragons" />
+  <Id value="WardensAndDragons" />
+  <Version value="v2.2.0" />
+  <SingleplayerModule value="true" />
+  <MultiplayerModule value="false" />
+  <DependedModules>
+    <DependedModule Id="Bannerlord.Harmony" Optional="false" />
+    <DependedModule Id="Native" />
+    <DependedModule Id="SandBoxCore" />
+    <DependedModule Id="Sandbox" />
+    <DependedModule Id="StoryMode" />
+    <DependedModule Id="BellumCivile" Optional="true" />
+  </DependedModules>
+  <SubModules>
+    <SubModule>
+      <Name value="Wardens &amp; Dragons" />
+      <DLLName value="WardensAndDragons.dll" />
+      <SubModuleClassType value="WardensAndDragons.SubModule" />
+      <Tags>
+        <Tag key="DedicatedServerType" value="none" />
+        <Tag key="IsNoRenderModeElement" value="false" />
+      </Tags>
+    </SubModule>
+  </SubModules>
+</Module>

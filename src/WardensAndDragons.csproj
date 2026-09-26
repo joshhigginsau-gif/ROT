@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Reconstructed from the v2.2.0 DLL (decompiled with ILSpy).
+    Builds against BUTR's Bannerlord reference assemblies, so no game install
+    is needed to compile. Output is copied into ../Module/WardensAndDragons.
+  -->
+  <PropertyGroup>
+    <AssemblyName>WardensAndDragons</AssemblyName>
+    <RootNamespace>WardensAndDragons</RootNamespace>
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>11.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GameVersion Condition="'$(GameVersion)' == ''">1.3.15.110062</GameVersion>
+    <ModuleDir>$(MSBuildThisFileDirectory)../Module/WardensAndDragons</ModuleDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Bannerlord.ReferenceAssemblies.Core" Version="$(GameVersion)" PrivateAssets="all" IncludeAssets="compile" />
+    <PackageReference Include="Lib.Harmony" Version="2.2.2" PrivateAssets="all" IncludeAssets="compile" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+  <Target Name="CopyToModule" AfterTargets="Build">
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ModuleDir)/bin/Win64_Shipping_Client" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ModuleDir)/bin/Gaming.Desktop.x64_Shipping_Client" />
+  </Target>
+</Project>
