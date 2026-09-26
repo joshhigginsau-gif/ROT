@@ -168,6 +168,43 @@ namespace WardensAndDragons
 				Bequeath();
 			}, false, 3, false, (object)null);
 
+			s.AddGameMenuOption("wad_house", "wad_house_culture", "{=WAD_Culture}Your house's culture", (GameMenuOption.OnConditionDelegate)delegate(MenuCallbackArgs a)
+			{
+				a.optionLeaveType = (GameMenuOption.LeaveType)2;
+				try
+				{
+					Clan mine = Clan.PlayerClan;
+					a.Tooltip = Styles.Line("Your house is " + ((mine != null && mine.Culture != null) ? mine.Culture.Name.ToString() : "of no culture") +
+						". Take up another - Valyrian, if your mods define it. It changes the succession law Bellum holds you to.");
+				}
+				catch
+				{
+				}
+				return true;
+			}, (GameMenuOption.OnConsequenceDelegate)delegate
+			{
+				Heritage.Pick(Refresh);
+			}, false, 4, false, (object)null);
+
+			s.AddGameMenuOption("wad_house", "wad_house_style", "{=WAD_Style}Your house's style", (GameMenuOption.OnConditionDelegate)delegate(MenuCallbackArgs a)
+			{
+				a.optionLeaveType = (GameMenuOption.LeaveType)2;
+				try
+				{
+					string now = Styles.Of(Clan.PlayerClan);
+					a.Tooltip = Styles.Line((now != null)
+						? ("The head of your house is styled " + now + ". Change it, or wear none.")
+						: "The head of your house wears no style. Proclaim one.");
+				}
+				catch
+				{
+				}
+				return true;
+			}, (GameMenuOption.OnConsequenceDelegate)delegate
+			{
+				Heritage.Style(Refresh);
+			}, false, 5, false, (object)null);
+
 			s.AddGameMenuOption("wad_house", "wad_house_back", "{=WAD_Back}Return to the court", (GameMenuOption.OnConditionDelegate)delegate(MenuCallbackArgs a)
 			{
 				a.optionLeaveType = (GameMenuOption.LeaveType)16;

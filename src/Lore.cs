@@ -149,6 +149,86 @@ namespace WardensAndDragons
 			}
 		}
 
+		// A baseborn child's page. Written when they come to the gate and again
+		// when they are written into the book, so it always says where they
+		// stand now.
+		internal static string Baseborn(Hero child, Hero parent, Hero other, Settlement where, bool legit, int night)
+		{
+			try
+			{
+				string they = child.IsFemale ? "She" : "He";
+				string them = child.IsFemale ? "her" : "him";
+				string place = (where != null) ? where.Name.ToString() : "a town nobody names";
+				string p1 = (parent != null) ? parent.Name.ToString() : "a ruler of this realm";
+				string p2 = (other != null) ? other.Name.ToString() : "someone of " + place;
+				string house = (Clan.PlayerClan != null) ? Clan.PlayerClan.Name.ToString() : "the ruling house";
+				System.Text.StringBuilder sb = new System.Text.StringBuilder();
+				sb.Append(child.FirstName).Append(" was got at ").Append(place).Append(", on a night ")
+				  .Append(p1).Append(" spent there with ").Append(p2).Append(", and was born out of wedlock.\n\n");
+				sb.Append(they).Append(" was raised by ").Append((other != null) ? ((child.IsFemale ? "her " : "his ") + (other.IsFemale ? "mother" : "father")) : "strangers")
+				  .Append(" and came to the gate of ").Append(house).Append(" at ").Append((int)child.Age)
+				  .Append(", with a face nobody at court could pretend not to know.\n\n");
+				if (legit)
+				{
+					sb.Append(p1).Append(" wrote ").Append(them).Append(" into the book and gave ").Append(them)
+					  .Append(" the name of ").Append(house).Append(". It was called generous at the time. The trueborn children called it other things, in private.");
+				}
+				else
+				{
+					sb.Append(they).Append(" carries the name every child born that way carries, and no claim anybody will say out loud.");
+				}
+				return sb.ToString();
+			}
+			catch
+			{
+				return "Born out of wedlock to a ruler of this realm.";
+			}
+		}
+
+		// The other parent's page.
+		internal static string OtherParent(Hero other, Hero parent, Hero child, Settlement where)
+		{
+			try
+			{
+				string place = (where != null) ? where.Name.ToString() : "a town";
+				return other.Name + " met " + ((parent != null) ? parent.Name.ToString() : "a ruler of this realm") + " at " + place +
+					", once, and raised the child that came of it alone" +
+					((child != null) ? (" - " + child.Name + ", who has " + (parent != null && parent.IsFemale ? "their mother's" : "their father's") + " face.") : ".");
+			}
+			catch
+			{
+				return "";
+			}
+		}
+
+		// What is added to a known child's page on the day they rise.
+		internal static string Risen(Hero him, Hero dead, Settlement seat, Blade.Reckoning how)
+		{
+			try
+			{
+				string they = him.IsFemale ? "she" : "he";
+				string blade = Blade();
+				System.Text.StringBuilder sb = new System.Text.StringBuilder();
+				sb.Append("On the death of ").Append((dead != null) ? dead.Name.ToString() : "the ruler").Append(" ").Append(they)
+				  .Append(" did not come to the funeral. ").Append(char.ToUpper(they[0])).Append(they.Substring(1)).Append(" went to ")
+				  .Append((seat != null) ? seat.Name.ToString() : "a castle of the house").Append(" instead, and took it.");
+				if (how == global::WardensAndDragons.Blade.Reckoning.Armed || how == global::WardensAndDragons.Blade.Reckoning.Both)
+				{
+					sb.Append(" ").Append(char.ToUpper(they[0])).Append(they.Substring(1)).Append(" carried ").Append(blade)
+					  .Append(", which was put in that hand on purpose, and every lord who came over said so.");
+				}
+				if (how == global::WardensAndDragons.Blade.Reckoning.Both)
+				{
+					sb.Append(" The house ").Append(they).Append(" raised took the sword's name. Its words are \"").Append(Motto()).Append("\".");
+				}
+				return sb.ToString();
+			}
+			catch
+			{
+				return "";
+			}
+		}
+
 		// The blade.
 		//
 		// This is the Blackfyre logic, and it is worth being exact about it.

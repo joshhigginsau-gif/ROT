@@ -120,6 +120,9 @@ public class CourtBehavior : CampaignBehaviorBase
 			Dialogue.Add(starter);
 			Log.Write("warden dialogue registered");
 			Dragons.EnsureSeeded();
+			// Children who came to the gate before their family lines and
+			// pages were written get them now.
+			Baseborn.Repair();
 		// One-time, for anyone upgrading: hand any privy-council seat still
 		// holding one of our old duties back to a Bellum default, now that
 		// ours no longer exist.

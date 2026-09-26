@@ -551,29 +551,7 @@ namespace WardensAndDragons
 				}
 
 				// Your blood, and hers.
-				try
-				{
-					if (you.IsFemale)
-					{
-						child.Mother = you;
-						if (other != null)
-						{
-							child.Father = other;
-						}
-					}
-					else
-					{
-						child.Father = you;
-						if (other != null)
-						{
-							child.Mother = other;
-						}
-					}
-				}
-				catch (Exception pe)
-				{
-					Log.Once("kidparent", "the parentage would not take: " + pe.Message);
-				}
+				Family(child, you, other);
 
 				// And the surname of the place they were got. This is what
 				// RoT reads to know they are baseborn - no registration, no
@@ -593,6 +571,7 @@ namespace WardensAndDragons
 				k.Hero = ((MBObjectBase)child).StringId;
 				k.Known = true;
 				Save(k);
+				Write(k);
 
 				Store.AddDeed(Standing.Date() + "  " + child.Name + " was brought to your gate.");
 				Log.Write("a child surfaces: " + child.Name + ", " + (int)child.Age + ", of " + where.Name);
@@ -763,6 +742,7 @@ namespace WardensAndDragons
 
 				k.Legit = true;
 				Save(k);
+				Write(k);
 				Store.AddDeed(Standing.Date() + "  " + child.Name + " was acknowledged and given your name.");
 				Log.Write("legitimised: " + child.Name + " (" + hurt + " kin took it badly)");
 
@@ -804,6 +784,119 @@ namespace WardensAndDragons
 			catch (Exception e)
 			{
 				Log.Once("observe", "RoT would not look at the child: " + e.Message);
+			}
+		}
+
+		// ------------------------------------------------------------------
+		// the family tree
+
+		// Father and mother, set from both ends.
+		//
+		// Setting Hero.Father tells the child who their parent is. The
+		// encyclopedia draws a parent's page from the PARENT's children list,
+		// and whether the setter also writes that list is not something the
+		// reference assemblies can show - in play it did not: the children
+		// arrived with no line back to either parent. So the list is written
+		// here directly, once, and checked first so a build whose setter does
+		// write it gets no duplicate.
+		internal static void Family(Hero child, Hero parent, Hero other)
+		{
+			if (child == null)
+			{
+				return;
+			}
+			try
+			{
+				Hero father = (parent != null && !parent.IsFemale) ? parent : ((other != null && !other.IsFemale) ? other : null);
+				Hero mother = (parent != null && parent.IsFemale) ? parent : ((other != null && other.IsFemale) ? other : null);
+				if (father != null && child.Father != father)
+				{
+					child.Father = father;
+				}
+				if (mother != null && child.Mother != mother)
+				{
+					child.Mother = mother;
+				}
+				Adopt(father, child);
+				Adopt(mother, child);
+			}
+			catch (Exception e)
+			{
+				Log.Once("kidparent", "the parentage would not take: " + e.Message);
+			}
+		}
+
+		private static void Adopt(Hero parent, Hero child)
+		{
+			try
+			{
+				if (parent != null && parent.Children != null && !parent.Children.Contains(child))
+				{
+					parent.Children.Add(child);
+				}
+			}
+			catch (Exception e)
+			{
+				Log.Once("kidlist", "a parent's list of children would not take: " + e.Message);
+			}
+		}
+
+		// Their page in the encyclopedia. A hero made by CreateSpecialHero has
+		// none, so without this a child of yours was a name and a face.
+		internal static void Write(Kid k)
+		{
+			try
+			{
+				Hero child = HeroOf(k);
+				if (child == null)
+				{
+					return;
+				}
+				Hero parent = Parent(k);
+				Hero other = OtherOf(k) ?? Hero.DeadOrDisabledHeroes.FirstOrDefault((Hero h) => ((MBObjectBase)h).StringId == k.Other);
+				Settlement where = Place(k.Where);
+				child.EncyclopediaText = new TextObject("{=!}" + Lore.Baseborn(child, parent, other, where, k.Legit, k.Night), (Dictionary<string, object>)null);
+				child.IsKnownToPlayer = true;
+				if (other != null && other.IsAlive)
+				{
+					other.EncyclopediaText = new TextObject("{=!}" + Lore.OtherParent(other, parent, child, where), (Dictionary<string, object>)null);
+					other.IsKnownToPlayer = true;
+				}
+			}
+			catch (Exception e)
+			{
+				Log.Once("kidwrite", "the child's page would not take: " + e.Message);
+			}
+		}
+
+		// On load: children who came before these fixes get their family
+		// lines and their page now, so an existing campaign is mended rather
+		// than only new ones.
+		internal static void Repair()
+		{
+			try
+			{
+				int n = 0;
+				foreach (Kid k in Known())
+				{
+					Hero child = HeroOf(k);
+					Hero parent = Parent(k);
+					Hero other = OtherOf(k) ?? Hero.DeadOrDisabledHeroes.FirstOrDefault((Hero h) => ((MBObjectBase)h).StringId == k.Other);
+					Family(child, parent, other);
+					if (child.EncyclopediaText == null || string.IsNullOrEmpty(child.EncyclopediaText.ToString()))
+					{
+						Write(k);
+					}
+					n++;
+				}
+				if (n > 0)
+				{
+					Log.Write("baseborn children checked on load: " + n);
+				}
+			}
+			catch (Exception e)
+			{
+				Log.Once("kidrepair", "mending the children failed: " + e.Message);
 			}
 		}
 

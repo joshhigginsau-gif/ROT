@@ -1,4 +1,50 @@
-Wardens & Dragons  v2.3.0  -  THE LISTS
+Wardens & Dragons  v2.3.1  -  THE LISTS
+
+
+v2.3.1 - FAMILY, CULTURE AND STYLE
+
+  BASTARDS NOW HAVE PARENTS
+
+    A baseborn child's father and mother were set on the child, but the
+    encyclopedia draws a parent's page from the parent's own list of
+    children, and that list was never written. So the children arrived with
+    no line back to either parent. Both lists are now written directly.
+
+    They also had no page to speak of. Every baseborn child now has a
+    written life: where they were got, who raised them, when they came to
+    your gate, and - once you acknowledge them - that you did. The other
+    parent gets a page too. A child who rises against your heir has the
+    rising added to theirs.
+
+    Children already in your save are mended the next time you load it.
+
+  YOUR HOUSE'S CULTURE
+
+    Court -> House and heirs -> Your house's culture. Choose any culture your
+    mods define - Valyrian, if one is loaded - for you and your blood, the
+    realm if you rule it, and optionally every holding and the notables in
+    them (whose culture decides what troops they raise). It changes the
+    succession law Bellum Civile holds you to.
+
+    A culture made from nothing needs its own troops, names and clothes in
+    XML: that is a module of its own, not something a menu can make.
+
+      wad.culture list                 every culture your mods define
+      wad.culture <name> [holdings]    take it up from the console
+
+  YOUR HOUSE'S STYLE
+
+    Court -> House and heirs -> Your house's style. "Warden of the East" is
+    the style this mod gives whoever holds the Vale. Change it to whatever
+    you like, or wear none.
+
+      wad.style <style> | none
+
+  TAKING UP THE BANNER
+
+    "Take up the banner" failed in play and the log only said an exception
+    was thrown. It now logs the real one, so the next attempt says why.
+
 
 
 v2.3.0 - THE LISTS

@@ -370,6 +370,18 @@ namespace WardensAndDragons
 				{
 					Rename(him);
 				}
+				if (already != null)
+				{
+					try
+					{
+						string before = (him.EncyclopediaText != null) ? him.EncyclopediaText.ToString() : "";
+						him.EncyclopediaText = new TextObject("{=!}" + before + ((before.Length > 0) ? "\n\n" : "") +
+							Lore.Risen(him, dead, seat, how), (Dictionary<string, object>)null);
+					}
+					catch
+					{
+					}
+				}
 
 				// Only now does he become the dead ruler's child. A hero's
 				// children list is append-only - there is no way to take a
@@ -560,14 +572,7 @@ namespace WardensAndDragons
 				{
 					return;
 				}
-				if (dead.IsFemale)
-				{
-					him.Mother = dead;
-				}
-				else
-				{
-					him.Father = dead;
-				}
+				Baseborn.Family(him, dead, null);
 			}
 			catch (Exception e)
 			{
@@ -1041,7 +1046,10 @@ namespace WardensAndDragons
 			}
 			catch (Exception e)
 			{
-				Log.Write("taking up the banner failed: " + e.Message);
+				// Invoke wraps the real failure; the wrapper's message says
+				// nothing. Log the inner exception with its stack.
+				Log.Write("taking up the banner failed: " + ((e.InnerException != null) ? e.InnerException.ToString() : e.ToString()));
+				Flow.Notify("You could not take up the banner - the log says why.");
 			}
 		}
 

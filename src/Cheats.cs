@@ -5,6 +5,7 @@ using System.Text;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.CampaignSystem.Settlements;
+using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.ObjectSystem;
 
@@ -45,6 +46,11 @@ namespace WardensAndDragons
 				"  wad.tourney_here [1-3]      call a tourney in this town, free, no cooldown",
 				"  wad.tourney_resolve         decide the tourney in this town (or yours) now",
 				"  wad.tourney_win <n> <name>  give someone tourney wins (baseborn champions)",
+				"",
+				"YOUR HOUSE",
+				"  wad.culture list            every culture your mods define",
+				"  wad.culture <name> [holdings]  your house (and holdings) take that culture",
+				"  wad.style <style> | none    the style the head of your house wears",
 				"",
 				"Also: wad.status, wad.honour <n>, wad.dread <n>, wad.wards, wad.dragons, wad.hatch <name>"
 			});
@@ -351,6 +357,49 @@ namespace WardensAndDragons
 			}
 			Tourney.AddWin(h, n);
 			return h.Name + " now has " + Tourney.Wins(h) + " tourney win(s)" + (Tourney.Crowned(h) ? " - enough that the crowds would crown them." : ".");
+		}
+
+		// ------------------------------------------------------------------
+		// your house
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("culture", "wad")]
+		public static string SetCulture(List<string> args)
+		{
+			if (Campaign.Current == null)
+			{
+				return "Load a campaign first.";
+			}
+			if (args == null || args.Count == 0 || args[0].ToLowerInvariant() == "list")
+			{
+				StringBuilder sb = new StringBuilder();
+				sb.AppendLine("Usage: wad.culture <id or name> [holdings]   - e.g. wad.culture valyrian holdings");
+				sb.AppendLine("Your house is " + ((Clan.PlayerClan != null && Clan.PlayerClan.Culture != null) ? Clan.PlayerClan.Culture.Name.ToString() : "?") + ". Cultures your mods define:");
+				foreach (CultureObject c in Heritage.Choices())
+				{
+					sb.AppendLine("  " + ((MBObjectBase)c).StringId + "  -  " + c.Name + (c.IsMainCulture ? "" : "  (minor)") + (Heritage.Valyrian(c) ? "  <- Valyrian" : ""));
+				}
+				return sb.ToString();
+			}
+			bool holdings = args.Count > 1 && args[args.Count - 1].ToLowerInvariant() == "holdings";
+			string what = string.Join(" ", (holdings ? args.Take(args.Count - 1) : args).ToArray());
+			CultureObject found = Heritage.Find(what);
+			return (found == null) ? ("No culture matches '" + what + "'. wad.culture list shows them.") : Heritage.Apply(found, holdings);
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("style", "wad")]
+		public static string SetStyle(List<string> args)
+		{
+			if (Campaign.Current == null)
+			{
+				return "Load a campaign first.";
+			}
+			string style = string.Join(" ", (args ?? new List<string>()).ToArray()).Replace("{", "").Replace("}", "").Trim();
+			if (style.Length == 0)
+			{
+				return "Usage: wad.style <style> | none.  Now: " + (Styles.Of(Clan.PlayerClan) ?? "none");
+			}
+			Styles.Set(Clan.PlayerClan, (style.ToLowerInvariant() == "none") ? null : style);
+			return "Your house's style: " + (Styles.Of(Clan.PlayerClan) ?? "none") + ".";
 		}
 
 		// ------------------------------------------------------------------
