@@ -1103,6 +1103,16 @@ namespace WardensAndDragons
 				}
 
 				Titles.Invalidate();
+				// Stop the clock, as the game's own heir switch does, and give
+				// the new party a fresh map icon.
+				try
+				{
+					Campaign.Current.TimeControlMode = CampaignTimeControlMode.Stop;
+				}
+				catch
+				{
+				}
+				RedrawMainParty();
 				Log.Write("you took up the bastard's banner as " + him.Name + "; your house is now " + Clan.PlayerClan.Name);
 				Store.AddDeed(Standing.Date() + "  You took up the banner yourself.");
 			}
@@ -1124,6 +1134,48 @@ namespace WardensAndDragons
 				}
 				Log.Write("taking up the banner failed: " + ((e.InnerException != null) ? e.InnerException.ToString() : e.ToString()));
 				Flow.Notify("You could not take up the banner - the log says why.");
+			}
+		}
+
+		// The party icon vanished after taking up the banner.
+		//
+		// SandBox.View makes a party's map visual the moment the party is
+		// created (MobilePartyVisualManager listens to MobilePartyCreated).
+		// The game's switch creates the new player party with
+		// MobileParty.CreateParty(id, null) and only afterwards gives it a
+		// leader, men, a position and IsActive - so the visual was built for
+		// an empty, invisible party at no position. Rebuilding the visual now,
+		// with the party whole, is what a save-and-reload does.
+		internal static void RedrawMainParty()
+		{
+			try
+			{
+				MobileParty main = MobileParty.MainParty;
+				if (main == null)
+				{
+					return;
+				}
+				main.Party.UpdateVisibilityAndInspected(main.Position);
+				Type mgrType = AccessTools.TypeByName("SandBox.View.Map.Managers.MobilePartyVisualManager");
+				object mgr = (mgrType == null) ? null : AccessTools.Property(mgrType, "Current")?.GetValue(null, null);
+				MethodInfo remove = (mgr == null) ? null : AccessTools.Method(mgrType, "RemovePartyVisualForParty", (Type[])null, (Type[])null);
+				MethodInfo add = (mgr == null) ? null : AccessTools.Method(mgrType, "AddNewPartyVisualForParty", (Type[])null, (Type[])null);
+				if (remove != null && add != null)
+				{
+					remove.Invoke(mgr, new object[1] { main });
+					add.Invoke(mgr, new object[2] { main, true });
+					Log.Write("the new party's map icon was rebuilt");
+				}
+				else
+				{
+					Log.Once("redraw", "the party visual manager was not found; the icon returns on the next load");
+				}
+				main.Party.SetVisualAsDirty();
+				main.Party.SetAsCameraFollowParty();
+			}
+			catch (Exception e)
+			{
+				Log.Write("rebuilding the party icon failed: " + ((e.InnerException != null) ? e.InnerException.Message : e.Message));
 			}
 		}
 

@@ -127,3 +127,21 @@ done whose edits had never been written to disk. It is worth continuing.
 - `TournamentManager.ResolveTournament` removes the tournament itself and fires
   `TournamentCancelled` when the town is under siege. `PlayerEliminatedFromTournament`
   rounds are 0-based.
+
+## v2.4.0 — the King's Justice
+
+- `Law.cs` (charges in `lw:c:*`, judging, sentences, summons, trials), `LawMenu.cs`,
+  `TrialFight.cs` (N-v-N arena `MissionLogic`). Builds against BUTR's
+  `Bannerlord.ReferenceAssemblies.SandBox` too now.
+- `TrialFight` is a widened copy of SandBox's `ArenaDuelMissionController` (the spy quest's
+  duel), opened with `MissionState.OpenNew` + `SandBoxMissions.CreateSandBoxMissionInitializerRecord`
+  and the arena `Location` from `LocationComplex.Current`. Its end callback only writes
+  `lw:result`; `Law.Settle()` applies it after the mission (never while `Mission.Current` is set).
+- `Law._sentencing` stops an execution ordered by the court being recorded as a crime.
+- Party icon after `Bastard.Become`: `MobilePartyVisualManager` builds a visual on
+  `MobilePartyCreated`, and `Campaign.OnPlayerCharacterChanged` creates the new main party
+  empty (`CreateParty(id, null)`) before giving it a leader, men and a position.
+  `Bastard.RedrawMainParty` removes and re-adds the visual by reflection afterwards.
+- Untested in game: the 7-v-7 spacing in real arenas (fighters are placed 1.4 m apart
+  along the spawn frame's side axis), and whether every ROT town arena has two or more
+  `sp_arena` frames (the trial logs and aborts the staging if not).

@@ -49,6 +49,14 @@ public class CourtBehavior : CampaignBehaviorBase
 			Tourney.Settle();
 		});
 		CampaignEvents.HourlyTickEvent.AddNonSerializedListener((object)this, (Action)Tourney.Settle);
+		// The King's Justice: houses that walk out are traitors, and a trial
+		// fought in the arena is judged once the arena is behind us.
+		CampaignEvents.OnClanChangedKingdomEvent.AddNonSerializedListener((object)this, (Action<Clan, Kingdom, Kingdom, ChangeKingdomAction.ChangeKingdomActionDetail, bool>)Law.OnClanChangedKingdom);
+		CampaignEvents.GameMenuOpened.AddNonSerializedListener((object)this, (Action<MenuCallbackArgs>)delegate
+		{
+			Law.Settle();
+		});
+		CampaignEvents.HourlyTickEvent.AddNonSerializedListener((object)this, (Action)Law.Settle);
 	}
 
 	public override void SyncData(IDataStore ds)
@@ -116,6 +124,7 @@ public class CourtBehavior : CampaignBehaviorBase
 				Log.Write("first session: Honour " + Store.Honour + ", Dread " + Store.Dread);
 			}
 			Tourney.Reset();
+			Law.Reset();
 			Menus.Register(starter);
 			Dialogue.Add(starter);
 			Log.Write("warden dialogue registered");
@@ -149,6 +158,7 @@ public class CourtBehavior : CampaignBehaviorBase
 				Oaths.Yearly(num);
 				Baseborn.Daily();
 				Tourney.Daily();
+				Law.Daily();
 				SettleTheDead();
 				Titles.Invalidate();
 				if (num - Store.LastDriftDay >= Cfg.DaysPerSeason)
@@ -192,6 +202,9 @@ public class CourtBehavior : CampaignBehaviorBase
 			int dd = (int)detail;
 			bool violent = dd == 1 || dd == 4 || dd == 5 || dd == 6 || dd == 7;
 			Dragons.OnRiderDeath(victim, violent);
+
+			// The law writes it down, if it was a crime somebody could answer for.
+			Law.OnHeroKilled(victim, killer, detail);
 
 			// Take the seat back for the heir who was named for it.
 			//

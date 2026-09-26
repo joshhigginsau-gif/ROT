@@ -107,6 +107,11 @@ internal static class Menus
 			() => "The children of other houses, held at your court.");
 		AddBranch(s, "wad_court", "wad_opt_realm", "{=WAD_Realm}Realm affairs", "wad_realm", 4,
 			() => "Your standing, your chronicle, Harrenhal and the dragons.");
+		if (Cfg.Law)
+		{
+			AddBranch(s, "wad_court", "wad_opt_law", "{=WAD_Law}The King's Justice", "wad_law", 7,
+				() => "Hear charges, bring them, and answer them.");
+		}
 		if (Cfg.Tourneys)
 		{
 			AddBranch(s, "wad_court", "wad_opt_lists", "{=WAD_Lists}The lists", "wad_lists", 6,
@@ -167,6 +172,7 @@ internal static class Menus
 		WardMenu.Register(s);
 		HouseMenu.Register(s);
 		TourneyMenu.Register(s);
+		LawMenu.Register(s);
 		s.AddGameMenu("wad_realm", "{=!}{WAD_REALM}", (OnInitDelegate)delegate
 		{
 			SetRealmText();

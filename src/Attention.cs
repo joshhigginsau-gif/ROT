@@ -46,6 +46,19 @@ namespace WardensAndDragons
 					}
 				}
 
+				// --- the law ---
+				try
+				{
+					string law = Law.Attention();
+					if (law != null)
+					{
+						list.Add(law);
+					}
+				}
+				catch
+				{
+				}
+
 				// --- the lists ---
 				try
 				{

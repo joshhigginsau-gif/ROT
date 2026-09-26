@@ -1,4 +1,96 @@
-Wardens & Dragons  v2.3.2  -  THE LISTS
+Wardens & Dragons  v2.4.0  -  THE KING'S JUSTICE
+
+
+v2.4.0 - THE KING'S JUSTICE
+
+  Court -> The King's Justice.
+
+  CRIMES ARE WRITTEN DOWN AS THEY HAPPEN
+
+    Treason        a house walks out of your realm - by defection, rebellion,
+                   or simply leaving. The houses that went over to the
+                   bastard are traitors now.
+    Murder         a lord of your realm, or of your blood, is murdered
+    Kinslaying     somebody kills their own blood
+    A captive      a lord of yours is put to the sword after being taken
+    Tyranny        what they call it when the one accused is the crown
+
+    You can hear a charge against any lord of the realm you rule, and
+    against anybody you hold prisoner, wherever they are from. A lord who
+    hates you may refuse to come - and then you outlaw their house, or let
+    it lie and be seen letting it.
+
+  BRINGING A CHARGE
+
+    Any lord of your realm, or anyone you hold. A crime on record costs
+    nothing to press. Anything else has to be bought: witnesses cost
+    20,000, and once it is judged there is a 35% chance the truth comes out.
+
+    Not the crown? Your charge goes to your liege, who judges it by the
+    evidence and by who they like better - you or the accused.
+
+  JUDGMENT
+
+    Guilty, innocent, or let the gods decide. Find them guilty and they may
+    demand trial by combat, as is their right; deny it and the realm calls
+    it tyranny (-5 Honour, +3 Dread).
+
+    Sentences:  a pardon, a fine, seize a holding, take the black (to the
+                Wall - they are never seen again), exile their house from
+                the realm, or death. A grave crime proven and punished is
+                justice, and the realm says so; a small one punished with
+                death is called something else.
+
+  TRIAL BY COMBAT, AND TRIAL OF SEVEN
+
+    Fight yourself and it is real: the game's own combat, in the arena of
+    the town you are in - or of the next town you enter. "Enter the arena
+    for your trial" appears on the town menu.
+
+    Trial of seven, for grave charges: you and the six best of your party
+    against the accused, their house and their culture's best, in the same
+    arena. Or send seven without you and it is decided on their skill.
+
+    Everyone who falls - on either side, you included - has a 50% chance of
+    never rising. Whoever loses, the verdict goes against their side.
+
+  WHEN THE CHARGE IS AGAINST YOU
+
+    Execute a lord whose kin kneel to your crown, or let a lord come to hate
+    you enough, and you are summoned.
+
+      As a vassal    your liege judges you. Submit (the chance you are found
+                     guilty is shown), demand trial by combat, demand a
+                     trial of seven, or refuse - and maybe be outlawed.
+                     Guilty: a fine, a holding, or for the gravest charges
+                     your house put out of the realm.
+
+      As the crown   your own lords want to see whether the law reaches you.
+                     Submit to their judgment and pay a weregild, fight, or
+                     answer "I am the law" (+5 Dread, -6 Honour, and the
+                     accuser's house may rise against you).
+
+  THE PARTY ICON
+
+    Taking up the banner no longer leaves your party without an icon on the
+    map. The game made the icon for the new party before it had a leader,
+    men or a place on the map; it is now rebuilt once the party is whole.
+
+  TESTING
+
+      wad.law                     every charge, and any trial waiting
+      wad.charge <kind> <name>    charge a lord (treason, murder, kinslaying,
+                                  execution, tyranny)
+      wad.accuse_me [kind]        a lord of your realm accuses you
+      wad.trial                   fight the waiting trial in this town
+
+  CONFIG
+
+    A new "The King's Justice" section: accusations on or off and how often,
+    the fine, the cost of witnesses and the chance they are found out, the
+    chance of rebellion, the death chance in trials (trial_death_chance=50)
+    and whether it applies to you (trial_player_can_die=true).
+
 
 
 v2.3.2 - READ FROM THE GAME ITSELF

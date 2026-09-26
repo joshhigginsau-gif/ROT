@@ -47,6 +47,13 @@ namespace WardensAndDragons
 				"  wad.tourney_resolve         decide the tourney in this town (or yours) now",
 				"  wad.tourney_win <n> <name>  give someone tourney wins (baseborn champions)",
 				"",
+				"THE KING'S JUSTICE",
+				"  wad.law                     every charge, and any trial waiting",
+				"  wad.charge <kind> <name>    a real charge against a lord (treason, murder,",
+				"                              kinslaying, execution, tyranny)",
+				"  wad.accuse_me [kind]        a lord of your realm accuses you",
+				"  wad.trial                   fight the waiting trial in this town's arena",
+				"",
 				"YOUR HOUSE",
 				"  wad.culture list            every culture your mods define",
 				"  wad.culture <name> [holdings]  your house (and holdings) take that culture",
@@ -357,6 +364,80 @@ namespace WardensAndDragons
 			}
 			Tourney.AddWin(h, n);
 			return h.Name + " now has " + Tourney.Wins(h) + " tourney win(s)" + (Tourney.Crowned(h) ? " - enough that the crowds would crown them." : ".");
+		}
+
+		// ------------------------------------------------------------------
+		// the law
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("law", "wad")]
+		public static string LawStatus(List<string> args)
+		{
+			if (Campaign.Current == null)
+			{
+				return "Load a campaign first.";
+			}
+			return Law.Summary() + (Law.TrialWaiting ? "\nA trial is waiting - wad.trial in a town to fight it." : "");
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("charge", "wad")]
+		public static string ChargeLord(List<string> args)
+		{
+			if (Campaign.Current == null)
+			{
+				return "Load a campaign first.";
+			}
+			if (args == null || args.Count < 2)
+			{
+				return "Usage: wad.charge <treason|murder|kinslaying|execution|tyranny> <part of a lord's name>   - a real charge, for testing";
+			}
+			string kind = args[0].ToLowerInvariant();
+			string part = string.Join(" ", args.Skip(1).ToArray()).ToLowerInvariant();
+			Hero h = Hero.AllAliveHeroes.FirstOrDefault((Hero x) => x.IsLord && x != Hero.MainHero && x.Name.ToString().ToLowerInvariant() == part)
+				?? Hero.AllAliveHeroes.FirstOrDefault((Hero x) => x.IsLord && x != Hero.MainHero && x.Name.ToString().ToLowerInvariant().Contains(part));
+			if (h == null)
+			{
+				return "No living lord matches '" + part + "'.";
+			}
+			Charge c = Law.Record(kind, h, Hero.MainHero, null, false);
+			if (c == null)
+			{
+				return "Not recorded - law_enabled is off, or " + h.Name + " already faces that charge.";
+			}
+			string why;
+			return "Charged: " + Law.Describe(c) + ". " + (Law.CanJudge(c, out why) ? "Court -> The King's Justice -> Hear a charge." : ("You cannot hear it: " + why + "."));
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("accuse_me", "wad")]
+		public static string AccuseMe(List<string> args)
+		{
+			if (Campaign.Current == null)
+			{
+				return "Load a campaign first.";
+			}
+			if (Clan.PlayerClan == null || Clan.PlayerClan.Kingdom == null)
+			{
+				return "You kneel to no crown and rule none - nobody has a court over you.";
+			}
+			string kind = (args != null && args.Count > 0) ? args[0].ToLowerInvariant() : Law.Treason;
+			Hero accuser = Clan.PlayerClan.Kingdom.Clans.Where((Clan c) => c != Clan.PlayerClan && c.Leader != null && c.Leader.IsAlive)
+				.Select((Clan c) => c.Leader).OrderBy((Hero x) => x.GetRelationWithPlayer()).FirstOrDefault();
+			if (accuser == null)
+			{
+				return "There is nobody in your realm to accuse you.";
+			}
+			Charge ch = Law.Record(kind, Hero.MainHero, accuser, null, false);
+			return (ch == null) ? "Not recorded - you may already face that charge." : (accuser.Name + " accuses you of " + Law.KindName(kind).ToLowerInvariant() + ". Close the console to answer.");
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("trial", "wad")]
+		public static string TrialNow(List<string> args)
+		{
+			if (Campaign.Current == null)
+			{
+				return "Load a campaign first.";
+			}
+			string why;
+			return Law.Fight(out why) ? "Into the arena." : ("Not now: " + why + ".");
 		}
 
 		// ------------------------------------------------------------------
