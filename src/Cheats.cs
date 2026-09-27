@@ -66,6 +66,7 @@ namespace WardensAndDragons
 				"  wad.raven [kind] [false]    a letter now: marriage, feast, kin, peace",
 				"  wad.feast_now               the feast you accepted is today",
 				"  wad.scheme_ready            your false feast is prepared and accepted",
+				"  wad.hall_test [guest]       a harmless fight in this hall (guest = you are the guest)",
 				"",
 				"YOUR HOUSE",
 				"  wad.culture list            every culture your mods define",
@@ -696,6 +697,45 @@ namespace WardensAndDragons
 				return "Load a campaign first.";
 			}
 			return Treachery.Ready() ? "They have accepted, and are at your table. Go to the hall." : "No feast is being prepared.";
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("hall_test", "wad")]
+		public static string HallTest(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			Settlement here = Settlement.CurrentSettlement;
+			if (here == null || here.Town == null)
+			{
+				return "Stand in a town or castle first.";
+			}
+			bool guest = args != null && args.Any((string a) => a.Trim().ToLowerInvariant() == "guest");
+			List<HallSeat> ours = Guard.Ready().Take(6).Select((Hero h) => new HallSeat(h.CharacterObject, guest)).ToList();
+			List<CharacterObject> pool = CharacterObject.All.Where((CharacterObject x) => x != null && !x.IsHero && x.Culture == here.Culture && x.Occupation == Occupation.Soldier && x.Tier >= 3).ToList();
+			if (pool.Count == 0)
+			{
+				pool = CharacterObject.All.Where((CharacterObject x) => x != null && !x.IsHero && x.Occupation == Occupation.Soldier && x.Tier >= 3).ToList();
+			}
+			List<HallSeat> theirs = new List<HallSeat>();
+			for (int i = 0; i < 6 && pool.Count > 0; i++)
+			{
+				theirs.Add(new HallSeat(pool[MBRandom.RandomInt(pool.Count)], !guest));
+			}
+			// "test" is never settled: nobody dies, nothing is charged.
+			Ravens.SetFight("test|" + ((MBObjectBase)here).StringId);
+			string why;
+			bool ok = HallFight.Open(here, ours, guest, theirs, guest, delegate(bool won, List<CharacterObject> fallen)
+			{
+				Ravens.SetResult((won ? "1" : "0") + "|");
+			}, out why);
+			if (!ok)
+			{
+				Ravens.SetFight(null);
+				return "The hall would not open: " + why;
+			}
+			return "Opening the hall of " + here.Name + (guest ? " with you as the guest." : " with you at the door.") + " Nothing that happens in it counts.";
 		}
 	}
 }

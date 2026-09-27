@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using SandBox;
 using SandBox.Missions;
 using SandBox.Missions.MissionLogics;
@@ -13,6 +14,7 @@ using TaleWorlds.Core;
 using TaleWorlds.Engine;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
+using TaleWorlds.MountAndBlade.Objects;
 using TaleWorlds.MountAndBlade.Missions.Handlers;
 using TaleWorlds.MountAndBlade.Missions.MissionLogics;
 using TaleWorlds.MountAndBlade.Source.Missions;
@@ -59,6 +61,11 @@ namespace WardensAndDragons
 		private bool _ended;
 		private BasicMissionTimer _endTimer;
 		private static Action<bool, List<CharacterObject>> _onEnd;
+		private static string _scene = "";
+		private bool _placed;
+		private float _checkAt = -1f;
+		private List<Vec3> _guestPoints;
+		private List<Vec3> _doorPoints;
 
 		private static readonly string[] GuestTags = new string[2] { "defender_infantry", "defender_archer" };
 
@@ -104,7 +111,8 @@ namespace WardensAndDragons
 				catch
 				{
 				}
-				MissionState.OpenNew("ArenaDuelMission", SandBoxMissions.CreateSandBoxMissionInitializerRecord(scene, "", false, (DecalAtlasGroup)3),
+				_scene = scene;
+				MissionState.OpenNew("ArenaDuelMission", SandBoxMissions.CreateSandBoxMissionInitializerRecord(scene, "siege", false, (DecalAtlasGroup)3),
 					(InitializeMissionBehaviorsDelegate)((Mission mission) => new MissionBehavior[]
 					{
 						new MissionOptionsComponent(),
@@ -132,33 +140,35 @@ namespace WardensAndDragons
 		public override void AfterStart()
 		{
 			_ended = false;
+			_placed = false;
+			_checkAt = -1f;
 			_endTimer = new BasicMissionTimer();
 			Mission.Teams.Add(BattleSideEnum.Defender, Hero.MainHero.MapFaction.Color, Hero.MainHero.MapFaction.Color2, null, true, false, true);
 			CultureObject them = (_theirs.Count > 0 && _theirs[0].Who != null) ? _theirs[0].Who.Culture : null;
 			Mission.Teams.Add(BattleSideEnum.Attacker, (them != null) ? them.Color : 0xFF8B0000u, (them != null) ? them.Color2 : 0xFF000000u, null, true, false, true);
 			Mission.PlayerTeam = Mission.Teams.Defender;
+		}
 
-			List<MatrixFrame> guests = Frames(GuestTags);
-			List<MatrixFrame> other = Frames(OtherTags);
-			Log.Write("hall spawn points: " + guests.Count + " guest, " + other.Count + " other");
-			List<MatrixFrame> all = guests.Concat(other).ToList();
-			if (all.Count < 2)
+		// Everyone is placed on the first tick, as the game's own keep fight
+		// does: by then the scene's rooms are live.
+		private void Place()
+		{
+			List<Vec3> guests;
+			List<Vec3> door;
+			string how = Rooms(out guests, out door);
+			if (guests.Count == 0 || door.Count == 0)
 			{
-				Log.Write("this hall has no spawn points the feast can use; the fight is decided outside");
+				how = Loose(out guests, out door);
+			}
+			Log.Write("hall " + _scene + ": " + how);
+			if (guests.Count == 0 || door.Count == 0)
+			{
+				Log.Write("this hall has no floor the feast can use; the fight is decided outside");
 				Finish(true);
 				return;
 			}
-			if (guests.Count == 0)
-			{
-				guests = all;
-			}
-			Vec3 middle = Vec3.Zero;
-			foreach (MatrixFrame f in guests)
-			{
-				middle += f.origin;
-			}
-			middle *= 1f / guests.Count;
-			MatrixFrame door = all.OrderByDescending((MatrixFrame f) => f.origin.Distance(middle)).First();
+			_guestPoints = guests;
+			_doorPoints = door;
 
 			List<HallSeat> guestSide = _weAreGuests ? _ours : _theirs;
 			List<HallSeat> doorSide = _weAreGuests ? _theirs : _ours;
@@ -167,51 +177,224 @@ namespace WardensAndDragons
 			List<Agent> guestAgents = _weAreGuests ? _ourAgents : _theirAgents;
 			List<Agent> doorAgents = _weAreGuests ? _theirAgents : _ourAgents;
 
+			int gi = 0;
+			int di = 0;
 			// The player first, wherever their side stands.
-			MatrixFrame playerAt = _weAreGuests ? guests[0] : door;
-			_ourAgents.Add(Spawn(CharacterObject.PlayerCharacter, _youCivilian, Mission.PlayerTeam, playerAt, 0));
-			for (int i = 0; i < guestSide.Count; i++)
+			if (_weAreGuests)
 			{
-				MatrixFrame f = guests[(i + (_weAreGuests ? 1 : 0)) % guests.Count];
-				int slot = (i + (_weAreGuests ? 1 : 0)) / guests.Count;
-				guestAgents.Add(Spawn(guestSide[i].Who, guestSide[i].Civilian, guestTeam, f, slot));
+				_ourAgents.Add(Spawn(CharacterObject.PlayerCharacter, _youCivilian, Mission.PlayerTeam, guests, gi++, door));
 			}
-			for (int i = 0; i < doorSide.Count; i++)
+			else
 			{
-				doorAgents.Add(Spawn(doorSide[i].Who, doorSide[i].Civilian, doorTeam, door, i + (_weAreGuests ? 0 : 1)));
+				_ourAgents.Add(Spawn(CharacterObject.PlayerCharacter, _youCivilian, Mission.PlayerTeam, door, di++, guests));
+			}
+			foreach (HallSeat h in guestSide)
+			{
+				guestAgents.Add(Spawn(h.Who, h.Civilian, guestTeam, guests, gi++, door));
+			}
+			foreach (HallSeat h in doorSide)
+			{
+				doorAgents.Add(Spawn(h.Who, h.Civilian, doorTeam, door, di++, guests));
+			}
+			_checkAt = Mission.CurrentTime + 1f;
+		}
+
+		// The game's own rooms: the innermost hall for the guests, the room
+		// before it for whoever comes through the door. Floor points only -
+		// the archer points are the galleries.
+		private string Rooms(out List<Vec3> guests, out List<Vec3> door)
+		{
+			guests = new List<Vec3>();
+			door = new List<Vec3>();
+			try
+			{
+				List<FightAreaMarker> markers = Mission.ActiveMissionObjects.FindAllWithType<FightAreaMarker>().ToList();
+				if (markers.Count == 0)
+				{
+					return "no rooms marked";
+				}
+				SortedDictionary<int, List<Vec3>> rooms = new SortedDictionary<int, List<Vec3>>();
+				int rejected = 0;
+				StringBuilder sb = new StringBuilder();
+				foreach (FightAreaMarker m in markers)
+				{
+					List<Vec3> list;
+					if (!rooms.TryGetValue(m.AreaIndex, out list))
+					{
+						list = new List<Vec3>();
+						rooms[m.AreaIndex] = list;
+					}
+					foreach (GameEntity e in m.GetGameEntitiesWithTagInRange("defender_infantry"))
+					{
+						Vec3 at;
+						if (Floor(e.GetGlobalFrame().origin, out at))
+						{
+							if (!list.Any((Vec3 x) => x.Distance(at) < 0.5f))
+							{
+								list.Add(at);
+							}
+						}
+						else
+						{
+							rejected++;
+						}
+					}
+				}
+				foreach (KeyValuePair<int, List<Vec3>> r in rooms)
+				{
+					sb.Append(" room ").Append(r.Key).Append("=").Append(r.Value.Count);
+				}
+				List<int> usable = rooms.Where((KeyValuePair<int, List<Vec3>> r) => r.Value.Count > 0).Select((KeyValuePair<int, List<Vec3>> r) => r.Key).ToList();
+				if (usable.Count == 0)
+				{
+					return "rooms with no floor:" + sb + ", " + rejected + " rejected";
+				}
+				int hall = usable[usable.Count - 1];
+				guests.AddRange(rooms[hall]);
+				if (usable.Count >= 2)
+				{
+					int before = usable[usable.Count - 2];
+					door.AddRange(rooms[before]);
+					if (guests.Count < 3 && usable.Count >= 3)
+					{
+						guests.AddRange(rooms[before]);
+						door.Clear();
+						door.AddRange(rooms[usable[usable.Count - 3]]);
+					}
+				}
+				else
+				{
+					// One room: the door is its far end.
+					Vec3 mid = Middle(guests);
+					Vec3 far = guests.OrderByDescending((Vec3 x) => x.Distance(mid)).First();
+					door.Add(far);
+					if (guests.Count > 1)
+					{
+						guests.Remove(far);
+					}
+				}
+				// The door side starts at the edge of its room nearest the
+				// hall, so they come straight in.
+				Vec3 hallMid = Middle(guests);
+				door = door.OrderBy((Vec3 x) => x.Distance(hallMid)).ToList();
+				return "rooms" + sb + ", " + rejected + " rejected; guests in room " + hall + " (" + guests.Count + "), door " + door.Count;
+			}
+			catch (Exception e)
+			{
+				return "reading the rooms failed: " + e.Message;
 			}
 		}
 
-		private List<MatrixFrame> Frames(string[] tags)
+		// A hall without rooms: any spawn point on the floor that most of
+		// them stand on.
+		private string Loose(out List<Vec3> guests, out List<Vec3> door)
 		{
-			List<MatrixFrame> list = new List<MatrixFrame>();
-			foreach (string tag in tags)
+			guests = new List<Vec3>();
+			door = new List<Vec3>();
+			List<Vec3> all = new List<Vec3>();
+			int rejected = 0;
+			foreach (string tag in GuestTags.Concat(OtherTags))
 			{
 				try
 				{
 					foreach (GameEntity e in Mission.Scene.FindEntitiesWithTag(tag))
 					{
-						MatrixFrame f = e.GetGlobalFrame();
-						f.rotation.OrthonormalizeAccordingToForwardAndKeepUpAsZAxis();
-						list.Add(f);
+						Vec3 at;
+						if (Floor(e.GetGlobalFrame().origin, out at))
+						{
+							if (!all.Any((Vec3 x) => x.Distance(at) < 0.5f))
+							{
+								all.Add(at);
+							}
+						}
+						else
+						{
+							rejected++;
+						}
 					}
 				}
 				catch
 				{
 				}
 			}
-			return list;
+			if (all.Count < 2)
+			{
+				return "no rooms, and only " + all.Count + " point(s) on the floor (" + rejected + " rejected)";
+			}
+			float floorZ = all.Select((Vec3 x) => x.z).OrderBy((float z) => z).ElementAt(all.Count / 2);
+			List<Vec3> level = all.Where((Vec3 x) => Math.Abs(x.z - floorZ) < 3f).ToList();
+			if (level.Count < 2)
+			{
+				level = all;
+			}
+			Vec3 mid = Middle(level);
+			Vec3 far = level.OrderByDescending((Vec3 x) => x.Distance(mid)).First();
+			List<Vec3> near = level.Where((Vec3 x) => x.Distance(far) < 4f).ToList();
+			door.AddRange(near);
+			guests.AddRange(level.Where((Vec3 x) => !near.Contains(x)));
+			if (guests.Count == 0)
+			{
+				guests.Add(door[door.Count - 1]);
+				door.RemoveAt(door.Count - 1);
+			}
+			return "no rooms; " + level.Count + " floor point(s) at height " + floorZ.ToString("F1") + ", " + rejected + " rejected";
 		}
 
-		private Agent Spawn(CharacterObject c, bool civilian, Team team, MatrixFrame frame, int slot)
+		// On the navigation mesh, and put down on the ground under it.
+		private bool Floor(Vec3 p, out Vec3 at)
 		{
-			Vec3 at = frame.origin;
-			if (slot > 0)
+			at = p;
+			try
 			{
-				int side = (slot % 2 == 1) ? 1 : -1;
-				at = at + frame.rotation.s * (side * 1.2f * ((slot + 1) / 2));
+				PathFaceRecord face = PathFaceRecord.NullFaceRecord;
+				Mission.Scene.GetNavMeshFaceIndex(ref face, p, true);
+				if (face.FaceIndex == -1)
+				{
+					return false;
+				}
+				at = new WorldPosition(Mission.Scene, p).GetGroundVec3();
+				if (!at.IsValid || Math.Abs(at.z - p.z) > 3f)
+				{
+					at = p;
+				}
+				return true;
 			}
-			Vec2 dir = frame.rotation.f.AsVec2.Normalized();
+			catch
+			{
+				return false;
+			}
+		}
+
+		private static Vec3 Middle(List<Vec3> points)
+		{
+			Vec3 m = Vec3.Zero;
+			foreach (Vec3 v in points)
+			{
+				m += v;
+			}
+			return (points.Count == 0) ? m : (m * (1f / points.Count));
+		}
+
+		// The i-th agent of a side: a point of its own while there are
+		// points, then beside one, if the floor is there.
+		private Agent Spawn(CharacterObject c, bool civilian, Team team, List<Vec3> points, int i, List<Vec3> facing)
+		{
+			Vec3 at = points[i % points.Count];
+			int round = i / points.Count;
+			Vec3 look = Middle(facing) - at;
+			Vec2 dir = look.AsVec2;
+			dir = (dir.Length > 0.01f) ? dir.Normalized() : new Vec2(0f, 1f);
+			if (round > 0)
+			{
+				Vec2 side = dir.LeftVec();
+				float d = 0.9f * ((round + 1) / 2) * ((round % 2 == 1) ? 1f : -1f);
+				Vec3 beside = new Vec3(at.x + side.x * d, at.y + side.y * d, at.z, -1f);
+				Vec3 ground;
+				if (Floor(beside, out ground))
+				{
+					at = ground;
+				}
+			}
 			Equipment kit = civilian ? (c.FirstCivilianEquipment ?? c.FirstBattleEquipment) : c.FirstBattleEquipment;
 			AgentBuildData data = new AgentBuildData(c)
 				.BodyProperties(c.GetBodyPropertiesMax(false))
@@ -230,6 +413,45 @@ namespace WardensAndDragons
 				agent.SetWatchState(Agent.WatchState.Alarmed);
 			}
 			return agent;
+		}
+
+		// Anyone the scene still put in the air comes down to their side's
+		// floor.
+		private void Rescue()
+		{
+			int n = 0;
+			foreach (Agent a in _ourAgents.Concat(_theirAgents))
+			{
+				try
+				{
+					if (a == null || !a.IsActive())
+					{
+						continue;
+					}
+					Vec3 p = a.Position;
+					Vec3 ground;
+					bool ok = Floor(p, out ground) && p.z - ground.z < 2f;
+					if (ok)
+					{
+						continue;
+					}
+					bool guest = _weAreGuests ? _ourAgents.Contains(a) : _theirAgents.Contains(a);
+					List<Vec3> pts = guest ? _guestPoints : _doorPoints;
+					if (pts == null || pts.Count == 0)
+					{
+						continue;
+					}
+					a.TeleportToPosition(pts[MBRandom.RandomInt(pts.Count)]);
+					n++;
+				}
+				catch
+				{
+				}
+			}
+			if (n > 0)
+			{
+				Log.Write("hall " + _scene + ": " + n + " fighter(s) were off the floor and were brought down to it");
+			}
 		}
 
 		public override void OnAgentRemoved(Agent affected, Agent affector, AgentState state, KillingBlow blow)
@@ -276,6 +498,25 @@ namespace WardensAndDragons
 
 		public override void OnMissionTick(float dt)
 		{
+			if (!_placed)
+			{
+				_placed = true;
+				try
+				{
+					Place();
+				}
+				catch (Exception e)
+				{
+					Log.Write("placing the hall failed: " + e);
+					Finish(true);
+				}
+				return;
+			}
+			if (_checkAt > 0f && Mission.CurrentTime >= _checkAt)
+			{
+				_checkAt = -1f;
+				Rescue();
+			}
 			if (_ended && _endTimer != null && _endTimer.ElapsedTime > 4f)
 			{
 				MBInformationManager.AddQuickInformation(GameTexts.FindText("str_duel_has_ended", null), 0, null, null, "");

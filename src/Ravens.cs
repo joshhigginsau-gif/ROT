@@ -644,6 +644,10 @@ namespace WardensAndDragons
 				{
 					AfterTrap(f, won, fallen);
 				}
+				else if (f[0] == "test")
+				{
+					Log.Write("hall test finished at " + ((f.Length > 1) ? f[1] : "?") + (won ? ": your side won" : ": your side lost"));
+				}
 				else if (f[0] == "scheme")
 				{
 					Treachery.After(f, won, fallen);

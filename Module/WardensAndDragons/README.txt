@@ -1,4 +1,25 @@
-Wardens & Dragons  v2.7.0  -  THE RAINS OF CASTAMERE
+Wardens & Dragons  v2.7.1  -  THE RAINS OF CASTAMERE
+
+
+v2.7.1 - FEET ON THE FLOOR
+
+  Hall fights put everyone high above the map. The hall was being loaded
+  without its "siege" layout, so it carried the spawn points of every
+  version of the hall at once, most of them nowhere near the floor.
+
+  Now the hall opens exactly as the game's own keep assault does, and the
+  fight uses the game's own rooms: the guests stand on the floor of the
+  innermost hall (never the galleries), and whoever comes for them bursts
+  in from the room before it. Every point is checked against the walkable
+  ground, and anyone still off the floor a second in is brought down to it.
+
+      wad.hall_test          a harmless fight in the hall you are in -
+                             you at the door, six soldiers at table
+      wad.hall_test guest    the same, with you as the guest
+
+    Nothing in a test counts: nobody dies and nothing is charged. The log
+    writes one line per hall saying which rooms it used.
+
 
 
 v2.7.0 - "THE LANNISTERS SEND THEIR REGARDS"

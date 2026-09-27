@@ -191,3 +191,18 @@ done whose edits had never been written to disk. It is worth continuing.
   castles and its children are taken **before** the killing (so the game's own
   leader-death destruction can't hand them elsewhere), then `DestroyClanAction.Apply`.
 - Cheats: `wad.raven [kind] [false]`, `wad.feast_now`, `wad.scheme_ready`.
+
+## v2.7.1 — hall fights on the floor
+
+- Cause of "spawned way above the map": `HallFight` opened the lordshall scene with scene
+  levels `""`; vanilla's keep assault uses `"siege"`. With no level, entities of every level
+  variant are present (Pentos logged 96 defender points).
+- Now mirrors `LordsHallFightMissionController`: opens with `"siege"`, places agents on the
+  first `OnMissionTick`, reads `Mission.ActiveMissionObjects.FindAllWithType<FightAreaMarker>()`
+  (namespace `TaleWorlds.MountAndBlade.Objects`), guests on the `defender_infantry` points of the
+  highest `AreaIndex` (innermost), the door side on the next-lower room. Every point must pass
+  `Scene.GetNavMeshFaceIndex` and is snapped with `WorldPosition.GetGroundVec3()`. No markers →
+  navmesh-valid tag points at the median floor height. One second in, anyone off the navmesh or
+  >2 m above ground is `TeleportToPosition`'d to their side's points.
+- `wad.hall_test [guest]` opens the current hall with record `"test|…"`, which `Ravens.Settle`
+  only logs.
