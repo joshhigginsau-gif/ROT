@@ -134,6 +134,64 @@ internal static class Bellum
 		return null;
 	}
 
+	private static Campaign _councilCampaign;
+	private static object _council;
+	private static MethodInfo _councilRecords;
+
+	// Bellum's privy council for a realm: each seat's office name and the
+	// house that holds it (null when empty). Empty list without Bellum.
+	internal static List<KeyValuePair<string, Clan>> CouncilSeats(Kingdom k)
+	{
+		List<KeyValuePair<string, Clan>> list = new List<KeyValuePair<string, Clan>>();
+		try
+		{
+			Campaign c = Campaign.Current;
+			if (k == null || c == null)
+			{
+				return list;
+			}
+			if (_councilCampaign != c)
+			{
+				_councilCampaign = c;
+				_council = null;
+				_councilRecords = null;
+				Type t = Find("BellumCivile.Behaviors.PrivyCouncilBehavior", "BellumCivile.PrivyCouncilBehavior");
+				if (t != null)
+				{
+					_council = GetBehavior(c, t);
+					_councilRecords = t.GetMethod("GetOfficeRecords", new Type[1] { typeof(Kingdom) });
+				}
+				Log.Write("Bellum council: behaviour=" + (_council != null) + " records=" + (_councilRecords != null));
+			}
+			if (_council == null || _councilRecords == null)
+			{
+				return list;
+			}
+			System.Collections.IEnumerable recs = _councilRecords.Invoke(_council, new object[1] { k }) as System.Collections.IEnumerable;
+			if (recs == null)
+			{
+				return list;
+			}
+			foreach (object r in recs)
+			{
+				if (r == null)
+				{
+					continue;
+				}
+				Type rt = r.GetType();
+				object office = rt.GetProperty("Office").GetValue(r, null);
+				string cid = rt.GetProperty("HolderClanId").GetValue(r, null) as string;
+				Clan holder = string.IsNullOrEmpty(cid) ? null : Clan.FindFirst((Clan x) => ((MBObjectBase)x).StringId == cid);
+				list.Add(new KeyValuePair<string, Clan>((office != null) ? office.ToString() : "", holder));
+			}
+		}
+		catch (Exception e)
+		{
+			Log.Once("bellumcouncil", "reading Bellum's council failed: " + e.Message);
+		}
+		return list;
+	}
+
 	private static object GetBehavior(Campaign c, Type t)
 	{
 		try
