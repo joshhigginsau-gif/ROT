@@ -68,6 +68,10 @@ namespace WardensAndDragons
 				"  wad.scheme_ready            your false feast is prepared and accepted",
 				"  wad.hall_test [guest]       a harmless fight in this hall (guest = you are the guest)",
 				"",
+				"THE SMALL COUNCIL AND HOSTS",
+				"  wad.council_now             a summoned council is in your hall today",
+				"  wad.host_end                the next host's service ends tomorrow",
+				"",
 				"YOUR HOUSE",
 				"  wad.culture list            every culture your mods define",
 				"  wad.culture <name> [holdings]  your house (and holdings) take that culture",
@@ -736,6 +740,26 @@ namespace WardensAndDragons
 				return "The hall would not open: " + why;
 			}
 			return "Opening the hall of " + here.Name + (guest ? " with you as the guest." : " with you at the door.") + " Nothing that happens in it counts.";
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("council_now", "wad")]
+		public static string CouncilNow(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			return Council.ArriveNow() ? "The council is in the hall today. Go to the lord's hall." : "Summon the council first (Court -> The small council).";
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("host_end", "wad")]
+		public static string HostEnd(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			return Host.EndSoon() ? "That host's service ends tomorrow." : "You have no host in the field.";
 		}
 	}
 }

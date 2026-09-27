@@ -210,3 +210,22 @@ done whose edits had never been written to disk. It is worth continuing.
 ## v2.7.2 — bar the doors
 
 - Text only: the Rains of Castamere (a century after the Dance) replaced by "Give the signal: bar the doors". Choice id `rains` kept, so nothing in saves changes.
+
+## v2.8.0 — the small council, and hosts bought with gold
+
+- `Host.cs` (`hs:<partyId>` = knight|quality|men|price|end|order|target|warned). Raised with
+  `MobilePartyHelper.CreateNewClanMobileParty(knight, PlayerClan)`, roster filled from the
+  clan culture's soldiers in the quality's tier band. Knight state `"host"` in `Guard`.
+- Four Harmony postfixes on the *concrete* model types in `Campaign.Current.Models` (applied once
+  at session launch): wage → 0, `DoesPartyConsumeFood` → false, size limit ≥ roster + 10,
+  desertion → empty roster. Each only for parties in `Host._ids`.
+- Orders are enforced daily: siege locks `DoNotMakeNewDecisions` and `SetMoveBesiegeSettlement`
+  until the siege camp is up, then unlocks so vanilla siege AI assaults; hold = locked defend;
+  follow = joins the player's army (created as Patrolling if needed, cohesion kept at 100).
+- `Council.cs`: seats from `Bellum.CouncilSeats` (reflection on `PrivyCouncilBehavior`), session
+  `cn:session`, councillors added to `lordshall` as LocationCharacters on
+  `BeforeMissionOpenedEvent`, removed when the session ends. Realm army via
+  `Kingdom.CreateArmy(... Besieger, parties)` held to its target like a host.
+- `CouncilDialogue.cs`: `hero_main_options` → `wad_cn_*`; actions run on
+  `ConversationEndOneShot`. `CouncilMenu.cs`: Court → The small council.
+- The assassination feature that was planned here was dropped.

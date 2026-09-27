@@ -130,6 +130,17 @@ namespace WardensAndDragons
 			return (h == null) ? null : Knight.Unpack(((MBObjectBase)h).StringId, Store.Get(Prefix + ((MBObjectBase)h).StringId));
 		}
 
+		// "guard", "away" on an errand, or "host" in command of one.
+		internal static void SetState(Hero h, string state)
+		{
+			Knight k = Of(h);
+			if (k != null)
+			{
+				k.State = state;
+				Save(k);
+			}
+		}
+
 		internal static bool IsSworn(Hero h)
 		{
 			return Cfg.Kingsguard && h != null && !string.IsNullOrEmpty(Store.Get(Prefix + ((MBObjectBase)h).StringId));
@@ -993,6 +1004,10 @@ namespace WardensAndDragons
 				if (k.State == "away")
 				{
 					sb.Append("   [away, back in ").Append(Math.Max(0, k.Back - today)).Append(" days]");
+				}
+				else if (k.State == "host")
+				{
+					sb.Append("   [commanding a host]");
 				}
 				else if (h.PartyBelongedTo != MobileParty.MainParty)
 				{

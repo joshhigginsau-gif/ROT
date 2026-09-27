@@ -172,6 +172,18 @@ namespace WardensAndDragons
 		// ------------------------------------------------------------------
 		// letters to you
 
+		// What the Master of Whisperers makes of the letter waiting, or null.
+		internal static string WhisperOnLetter()
+		{
+			string[] p = (Store.Get(LetterKey) ?? "").Split('|');
+			if (p.Length < 7)
+			{
+				return null;
+			}
+			Hero from = Law.Find(p[1]);
+			return ((from != null) ? ("it is from " + from.Name + ". ") : "") + Hint(p[5] == "1");
+		}
+
 		internal static bool Waiting
 		{
 			get

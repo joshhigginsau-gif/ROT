@@ -72,6 +72,19 @@ namespace WardensAndDragons
 				{
 				}
 
+				// --- the council and the hosts ---
+				try
+				{
+					string cn = Council.Attention();
+					if (cn != null)
+					{
+						list.Add(cn);
+					}
+				}
+				catch
+				{
+				}
+
 				// --- the ravens ---
 				try
 				{

@@ -59,6 +59,8 @@ public class CourtBehavior : CampaignBehaviorBase
 		CampaignEvents.HourlyTickEvent.AddNonSerializedListener((object)this, (Action)Law.Settle);
 		// The white cloaks walk in with you.
 		CampaignEvents.BeforeMissionOpenedEvent.AddNonSerializedListener((object)this, (Action)Guard.Bodyguards);
+		// The small council at the table in your hall.
+		CampaignEvents.BeforeMissionOpenedEvent.AddNonSerializedListener((object)this, (Action)Council.SeatThem);
 		// The ravens: a feast that became a fight is counted off the hall.
 		CampaignEvents.GameMenuOpened.AddNonSerializedListener((object)this, (Action<MenuCallbackArgs>)delegate
 		{
@@ -135,8 +137,11 @@ public class CourtBehavior : CampaignBehaviorBase
 			Law.Reset();
 			Guard.Reset();
 			Ravens.Reset();
+			Host.Load();
+			Host.Patch();
 			Menus.Register(starter);
 			Dialogue.Add(starter);
+			CouncilDialogue.Add(starter);
 			Log.Write("warden dialogue registered");
 			Dragons.EnsureSeeded();
 			// Children who came to the gate before their family lines and
@@ -175,6 +180,8 @@ public class CourtBehavior : CampaignBehaviorBase
 				Guard.Daily();
 				Ravens.Daily();
 				Treachery.Daily();
+				Council.Daily();
+				Host.Daily();
 				SettleTheDead();
 				Titles.Invalidate();
 				if (num - Store.LastDriftDay >= Cfg.DaysPerSeason)

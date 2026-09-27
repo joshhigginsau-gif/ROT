@@ -117,6 +117,11 @@ internal static class Menus
 			AddBranch(s, "wad_court", "wad_opt_law", "{=WAD_Law}The King's Justice", "wad_law", 7,
 				() => "Hear charges, bring them, and answer them.");
 		}
+		if (Cfg.Council)
+		{
+			AddBranch(s, "wad_court", "wad_opt_council", "{=WAD_Council}The small council", "wad_council", 1,
+				() => "Summon your council to your hall, muster hosts with gold, and give them their orders.");
+		}
 		if (Cfg.Ravens)
 		{
 			AddBranch(s, "wad_court", "wad_opt_ravens", "{=WAD_Ravens}Ravens", "wad_ravens", 8,
@@ -185,6 +190,7 @@ internal static class Menus
 		LawMenu.Register(s);
 		GuardMenu.Register(s);
 		RavensMenu.Register(s);
+		CouncilMenu.Register(s);
 		s.AddGameMenu("wad_realm", "{=!}{WAD_REALM}", (OnInitDelegate)delegate
 		{
 			SetRealmText();

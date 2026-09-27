@@ -1,4 +1,56 @@
-Wardens & Dragons  v2.7.2  -  BAR THE DOORS
+Wardens & Dragons  v2.8.0  -  THE SMALL COUNCIL
+
+
+v2.8.0 - THE SMALL COUNCIL
+
+  HOSTS BOUGHT WITH GOLD  (Court -> The small council -> Muster a host)
+
+    Choose one of your sworn knights to command, what sort of men, and how
+    much gold to spend:
+
+      levies          40 a man    tier 1-2
+      men-at-arms     80 a man    tier 2-4    (2,000,000 buys 25,000)
+      veterans       200 a man    tier 4-6
+
+    They are raised from your culture's soldiers, at most 30,000 to a host,
+    and serve 84 days. They were paid up front, so they draw no wages,
+    carry their own food, and do not desert however large the host is.
+    A week before their service ends you are asked whether to keep them
+    another 84 days for a quarter of the first price.
+
+    Orders (Court -> The small council -> Your hosts):
+      Besiege      march on an enemy castle or town and lay siege to it
+      Hold         go to one of your castles or towns and stay there
+      March with me   join your army and fight your battles
+      Free         the knight campaigns with them as they see fit
+      Stand down   the men go home and the knight rides with you again
+
+    Several knights can each command a host. If a host is destroyed or its
+    knight is taken, it scatters.
+
+  THE SMALL COUNCIL IN YOUR HALL  (while you rule)
+
+    Summon Bellum's privy council to one of your towns or castles. They
+    ride in over a day or three (anyone who hates you may send regrets)
+    and sit for three days at the table in the lord's hall. Walk in and
+    speak to them - "There is council business":
+
+      Master of Ships       muster a host; call the realm's lords to the
+                            banners against a castle (costs influence);
+                            orders for your hosts; stand the lords down
+      Master of Coin        a levy on your towns - gold, and resentment
+      Hand                  how the realm stands: its strength, its wars,
+                            and who loves you least
+      Master of Laws        what waits on the King's Justice
+      Master of Whisperers  what they make of the letter waiting for you,
+                            and which houses would most likely lie to you
+      Grand Maester         the health of your house
+
+  TESTING
+
+      wad.council_now    a summoned council is in your hall today
+      wad.host_end       the next host's service ends tomorrow
+
 
 
 v2.7.2 - BAR THE DOORS
