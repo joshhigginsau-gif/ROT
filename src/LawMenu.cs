@@ -58,6 +58,14 @@ namespace WardensAndDragons
 				Law.Bring();
 			}, false, 1, false, (object)null);
 
+			s.AddGameMenuOption("wad_law", "wad_law_seek", "{=WAD_Seek}Seek six to stand with you", (GameMenuOption.OnConditionDelegate)delegate(MenuCallbackArgs a)
+			{
+				return SeekCondition(a);
+			}, (GameMenuOption.OnConsequenceDelegate)delegate
+			{
+				Seek();
+			}, false, 2, false, (object)null);
+
 			s.AddGameMenuOption("wad_law", "wad_law_arena", "{=WAD_TrialArena}Enter the arena for your trial", (GameMenuOption.OnConditionDelegate)delegate(MenuCallbackArgs a)
 			{
 				return ArenaCondition(a);
@@ -75,6 +83,21 @@ namespace WardensAndDragons
 				GameMenu.SwitchToMenu("wad_court");
 			}, true, 9, false, (object)null);
 
+			try
+			{
+				s.AddGameMenuOption("town", "wad_town_seek", "{=WAD_Seek}Seek six to stand with you in the trial of seven", (GameMenuOption.OnConditionDelegate)delegate(MenuCallbackArgs a)
+				{
+					return SeekCondition(a);
+				}, (GameMenuOption.OnConsequenceDelegate)delegate
+				{
+					Seek();
+				}, false, 0, false, (object)null);
+			}
+			catch (Exception e)
+			{
+				Log.Write("could not put the gathering on the town menu: " + e.Message);
+			}
+
 			// And from any town: a trial waits for you in whichever arena you
 			// reach first, whether or not the town is yours.
 			try
@@ -90,6 +113,65 @@ namespace WardensAndDragons
 			catch (Exception e)
 			{
 				Log.Write("could not put the trial on the town menu: " + e.Message);
+			}
+		}
+
+		private static bool SeekCondition(MenuCallbackArgs a)
+		{
+			try
+			{
+				a.optionLeaveType = (GameMenuOption.LeaveType)2;
+				if (!Cfg.Law || !Law.Gathering)
+				{
+					return false;
+				}
+				if (Law.Answered() >= 6)
+				{
+					a.IsEnabled = false;
+					a.Tooltip = Styles.Line("Six stand with you. The lists open in " + Law.HoursLeft() + " hours.");
+				}
+				else
+				{
+					a.Tooltip = Styles.Line(Law.Answered() + " of six have answered. The lists open in " + Law.HoursLeft() + " hours. Kin and sworn knights will answer; friends may; strangers will not.");
+				}
+				return true;
+			}
+			catch
+			{
+				return false;
+			}
+		}
+
+		private static void Seek()
+		{
+			try
+			{
+				List<Hero> can = Law.Askable();
+				if (can.Count == 0)
+				{
+					Flow.Notify("There is nobody here left to ask. Whoever is missing tomorrow will be made up from your soldiers and the glory hunters.");
+					return;
+				}
+				int room = Math.Max(1, 6 - Law.Answered());
+				List<InquiryElement> els = can.Select((Hero h) => new InquiryElement(h,
+					h.Name + "  (relation " + (int)h.GetRelationWithPlayer() + ", rated " + Law.Rating(h.CharacterObject) + ")   - " + Law.Willing(h) + "% to stand",
+					null, Law.Willing(h) > 0,
+					(Law.Willing(h) >= 100) ? "They will not refuse you." : ((Law.Willing(h) > 0) ? "They may say yes." : "They do not love you enough to die for you."))).ToList();
+				Inquiry.Select("Will No Knight Stand For Me?",
+					"Ask whoever you would have beside you. Each can be asked once, and whatever they say, they meant it.",
+					els, 1, Math.Min(room, els.Count), "Ask them", "Not yet",
+					delegate(List<InquiryElement> chosen)
+					{
+						List<Hero> asked = (chosen ?? new List<InquiryElement>()).Select((InquiryElement e) => e.Identifier as Hero).Where((Hero h) => h != null).ToList();
+						if (asked.Count > 0)
+						{
+							Law.Ask(asked);
+						}
+					});
+			}
+			catch (Exception e)
+			{
+				Log.Write("seeking champions failed: " + e.Message);
 			}
 		}
 

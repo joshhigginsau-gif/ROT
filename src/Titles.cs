@@ -217,7 +217,19 @@ namespace WardensAndDragons
 				string cloak = Guard.StyleOf(__instance);
 				if (cloak != null && plain.IndexOf(cloak.TrimStart(',', ' '), StringComparison.OrdinalIgnoreCase) < 0)
 				{
-					text = plain.TrimStart(' ', '\t', '\u200B') + cloak;
+					string bare = plain.TrimStart(' ', '\t', '\u200B');
+					// ROT puts its own rank in front of every lord, so a knight the mod
+					// named "Ser Alliser" read "Lord Ser Alliser". A knight is Ser, and
+					// nothing in front of it.
+					foreach (string r in Lesser)
+					{
+						if (r != "Ser " && bare.StartsWith(r + "Ser ", StringComparison.OrdinalIgnoreCase))
+						{
+							bare = bare.Substring(r.Length);
+							break;
+						}
+					}
+					text = bare + cloak;
 				}
 				if (text == null)
 				{

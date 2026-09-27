@@ -1,4 +1,51 @@
-Wardens & Dragons  v2.5.1  -  THE WHITE CLOAKS
+Wardens & Dragons  v2.6.0  -  SEVEN, AND THE CLOAK
+
+
+v2.6.0 - "WILL NO KNIGHT STAND FOR ME?"
+
+  A TRIAL OF SEVEN TAKES A DAY TO GATHER
+
+    Choose to stand among the seven yourself and the lists take a day to
+    raise (trial_seven_gather_hours=24). In that day you must find six who
+    will stand beside you - "Seek six to stand with you", from the King's
+    Justice or the town square.
+
+      Your sworn knights and your own blood    always answer
+      Your companions                          nearly always
+      Other lords                              only at relation 30 or more
+                                               (trial_seven_friend), and even
+                                               then they may refuse
+      Anybody else                             will not die for you
+
+    Each can be asked once, and whatever they say, they meant it. When the
+    day is out, whoever you could not find is made up - half from your own
+    soldiers, half from the glory hunters and hedge knights who came to
+    watch - and the lists are ready at the arena of the town you are in or
+    the next one you reach. The other side gathers too: the accused's own
+    house, then lords who love them, then hired swords.
+
+    Sending seven without you is still decided on the spot.
+
+  THE WHITE CLOAK
+
+    Swearing a knight is now a ceremony before the throne: the vows spoken,
+    the cloak fastened, the White Book opened to a clean page. And they are
+    dressed in the white armour there and then - the kit of Realm of
+    Thrones' own Kingsguard troop. Their old battle kit is gone; their town
+    clothes stay. Knights already sworn in your save are dressed the next
+    time you load it. kingsguard_armour=false turns it off.
+
+  "LORD SER ALLISER"
+
+    Realm of Thrones puts its own rank in front of every lord, so a knighted
+    soldier read "Lord Ser Alliser". A sworn knight is Ser, and nothing in
+    front of it: "Ser Alliser of the Queensguard".
+
+  TESTING
+
+      wad.seven_ready    end a trial of seven's gathering now
+      wad.kg_cloak       dress every sworn knight in the white armour
+
 
 
 v2.5.1 - A SWORD YOU CAN DRAW

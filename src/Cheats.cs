@@ -59,6 +59,8 @@ namespace WardensAndDragons
 				"  wad.kg_swear <name>         swear anyone, skipping the vows' checks",
 				"  wad.kg_knight               knight your best soldier and swear them",
 				"  wad.kg_return               every knight away comes home now",
+				"  wad.kg_cloak                dress every sworn knight in the white armour",
+				"  wad.seven_ready             end a trial of seven's gathering now",
 				"",
 				"YOUR HOUSE",
 				"  wad.culture list            every culture your mods define",
@@ -492,6 +494,39 @@ namespace WardensAndDragons
 			Hero h = Guard.KnightSoldier(best);
 			string why;
 			return (h != null && Guard.Swear(h, "commoner", true, out why)) ? (h.Name + ", once " + best.Name + ", is knighted and sworn.") : "It did not take - see the log.";
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("kg_cloak", "wad")]
+		public static string KgCloak(List<string> args)
+		{
+			if (Campaign.Current == null)
+			{
+				return "Load a campaign first.";
+			}
+			CharacterObject white = Guard.Armour();
+			if (white == null)
+			{
+				return "No Kingsguard troop was found to take the white armour from.";
+			}
+			int n = 0;
+			foreach (Knight k in Guard.All())
+			{
+				if (Guard.Dress(Guard.HeroOf(k)))
+				{
+					n++;
+				}
+			}
+			return n + " knight(s) dressed in the kit of " + white.Name + ".";
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("seven_ready", "wad")]
+		public static string SevenReady(List<string> args)
+		{
+			if (Campaign.Current == null)
+			{
+				return "Load a campaign first.";
+			}
+			return Law.OpenNow() ? "The lists are raised. Close the console to see who stands with you." : "No trial of seven is gathering.";
 		}
 
 		[CommandLineFunctionality.CommandLineArgumentFunction("kg_return", "wad")]

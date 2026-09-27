@@ -33,10 +33,12 @@ namespace WardensAndDragons
 		internal string Errand = "";
 		// the men who went with them: troop:count;troop:count
 		internal string Men = "";
+		// Dressed in the white armour yet.
+		internal bool Cloaked;
 
 		internal string Pack()
 		{
-			return string.Join("|", new string[9] { Sworn.ToString(), Origin, Rank.ToString(), Camps.ToString(), Outlaws.ToString(), State, Back.ToString(), Errand, Men });
+			return string.Join("|", new string[10] { Sworn.ToString(), Origin, Rank.ToString(), Camps.ToString(), Outlaws.ToString(), State, Back.ToString(), Errand, Men, Cloaked ? "c" : "" });
 		}
 
 		internal static Knight Unpack(string id, string s)
@@ -58,6 +60,8 @@ namespace WardensAndDragons
 			k.Back = int.TryParse(p[6], out n) ? n : 0;
 			k.Errand = p[7];
 			k.Men = p[8];
+			// Tolerated missing: records sworn before the ceremony existed.
+			k.Cloaked = p.Length > 9 && p[9] == "c";
 			return k;
 		}
 	}
@@ -359,6 +363,7 @@ namespace WardensAndDragons
 				Save(k);
 				Page(h, k, null);
 				Store.AddDeed(Standing.Date() + "  " + h.Name + " took the white cloak.");
+				Ceremony(h, k, tag);
 				Log.Write("sworn to the " + Title() + ": " + h.Name + " (" + tag + ")" + ((k.Rank >= 1) ? ", Lord Commander" : ""));
 				return true;
 			}
@@ -1038,6 +1043,132 @@ namespace WardensAndDragons
 		{
 			_queue.Clear();
 			_showing = false;
+			_armour = null;
+			_looked = false;
+		}
+
+		// ------------------------------------------------------------------
+		// the white armour
+
+		private static CharacterObject _armour;
+
+		private static bool _looked;
+
+		// Realm of Thrones ships a Kingsguard troop, white enamel and all. Its
+		// kit is what a new brother is dressed in. Looked up once a session.
+		internal static CharacterObject Armour()
+		{
+			if (_looked)
+			{
+				return _armour;
+			}
+			_looked = true;
+			try
+			{
+				List<CharacterObject> all = CharacterObject.All.Where((CharacterObject c) => c != null && !c.IsHero && c.FirstBattleEquipment != null).ToList();
+				_armour = all.Where((CharacterObject c) => ((MBObjectBase)c).StringId.ToLowerInvariant().Contains("kingsguard") || c.Name.ToString().ToLowerInvariant().Contains("kingsguard"))
+					.OrderByDescending((CharacterObject c) => c.Tier).FirstOrDefault()
+					?? all.Where((CharacterObject c) => c.Name.ToString().ToLowerInvariant().Contains("white cloak"))
+					.OrderByDescending((CharacterObject c) => c.Tier).FirstOrDefault();
+				Log.Write((_armour != null)
+					? ("the white armour is " + _armour.Name + " (" + ((MBObjectBase)_armour).StringId + ")")
+					: "no Kingsguard troop found to take the white armour from; knights keep their own");
+			}
+			catch (Exception e)
+			{
+				Log.Write("looking for the white armour failed: " + e.Message);
+			}
+			return _armour;
+		}
+
+		// Dress them. Their old battle kit is gone - the cloak is all they
+		// need now. Town clothes are left as they are.
+		internal static bool Dress(Hero h)
+		{
+			try
+			{
+				CharacterObject white = Armour();
+				if (!Cfg.KgArmour || h == null || white == null)
+				{
+					return false;
+				}
+				h.BattleEquipment.FillFrom(white.FirstBattleEquipment, false);
+				Knight k = Of(h);
+				if (k != null && !k.Cloaked)
+				{
+					k.Cloaked = true;
+					Save(k);
+				}
+				return true;
+			}
+			catch (Exception e)
+			{
+				Log.Write("dressing " + ((h != null) ? h.Name.ToString() : "a knight") + " failed: " + e.Message);
+				return false;
+			}
+		}
+
+		// The swearing itself, in the hall.
+		private static void Ceremony(Hero h, Knight k, string origin)
+		{
+			bool dressed = Dress(h);
+			string order = Title();
+			string who = (h.FirstName != null) ? h.FirstName.ToString() : h.Name.ToString();
+			string from;
+			switch ((origin ?? "").Split(':')[0])
+			{
+			case "commoner":
+				from = who + " came into the hall a common soldier, in the kit " + (h.IsFemale ? "she" : "he") + " had marched in, and everybody knew it.";
+				break;
+			case "baseborn":
+				from = who + " came into the hall with your face and without your name, and everybody knew that too.";
+				break;
+			case "ward":
+				from = who + " came into the hall as the ward " + (h.IsFemale ? "she" : "he") + " had been since childhood, at the table of the house " + (h.IsFemale ? "she" : "he") + " now swears to die for.";
+				break;
+			case "noble":
+				from = who + " came into the hall a child of a great house, with a name and an inheritance, and knelt to give up both.";
+				break;
+			default:
+				from = who + " came into the hall a sword of your household, as " + (h.IsFemale ? "she" : "he") + " has been for years.";
+				break;
+			}
+			string text = from + "\n\n" +
+				"The words were spoken before the throne, with the court standing: to guard the crown's person with " + (h.IsFemale ? "her" : "his") + " life, to take no wife, hold no lands, father no children, and keep " + (h.IsFemale ? "her" : "his") + " silence and the crown's counsel until death.\n\n" +
+				(dressed
+					? ("The white cloak was fastened at " + (h.IsFemale ? "her" : "his") + " throat, and the white armour brought out and buckled on. When " + who + " stood, nobody in the hall would have known what " + (h.IsFemale ? "she" : "he") + " had been an hour before.\n\n")
+					: ("The white cloak was fastened at " + (h.IsFemale ? "her" : "his") + " throat.\n\n")) +
+				"The Lord Commander opened the White Book to a clean page." +
+				((k.Rank >= 1) ? (" It was " + who + "'s own - the first page of the " + order + ", and " + (h.IsFemale ? "hers" : "his") + " to keep.") : "");
+			Popup("The White Cloak", text);
+		}
+
+		// Knights sworn before the ceremony existed get dressed once, on load.
+		internal static void Repair()
+		{
+			try
+			{
+				if (!Cfg.Kingsguard || !Cfg.KgArmour)
+				{
+					return;
+				}
+				int n = 0;
+				foreach (Knight k in All())
+				{
+					if (!k.Cloaked && Dress(HeroOf(k)))
+					{
+						n++;
+					}
+				}
+				if (n > 0)
+				{
+					Log.Write("sworn knights dressed in the white armour on load: " + n);
+				}
+			}
+			catch (Exception e)
+			{
+				Log.Write("dressing the sworn knights failed: " + e.Message);
+			}
 		}
 
 		private static void Popup(string title, string text)

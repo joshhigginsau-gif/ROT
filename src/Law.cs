@@ -840,12 +840,13 @@ namespace WardensAndDragons
 				string roll = string.Join(", ", theirs.Select((CharacterObject x) => x.Name.ToString()).ToArray());
 				Inquiry.Confirm("A Trial of Seven",
 					"Seven for " + (prosecution ? accused.Name.ToString() : "the accusation") + ": " + roll + ".\n\n" +
-					"Seven for you: yourself and the six best of your party - " +
+					"Stand among them yourself, and you have a day to find six who will stand with you - and only those who love you will. " +
+					"Or send seven of your party without you: " +
 					string.Join(", ", ours.Select((CharacterObject x) => x.Name.ToString()).ToArray()) + ".",
 					"Stand among them", "Send seven without me",
 					delegate
 					{
-						Arrange(c, "seven", prosecution, ours, theirs, true);
+						Gather(c, prosecution, theirs);
 					},
 					delegate
 					{
@@ -861,10 +862,264 @@ namespace WardensAndDragons
 			}
 		}
 
+		// ------------------------------------------------------------------
+		// the gathering
+		//
+		// "Will no knight stand for me?" A trial of seven is not called and
+		// fought in the same breath. The lists take a day to raise, and in
+		// that day you must find six who will stand beside you - which is a
+		// question of who loves you, not who you pay. Whoever you cannot find
+		// is made up at the end by your own soldiers and whatever glory
+		// hunters turn up to watch.
+
+		private const string GatherKey = "lw:gather";
+
+		internal static bool Gathering
+		{
+			get
+			{
+				return !string.IsNullOrEmpty(Store.Get(GatherKey));
+			}
+		}
+
+		// chargeId | p/d | ready hour | ours | theirs | asked
+		private static string[] GatherRec()
+		{
+			string[] p = (Store.Get(GatherKey) ?? "").Split('|');
+			return (p.Length >= 6) ? p : null;
+		}
+
+		private static void Gather(Charge c, bool prosecution, List<CharacterObject> theirs)
+		{
+			c.State = "trial";
+			Save(c);
+			int ready = (int)CampaignTime.Now.ToHours + Math.Max(1, Cfg.TrialSevenGatherHours);
+			Store.Set(GatherKey, c.Id + "|" + (prosecution ? "p" : "d") + "|" + ready + "||" + Ids(theirs) + "|");
+			Store.AddDeed(Standing.Date() + "  A trial of seven was called: " + Describe(c) + ".");
+			Popup("A Trial of Seven",
+				"The lists will be raised by this time tomorrow. Seven will stand against you: " +
+				string.Join(", ", theirs.Select((CharacterObject x) => x.Name.ToString()).ToArray()) + ".\n\n" +
+				"Six must stand with you. Go and find them - Court -> The King's Justice, or the town square. " +
+				"Kin and sworn knights will answer. Friends may. Strangers will not.\n\n" +
+				"Whoever you cannot find by tomorrow will be made up from your own soldiers, and from whatever glory hunters come to watch.");
+		}
+
+		internal static int Answered()
+		{
+			string[] p = GatherRec();
+			return (p == null) ? 0 : Chars(p[3]).Count;
+		}
+
+		internal static int HoursLeft()
+		{
+			string[] p = GatherRec();
+			int ready;
+			return (p == null || !int.TryParse(p[2], out ready)) ? 0 : Math.Max(0, ready - (int)CampaignTime.Now.ToHours);
+		}
+
+		// The chance they say yes, 0 to 100.
+		internal static int Willing(Hero h)
+		{
+			if (Guard.IsSworn(h))
+			{
+				return 100;
+			}
+			if (h.Clan == Clan.PlayerClan && Succession.IsBlood(h, Hero.MainHero))
+			{
+				return 100;
+			}
+			if (h.CompanionOf == Clan.PlayerClan)
+			{
+				return 90;
+			}
+			int rel = (int)h.GetRelationWithPlayer();
+			if (rel < Cfg.TrialSevenFriend)
+			{
+				return 0;
+			}
+			return Math.Min(90, 40 + (rel - Cfg.TrialSevenFriend));
+		}
+
+		// Everyone who could be asked: your house, your companions, the lords
+		// in this town, and the lords of your realm who like you enough.
+		internal static List<Hero> Askable()
+		{
+			List<Hero> list = new List<Hero>();
+			string[] p = GatherRec();
+			if (p == null)
+			{
+				return list;
+			}
+			Charge c = Get(p[0]);
+			HashSet<string> taken = new HashSet<string>(p[3].Split(',').Concat(p[4].Split(',')).Concat(p[5].Split(',')).Where((string x) => x.Length > 0));
+			Action<Hero> add = delegate(Hero h)
+			{
+				if (h != null && h.IsAlive && !h.IsChild && !h.IsPrisoner && !h.IsWounded && h != Hero.MainHero && !list.Contains(h)
+					&& !taken.Contains(((MBObjectBase)h).StringId)
+					&& (c == null || (((MBObjectBase)h).StringId != c.Accused && ((MBObjectBase)h).StringId != c.Accuser)))
+				{
+					list.Add(h);
+				}
+			};
+			try
+			{
+				foreach (Hero h in Clan.PlayerClan.Heroes)
+				{
+					add(h);
+				}
+				foreach (Hero h in Clan.PlayerClan.Companions)
+				{
+					add(h);
+				}
+				Settlement here = Settlement.CurrentSettlement;
+				if (here != null)
+				{
+					foreach (Hero h in here.HeroesWithoutParty)
+					{
+						if (h.IsLord)
+						{
+							add(h);
+						}
+					}
+					foreach (MobileParty mp in here.Parties)
+					{
+						if (mp != null && mp.LeaderHero != null && mp.LeaderHero.IsLord)
+						{
+							add(mp.LeaderHero);
+						}
+					}
+				}
+				Kingdom realm = Clan.PlayerClan.Kingdom;
+				if (realm != null)
+				{
+					foreach (Clan cl in realm.Clans)
+					{
+						foreach (Hero h in cl.Heroes)
+						{
+							if (h.IsLord && h.GetRelationWithPlayer() >= Cfg.TrialSevenFriend)
+							{
+								add(h);
+							}
+						}
+					}
+				}
+			}
+			catch
+			{
+			}
+			return list.OrderByDescending(Willing).ThenByDescending((Hero h) => Rating(h.CharacterObject)).Take(40).ToList();
+		}
+
+		// Ask them. Each is asked once, and the answer stands.
+		internal static void Ask(List<Hero> asked)
+		{
+			string[] p = GatherRec();
+			if (p == null)
+			{
+				return;
+			}
+			List<string> ours = p[3].Split(',').Where((string x) => x.Length > 0).ToList();
+			List<string> done = p[5].Split(',').Where((string x) => x.Length > 0).ToList();
+			List<string> yes = new List<string>();
+			List<string> no = new List<string>();
+			foreach (Hero h in asked)
+			{
+				string id = ((MBObjectBase)h).StringId;
+				if (done.Contains(id) || ours.Contains(id))
+				{
+					continue;
+				}
+				done.Add(id);
+				if (ours.Count < 6 && MBRandom.RandomInt(100) < Willing(h))
+				{
+					ours.Add(id);
+					yes.Add(h.Name.ToString());
+				}
+				else
+				{
+					no.Add(h.Name.ToString());
+				}
+			}
+			p[3] = string.Join(",", ours.ToArray());
+			p[5] = string.Join(",", done.ToArray());
+			Store.Set(GatherKey, string.Join("|", p));
+			string text = "";
+			if (yes.Count > 0)
+			{
+				text += string.Join(", ", yes.ToArray()) + " will stand with you.\n\n";
+			}
+			if (no.Count > 0)
+			{
+				text += string.Join(", ", no.ToArray()) + " will not.\n\n";
+			}
+			text += ours.Count + " of six have answered. The lists open in " + HoursLeft() + " hours.";
+			Popup("Who Will Stand With You", text);
+		}
+
+		// The lists are ready. Whoever did not answer is made up.
+		private static void Open()
+		{
+			string[] p = GatherRec();
+			Store.Set(GatherKey, null);
+			if (p == null)
+			{
+				return;
+			}
+			Charge c = Get(p[0]);
+			if (c == null)
+			{
+				return;
+			}
+			List<CharacterObject> ours = Chars(p[3]).Take(6).ToList();
+			List<CharacterObject> theirs = Chars(p[4]);
+			List<string> named = ours.Select((CharacterObject x) => x.Name.ToString()).ToList();
+			int missing = 6 - ours.Count;
+			List<string> made = new List<string>();
+			if (missing > 0)
+			{
+				// Half your own soldiers, half glory hunters.
+				List<CharacterObject> soldiers = OursSeven().Where((CharacterObject x) => !x.IsHero).ToList();
+				int own = Math.Min(soldiers.Count, (missing + 1) / 2);
+				for (int i = 0; i < own; i++)
+				{
+					ours.Add(soldiers[i]);
+					made.Add("a " + soldiers[i].Name + " of your own host");
+				}
+				List<CharacterObject> hunters = CharacterObject.All.Where((CharacterObject x) => x != null && !x.IsHero
+					&& x.Occupation == Occupation.Soldier && x.Tier >= 3 && x.Tier <= 5).ToList();
+				while (ours.Count < 6 && hunters.Count > 0)
+				{
+					CharacterObject g = hunters[MBRandom.RandomInt(hunters.Count)];
+					ours.Add(g);
+					made.Add((MBRandom.RandomInt(2) == 0) ? ("a glory hunter who fights as a " + g.Name) : ("a hedge knight with no house, armed as a " + g.Name));
+				}
+			}
+			string text = "The lists are raised.\n\n" +
+				((named.Count > 0) ? ("Standing with you: " + string.Join(", ", named.ToArray()) + ".\n\n") : "Nobody you asked would stand with you.\n\n") +
+				((made.Count > 0) ? ("And the rest: " + string.Join("; ", made.ToArray()) + ".\n\n") : "") +
+				"Against you: " + string.Join(", ", theirs.Select((CharacterObject x) => x.Name.ToString()).ToArray()) + ".\n\n" +
+				"Go to the arena of the town you are in, or the next one you reach.";
+			Popup("The Lists Are Ready", text);
+			// Not straight into the arena: the lists open on the clock, and the
+			// player walks in when they choose.
+			Arrange(c, "seven", p[1] == "p", ours, theirs, true, false);
+		}
+
+		// Ready now, for the console.
+		internal static bool OpenNow()
+		{
+			if (!Gathering)
+			{
+				return false;
+			}
+			Open();
+			return true;
+		}
+
 		// With you in it, it is fought in an arena: now if you are in a town,
 		// otherwise at the next town you enter. Without you, it is decided on
 		// the spot.
-		private static void Arrange(Charge c, string form, bool prosecution, List<CharacterObject> ours, List<CharacterObject> theirs, bool youFight)
+		private static void Arrange(Charge c, string form, bool prosecution, List<CharacterObject> ours, List<CharacterObject> theirs, bool youFight, bool start = true)
 		{
 			c.State = "trial";
 			Save(c);
@@ -880,6 +1135,10 @@ namespace WardensAndDragons
 			}
 			Store.Set(TrialKey, rec);
 			Store.AddDeed(Standing.Date() + "  A " + ((form == "seven") ? "trial of seven" : "trial by combat") + " was called: " + Describe(c) + ".");
+			if (!start)
+			{
+				return;
+			}
 			string why;
 			if (!Fight(out why))
 			{
@@ -960,6 +1219,11 @@ namespace WardensAndDragons
 					Store.Set(ResultKey, null);
 					Store.Set(TrialKey, null);
 					Verdict(rec, result);
+					return;
+				}
+				if (Gathering && HoursLeft() <= 0)
+				{
+					Open();
 					return;
 				}
 				// One summons at a time.
@@ -1600,6 +1864,10 @@ namespace WardensAndDragons
 			{
 				return null;
 			}
+			if (Gathering)
+			{
+				return "Your trial of seven gathers: " + Answered() + " of six have answered, and the lists open in " + HoursLeft() + " hours.";
+			}
 			if (TrialWaiting)
 			{
 				return "A trial waits for you in the arena of the next town you enter.";
@@ -1741,6 +2009,16 @@ namespace WardensAndDragons
 						}
 						list.Add(h.CharacterObject);
 					}
+				}
+				// Then the head's friends - lords who love them enough to stand.
+				foreach (Hero h in Hero.AllAliveHeroes.Where((Hero x) => x.IsLord && x != head && x != Hero.MainHero && !x.IsChild && !x.IsPrisoner
+					&& x.Clan != head.Clan && head.GetRelation(x) >= Cfg.TrialSevenFriend).OrderByDescending((Hero x) => head.GetRelation(x)).Take(6))
+				{
+					if (list.Count >= 7)
+					{
+						break;
+					}
+					list.Add(h.CharacterObject);
 				}
 				CultureObject culture = head.Culture;
 				List<CharacterObject> elite = CharacterObject.All.Where((CharacterObject x) => x != null && !x.IsHero && x.Culture == culture

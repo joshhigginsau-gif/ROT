@@ -135,6 +135,9 @@ public class CourtBehavior : CampaignBehaviorBase
 			// Children who came to the gate before their family lines and
 			// pages were written get them now.
 			Baseborn.Repair();
+			// Sworn knights from before the ceremony existed get the white
+			// armour now.
+			Guard.Repair();
 		// One-time, for anyone upgrading: hand any privy-council seat still
 		// holding one of our old duties back to a Bellum default, now that
 		// ours no longer exist.
