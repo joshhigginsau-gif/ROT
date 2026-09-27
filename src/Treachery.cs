@@ -17,7 +17,7 @@ namespace WardensAndDragons
 	//
 	// The other side of the ravens: a false letter of your own. Choose a
 	// house, a pretext and one of your halls; pay the servants, the
-	// crossbowmen in the galleries and the musicians who know the tune; wait
+	// crossbowmen in the galleries and the men who know when to bar the doors; wait
 	// while it is prepared, and hope nobody talks. If the house comes, you
 	// may still let them eat and go home. Or you may not.
 	internal static class Treachery
@@ -135,7 +135,7 @@ namespace WardensAndDragons
 			List<InquiryElement> els = can.Select((Clan c) => new InquiryElement(c,
 				c.Name + "  (" + Guests(c).Count + " would come, " + Cost(c).ToString("N0") + " gold, relation " + (int)c.Leader.GetRelationWithPlayer() + ")", null,
 				Hero.MainHero.Gold >= Cost(c), "")).ToList();
-			Inquiry.Select("A Feast They Will Not Leave", "Which house?\n\nThe gold is paid up front - servants, crossbowmen for the galleries, musicians who know the tune - and it is not coming back whatever happens.",
+			Inquiry.Select("A Feast They Will Not Leave", "Which house?\n\nThe gold is paid up front - servants, crossbowmen for the galleries, servants who will bar the doors when you say - and it is not coming back whatever happens.",
 				els, 1, 1, "That one", "Not today",
 				delegate(List<InquiryElement> chosen)
 				{
@@ -201,7 +201,7 @@ namespace WardensAndDragons
 					});
 					Log.Write("scheme laid against " + c.Name + " at " + s.Name + " (" + pretext + ", " + cost + " gold)");
 					Ravens.Popup("The Feast Is Planned",
-						"The servants are paid. The galleries over the hall at " + s.Name + " will have men in them, and the musicians have been given a song to learn.\n\n" +
+						"The servants are paid. The galleries over the hall at " + s.Name + " will have men in them, and the servants know which word means bar the doors.\n\n" +
 						"In " + Cfg.TreacheryPrepDays + " days the raven goes to " + c.Name + ". Until then, the fewer who know, the better.");
 				});
 		}
@@ -266,7 +266,7 @@ namespace WardensAndDragons
 						Store.AddDeed(Standing.Date() + "  The whole realm knows what you meant to do to " + c.Name + " at " + venue.Name + ".");
 						Log.Write("the scheme against " + c.Name + " leaked");
 						Ravens.Popup("It Came Out",
-							"Somebody talked - a servant, a musician, a crossbowman with a sweetheart. " + c.Name + " know what was waiting for them at " + venue.Name + ", and soon everyone else will.\n\nThe gold is gone. So is anything they ever thought of you.");
+							"Somebody talked - a servant, a cupbearer, a crossbowman with a sweetheart. " + c.Name + " know what was waiting for them at " + venue.Name + ", and soon everyone else will.\n\nThe gold is gone. So is anything they ever thought of you.");
 						return;
 					}
 					if (today < ready)
@@ -341,9 +341,9 @@ namespace WardensAndDragons
 			string names = string.Join(", ", guests.Select((Hero h) => h.Name.ToString()).ToArray());
 			List<InquiryElement> els = new List<InquiryElement>();
 			els.Add(new InquiryElement("eat", "Let them eat, and go home", null, true, "Guest right is kept. The gold was the price of a feast after all."));
-			els.Add(new InquiryElement("rains", "Have the musicians play The Rains of Castamere", null, true,
+			els.Add(new InquiryElement("rains", "Give the signal: bar the doors", null, true,
 				"The doors are barred. You and your men are armoured; they are dressed for dinner. Guest right will be broken, and no one will ever eat your bread again without wondering."));
-			Inquiry.Select("The Feast Is Laid", c.Name + " are at your table: " + names + ".\n\nThe wine is poured. The musicians are waiting for a sign.", els, 1, 1, "So be it", null,
+			Inquiry.Select("The Feast Is Laid", c.Name + " are at your table: " + names + ".\n\nThe wine is poured. The servants are watching you for the sign.", els, 1, 1, "So be it", null,
 				delegate(List<InquiryElement> chosen)
 				{
 					string p = (chosen != null && chosen.Count > 0) ? (chosen[0].Identifier as string) : "eat";
@@ -384,7 +384,7 @@ namespace WardensAndDragons
 			ChangeRelationAction.ApplyPlayerRelation(c.Leader, 20, true, false);
 			Standing.Change(3, 0, "Kept guest right with " + c.Name);
 			Ravens.Popup("Bread and Salt",
-				"The musicians played something else. " + c.Name + " ate, and drank, and went home, and will never know how close it was.\n\nThe crossbowmen in the galleries were paid to watch a feast. It is the most any of them has ever been paid to do nothing.");
+				"You never gave the sign. " + c.Name + " ate, and drank, and went home, and will never know how close it was.\n\nThe crossbowmen in the galleries were paid to watch a feast. It is the most any of them has ever been paid to do nothing.");
 		}
 
 		private static void Rains(string[] s, Clan c, List<Hero> guests)
@@ -424,7 +424,7 @@ namespace WardensAndDragons
 			Ravens.SetFight("scheme|" + ((MBObjectBase)venue).StringId + "|" + ((MBObjectBase)c).StringId + "|" +
 				Ravens.Ids(ours.Select((HallSeat x) => x.Who)) + "|" + Ravens.Ids(theirs.Select((HallSeat x) => x.Who)) + "|" +
 				Ravens.Ids(guests.Select((Hero h) => h.CharacterObject)));
-			Log.Write("the Rains of Castamere at " + venue.Name + ": " + ours.Count + " of yours against " + guests.Count + " guests and " + (theirs.Count - guests.Count) + " guards");
+			Log.Write("the doors barred at " + venue.Name + ": " + ours.Count + " of yours against " + guests.Count + " guests and " + (theirs.Count - guests.Count) + " guards");
 			string why;
 			bool opened = HallFight.Open(venue, ours, false, theirs, false, delegate(bool won, List<CharacterObject> fallen)
 			{
@@ -573,7 +573,7 @@ namespace WardensAndDragons
 			{
 				Log.Write("the realm's answer to the feast failed: " + e.Message);
 			}
-			Store.AddDeed(Standing.Date() + "  The Rains of Castamere at " + where + ": " + dead.Count + " of " + house + " died at your table.");
+			Store.AddDeed(Standing.Date() + "  Guest right broken at " + where + ": " + dead.Count + " of " + house + " died at your table.");
 			Log.Write("massacre at " + where + ": " + dead.Count + " dead, " + fled.Count + " escaped, won=" + won);
 
 			// The charge: from your liege, or from your own lords.
@@ -608,8 +608,8 @@ namespace WardensAndDragons
 			bool youFell = fallen.Contains(CharacterObject.PlayerCharacter);
 			bool youDie = youFell && Cfg.TrialPlayerCanDie && MBRandom.RandomInt(100) < Cfg.TrialDeathChance;
 			string head = won
-				? "The musicians began The Rains of Castamere, and the doors were barred, and the crossbows came out of the galleries.\n\n"
-				: "The musicians began The Rains of Castamere, and it did not go the way it was meant to.\n\n";
+				? "You gave the sign. The doors were barred, and the crossbows came out of the galleries.\n\n"
+				: "You gave the sign, and it did not go the way it was meant to.\n\n";
 			if (youFell)
 			{
 				tale.Append(youDie ? "\nYou did not get up either.\n" : "\nYou were carried out of your own hall, and you will live.\n");
@@ -619,7 +619,7 @@ namespace WardensAndDragons
 				}
 			}
 			tale.Append("\nGuest right was broken under your roof. Nobody will eat your bread and salt again without looking at the doors.");
-			Ravens.Popup("The Rains of Castamere", head + tale);
+			Ravens.Popup("The Doors Are Barred", head + tale);
 			if (youDie)
 			{
 				try

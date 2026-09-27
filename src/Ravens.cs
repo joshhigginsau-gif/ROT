@@ -702,13 +702,13 @@ namespace WardensAndDragons
 					Law.Record(Law.GuestRight, host, Hero.MainHero, null, false);
 				}
 				Popup("The Doors Were Barred",
-					"The musicians stopped, and the doors were barred, and " + ((host != null) ? host.Name.ToString() : "your host") + "'s men came in armoured.\n\n" +
+					"The servants slipped out, and the doors were barred, and " + ((host != null) ? host.Name.ToString() : "your host") + "'s men came in armoured.\n\n" +
 					"You came out anyway.\n\n" + sb + "\nGuest right was broken under that roof, and the King's Justice can hear it.");
 				return;
 			}
 			// You fell. In their hall, that is the end of you.
-			Popup("The Rains of Castamere",
-				"The musicians stopped, and the doors were barred, and " + ((host != null) ? host.Name.ToString() : "your host") + "'s men came in armoured.\n\n" +
+			Popup("The Doors Are Barred",
+				"The servants slipped out, and the doors were barred, and " + ((host != null) ? host.Name.ToString() : "your host") + "'s men came in armoured.\n\n" +
 				sb + "\nYou did not come out.");
 			Store.AddDeed(Standing.Date() + "  Murdered at the table of " + ((host != null) ? host.Name.ToString() : "a host") + ".");
 			try

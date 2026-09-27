@@ -162,7 +162,7 @@ done whose edits had never been written to disk. It is worth continuing.
 - Errands are abstract (knight + men removed, teleported to the nearest town, resolved on
   return from `Law.Rating` against bandit man count / the quarry's party).
 
-## v2.7.0 — ravens, and the Rains of Castamere
+## v2.7.0 — ravens, and the barred doors
 
 - **Kingsguard armour in town.** `Guard.Armoured(h)` builds the same `LocationCharacter` as
   `CreateBodyguardHero` (PartyAgentOrigin, `_settlement` monster, AddFirstCompanionBehavior)
@@ -206,3 +206,7 @@ done whose edits had never been written to disk. It is worth continuing.
   >2 m above ground is `TeleportToPosition`'d to their side's points.
 - `wad.hall_test [guest]` opens the current hall with record `"test|…"`, which `Ravens.Settle`
   only logs.
+
+## v2.7.2 — bar the doors
+
+- Text only: the Rains of Castamere (a century after the Dance) replaced by "Give the signal: bar the doors". Choice id `rains` kept, so nothing in saves changes.

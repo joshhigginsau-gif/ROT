@@ -1,4 +1,12 @@
-Wardens & Dragons  v2.7.1  -  THE RAINS OF CASTAMERE
+Wardens & Dragons  v2.7.2  -  BAR THE DOORS
+
+
+v2.7.2 - BAR THE DOORS
+
+  Nobody has written that song yet - Castamere is a hundred years off. At
+  your false feast you now simply give the signal, and the doors are
+  barred. The chronicle calls it what it is: guest right broken.
+
 
 
 v2.7.1 - FEET ON THE FLOOR
@@ -22,7 +30,7 @@ v2.7.1 - FEET ON THE FLOOR
 
 
 
-v2.7.0 - "THE LANNISTERS SEND THEIR REGARDS"
+v2.7.0 - "BREAD AND SALT"
 
   THE WHITE CLOAKS IN THE STREETS
 
@@ -73,8 +81,8 @@ v2.7.0 - "THE LANNISTERS SEND THEIR REGARDS"
     whole realm knows. If it holds, they may still decline.
 
     When they come, be at the hall and choose "The feast is laid". You can
-    still let them eat and go home. Or have the musicians play The Rains of
-    Castamere: you and your white cloaks and best men, armoured, against
+    still let them eat and go home. Or give the signal and have the doors
+    barred: you and your white cloaks and best men, armoured, against
     the whole house in their feast clothes and a handful of their guards.
 
     Every guest who falls dies. Anyone who gets out swears vengeance, and
@@ -1565,4 +1573,4 @@ PHASE 8: THE BLACK BANNER
 
 
 WHAT IS NEXT
-  Phase 9 - tourneys, and the Red Wedding.
+  Phase 9 - tourneys, and the broken feast.
