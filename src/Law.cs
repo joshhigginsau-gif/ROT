@@ -79,6 +79,7 @@ namespace WardensAndDragons
 		internal const string Execution = "execution";
 		internal const string Tyranny = "tyranny";
 		internal const string Oathbreaking = "oathbreaking";
+		internal const string GuestRight = "guestright";
 
 		private const string Prefix = "lw:c:";
 		private const string TrialKey = "lw:trial";
@@ -88,6 +89,11 @@ namespace WardensAndDragons
 		// execution ordered by the court is not recorded as a crime of the
 		// court.
 		private static bool _sentencing;
+
+		// Set while a massacre is being counted, so each death in the hall is
+		// not also charged as its own murder - the crime is guest right, and
+		// it is charged once.
+		internal static bool Quiet;
 
 		// ------------------------------------------------------------------
 		// the record
@@ -171,6 +177,7 @@ namespace WardensAndDragons
 			{
 			case Treason:
 			case Kinslaying:
+			case GuestRight:
 				return 3;
 			case Murder:
 			case Execution:
@@ -197,6 +204,8 @@ namespace WardensAndDragons
 				return "Tyranny";
 			case Oathbreaking:
 				return "Oathbreaking";
+			case GuestRight:
+				return "Breaking guest right";
 			default:
 				return kind;
 			}
@@ -222,7 +231,7 @@ namespace WardensAndDragons
 		{
 			try
 			{
-				if (!Cfg.Law || victim == null || killer == null || killer == victim || _sentencing || !Store.Initialized)
+				if (!Cfg.Law || victim == null || killer == null || killer == victim || _sentencing || Quiet || !Store.Initialized)
 				{
 					return;
 				}

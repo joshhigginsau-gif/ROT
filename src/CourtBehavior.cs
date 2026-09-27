@@ -59,6 +59,12 @@ public class CourtBehavior : CampaignBehaviorBase
 		CampaignEvents.HourlyTickEvent.AddNonSerializedListener((object)this, (Action)Law.Settle);
 		// The white cloaks walk in with you.
 		CampaignEvents.BeforeMissionOpenedEvent.AddNonSerializedListener((object)this, (Action)Guard.Bodyguards);
+		// The ravens: a feast that became a fight is counted off the hall.
+		CampaignEvents.GameMenuOpened.AddNonSerializedListener((object)this, (Action<MenuCallbackArgs>)delegate
+		{
+			Ravens.Settle();
+		});
+		CampaignEvents.HourlyTickEvent.AddNonSerializedListener((object)this, (Action)Ravens.Settle);
 	}
 
 	public override void SyncData(IDataStore ds)
@@ -128,6 +134,7 @@ public class CourtBehavior : CampaignBehaviorBase
 			Tourney.Reset();
 			Law.Reset();
 			Guard.Reset();
+			Ravens.Reset();
 			Menus.Register(starter);
 			Dialogue.Add(starter);
 			Log.Write("warden dialogue registered");
@@ -166,6 +173,8 @@ public class CourtBehavior : CampaignBehaviorBase
 				Tourney.Daily();
 				Law.Daily();
 				Guard.Daily();
+				Ravens.Daily();
+				Treachery.Daily();
 				SettleTheDead();
 				Titles.Invalidate();
 				if (num - Store.LastDriftDay >= Cfg.DaysPerSeason)

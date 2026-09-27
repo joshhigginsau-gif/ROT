@@ -62,6 +62,11 @@ namespace WardensAndDragons
 				"  wad.kg_cloak                dress every sworn knight in the white armour",
 				"  wad.seven_ready             end a trial of seven's gathering now",
 				"",
+				"RAVENS",
+				"  wad.raven [kind] [false]    a letter now: marriage, feast, kin, peace",
+				"  wad.feast_now               the feast you accepted is today",
+				"  wad.scheme_ready            your false feast is prepared and accepted",
+				"",
 				"YOUR HOUSE",
 				"  wad.culture list            every culture your mods define",
 				"  wad.culture <name> [holdings]  your house (and holdings) take that culture",
@@ -639,6 +644,58 @@ namespace WardensAndDragons
 				return home;
 			}
 			return Settlement.All.FirstOrDefault((Settlement s) => s.IsTown);
+		}
+
+		// ------------------------------------------------------------------
+		// ravens
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("raven", "wad")]
+		public static string Raven(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			string kind = null;
+			bool force = false;
+			foreach (string a in args ?? new List<string>())
+			{
+				string t = a.Trim().ToLowerInvariant();
+				if (t == "false" || t == "trap")
+				{
+					force = true;
+				}
+				else if (t == Ravens.Marriage || t == Ravens.Feast || t == Ravens.Kin || t == Ravens.Peace)
+				{
+					kind = t;
+				}
+			}
+			return Ravens.Arrive(kind, force) ? ("A raven has come" + (force ? " - and it lies." : ".")) : "No house had anything to write to you.";
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("feast_now", "wad")]
+		public static string FeastNow(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			if (!Ravens.Appointment)
+			{
+				return "You are not expected anywhere.";
+			}
+			Ravens.FeastNow();
+			return "The feast is today. Go to the venue and go in.";
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("scheme_ready", "wad")]
+		public static string SchemeReady(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			return Treachery.Ready() ? "They have accepted, and are at your table. Go to the hall." : "No feast is being prepared.";
 		}
 	}
 }

@@ -161,3 +161,33 @@ done whose edits had never been written to disk. It is worth continuing.
   whole order as oathbreakers when the player clan changes.
 - Errands are abstract (knight + men removed, teleported to the nearest town, resolved on
   return from `Law.Rating` against bandit man count / the quarry's party).
+
+## v2.7.0 — ravens, and the Rains of Castamere
+
+- **Kingsguard armour in town.** `Guard.Armoured(h)` builds the same `LocationCharacter` as
+  `CreateBodyguardHero` (PartyAgentOrigin, `_settlement` monster, AddFirstCompanionBehavior)
+  but with `useCivilianEquipment: false`. `kingsguard_armour_in_town`.
+- **`HallFight.cs`**: TrialFight taken indoors. The scene is the venue's `lordshall`
+  (`GetSceneName(wallLevel)`), opened as `"ArenaDuelMission"` for the duel's views, with
+  `MissionAgentHandler` + `MissionLocationLogic(hall)`; the hall's cast is cleared first
+  (`RemoveAllCharacters`). Guests stand on `defender_infantry`/`defender_archer`; the other
+  side spawns at the frame furthest from the guests' centroid (the door). The spawn-point
+  counts are logged per hall. Fewer than two frames → decided without a mission.
+  The callback only writes `rv:result`; `Ravens.Settle` applies it off-mission.
+- **`Ravens.cs`** (`rv:*`): a weekly roll for a letter (marriage / feast / kin / peace),
+  false with `TrapChance` (sender hatred, Honor trait, your Dread and Honour; 2–40, 100 for
+  anyone with a `rv:veng:<id>` flag). An accepted letter is an appointment `rv:appt`; at
+  the venue on the day, "Go in to the feast" → honest (relation, marriage, peace) or a trap
+  (you as guest, civilian unless you came armed). Falling in a trap = `ApplyByMurder(MainHero)`.
+  Proposing a marriage from the court makes a wedding appointment at their seat, itself
+  possibly false.
+- **`Treachery.cs`** (`tr:scheme`): your false feast. Target → pretext (wedding / feast /
+  kin letter) → one of your halls; gold up front, a daily leak roll during preparation,
+  then an acceptance roll. At the venue "The feast is laid": let them eat (Honour +3) or the
+  Rains. `After`: fallen guests die (`Law.Quiet` suppresses the per-death murder charges),
+  survivors and kin of the dead get vengeance flags, Dread +30 / Honour −25 /
+  `HonourCap −= treachery_honour_cap`, world relations −15, kin −60, `rv:salt`, and one
+  `Law.GuestRight` charge against you. If no adult of the house is left, its towns and
+  castles and its children are taken **before** the killing (so the game's own
+  leader-death destruction can't hand them elsewhere), then `DestroyClanAction.Apply`.
+- Cheats: `wad.raven [kind] [false]`, `wad.feast_now`, `wad.scheme_ready`.

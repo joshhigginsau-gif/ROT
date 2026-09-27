@@ -72,6 +72,19 @@ namespace WardensAndDragons
 				{
 				}
 
+				// --- the ravens ---
+				try
+				{
+					string rv = Treachery.Attention() ?? Ravens.Attention();
+					if (rv != null)
+					{
+						list.Add(rv);
+					}
+				}
+				catch
+				{
+				}
+
 				// --- the lists ---
 				try
 				{

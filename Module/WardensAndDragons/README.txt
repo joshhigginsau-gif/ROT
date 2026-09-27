@@ -1,4 +1,78 @@
-Wardens & Dragons  v2.6.0  -  SEVEN, AND THE CLOAK
+Wardens & Dragons  v2.7.0  -  THE RAINS OF CASTAMERE
+
+
+v2.7.0 - "THE LANNISTERS SEND THEIR REGARDS"
+
+  THE WHITE CLOAKS IN THE STREETS
+
+    Your sworn knights now follow you through towns, castles and your hall
+    in the white armour instead of their town clothes.
+    kingsguard_armour_in_town=false puts them back in doublets.
+
+  RAVENS  (Court -> Ravens)
+
+    Letters come from other houses, about one every month: a match offered,
+    a feast, word from your kin who married into their house, a feast to
+    end a war. Accept and you are expected at their hall in five days -
+    go there and choose "Go in to the feast".
+
+    Most letters mean what they say. Some do not. The odds a letter is
+    false run from about 2% to 40%:
+
+      more likely   the sender hates you, is dishonourable, you are feared
+      less likely   the sender is honourable, you are honourable
+      always        a survivor of a feast of yours, sworn to vengeance
+
+    Your people say what they make of each letter - right more often the
+    more Roguery you have and the more white cloaks ride with you, and
+    wrong in either direction when they are wrong. You may accept, accept
+    and come armoured with your knights (an insult if it was honest), decline
+    politely, or burn it.
+
+    If it was a trap, the doors close and their men come in armoured; you
+    and whoever rode with you are in your feast clothes unless you came
+    armed. Fight your way out and guest right was broken by THEM - you may
+    charge them. Fall in their hall and you do not get up.
+
+    From the court you can also offer a marriage (your own blood, or you,
+    to anyone suitable - the wedding is at their hall) and hold an honest
+    feast of your own.
+
+  A FEAST THEY WILL NOT LEAVE  (Court -> Ravens)
+
+    Choose a house, a pretext and one of your halls:
+
+      a wedding        a real match, really made (+30 to their coming)
+      a feast          bread and salt, old quarrels forgotten
+      a kin letter     only if their blood lives at your court (+20)
+
+    It costs 30,000 plus 8,000 a guest, paid up front, and takes 7 days to
+    prepare. Every day it may leak - more if you are feared, less if you are
+    honourable or have a Lord Commander keeping the doors. If it leaks, the
+    whole realm knows. If it holds, they may still decline.
+
+    When they come, be at the hall and choose "The feast is laid". You can
+    still let them eat and go home. Or have the musicians play The Rains of
+    Castamere: you and your white cloaks and best men, armoured, against
+    the whole house in their feast clothes and a handful of their guards.
+
+    Every guest who falls dies. Anyone who gets out swears vengeance, and
+    so does their kin. If nobody of age is left, the house is ended: its
+    towns and castles become yours and its children are raised at your
+    court. Dread +30, Honour -25, and your Honour can never again rise as
+    high (treachery_honour_cap=20). Every house thinks less of you, nobody
+    trusts your bread and salt again, and you will be charged with breaking
+    guest right.
+
+  TESTING
+
+      wad.raven [marriage|feast|kin|peace] [false]   a letter now
+      wad.feast_now        the feast you accepted is today
+      wad.scheme_ready     your false feast is prepared and accepted
+
+    Hall scenes differ from castle to castle; the log records the spawn
+    points each hall had. Please send the log after a hall fight.
+
 
 
 v2.6.0 - "WILL NO KNIGHT STAND FOR ME?"

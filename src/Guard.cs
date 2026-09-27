@@ -905,7 +905,10 @@ namespace WardensAndDragons
 					{
 						continue;
 					}
-					LocationCharacter lc = LocationCharacter.CreateBodyguardHero(h, MobileParty.MainParty, SandBoxManager.Instance.AgentBehaviorManager.AddFirstCompanionBehavior);
+					// The game's own CreateBodyguardHero puts a bodyguard in town
+					// clothes in every town and castle. This is the same
+					// character, built the same way, in the white armour.
+					LocationCharacter lc = Cfg.KgArmourInTown ? Armoured(h) : LocationCharacter.CreateBodyguardHero(h, MobileParty.MainParty, SandBoxManager.Instance.AgentBehaviorManager.AddFirstCompanionBehavior);
 					enc.AddAccompanyingCharacter(lc, true);
 					AccompanyingCharacter ac = enc.GetAccompanyingCharacter(h.CharacterObject);
 					if (ac != null)
@@ -919,6 +922,14 @@ namespace WardensAndDragons
 			{
 				Log.Once("kgbody", "the bodyguards could not come in with you: " + e.Message);
 			}
+		}
+
+		private static LocationCharacter Armoured(Hero h)
+		{
+			UniqueTroopDescriptor no = new UniqueTroopDescriptor(FlattenedTroopRoster.GenerateUniqueNoFromParty(MobileParty.MainParty, 0));
+			Monster monster = FaceGen.GetMonsterWithSuffix(h.CharacterObject.Race, "_settlement");
+			AgentData data = new AgentData(new TaleWorlds.CampaignSystem.AgentOrigins.PartyAgentOrigin(PartyBase.MainParty, h.CharacterObject, -1, no)).Monster(monster).NoHorses(true);
+			return new LocationCharacter(data, SandBoxManager.Instance.AgentBehaviorManager.AddFirstCompanionBehavior, null, false, LocationCharacter.CharacterRelations.Friendly, null, false);
 		}
 
 		// ------------------------------------------------------------------
