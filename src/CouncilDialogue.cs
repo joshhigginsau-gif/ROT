@@ -64,7 +64,7 @@ namespace WardensAndDragons
 			Line(s, "wad_cn_muster", "Muster a host of our own - gold for men, under one of my knights.", Council.Ships, delegate { Later(Host.Muster); });
 			Line(s, "wad_cn_banners", "Call the realm's lords to the banners. I want a castle taken.", Council.Ships, delegate { Later(Council.CallBanners); });
 			Line(s, "wad_cn_down", "Stand the realm's lords down.", Council.Ships, delegate { Later(Council.StandDownBanners); }, () => Council.CouncilArmy() != null);
-			Line(s, "wad_cn_hosts", "My hosts in the field - I have orders for them.", Council.Ships, delegate { Later(Host.Pick); }, () => Host.All().Count > 0);
+			Line(s, "wad_cn_hosts", "My hosts in the field - I have orders for them.", Council.Ships, delegate { Later(Host.Pick); }, () => Host.Mine().Count > 0);
 			Line(s, "wad_cn_levy", "Raise a levy on the towns.", Council.Coin, delegate { Later(Council.Levy); });
 			Line(s, "wad_cn_realm", "How stands the realm?", Council.Hand, delegate { Later(delegate { Ravens.Popup("The Hand's Report", Council.Realm()); }); });
 			Line(s, "wad_cn_laws", "What waits for judgement?", Council.Laws, delegate { Later(delegate { Ravens.Popup("The Master of Laws", Council.Judgement()); }); });

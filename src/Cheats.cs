@@ -71,6 +71,7 @@ namespace WardensAndDragons
 				"THE SMALL COUNCIL AND HOSTS",
 				"  wad.council_now             a summoned council is in your hall today",
 				"  wad.host_end                the next host's service ends tomorrow",
+				"  wad.ai_host [realm]         an enemy ruler (or the one named) musters a host now",
 				"",
 				"YOUR HOUSE",
 				"  wad.culture list            every culture your mods define",
@@ -760,6 +761,16 @@ namespace WardensAndDragons
 				return "Load a campaign first.";
 			}
 			return Host.EndSoon() ? "That host's service ends tomorrow." : "You have no host in the field.";
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("ai_host", "wad")]
+		public static string AiHost(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			return Host.ForceAi((args != null && args.Count > 0) ? string.Join(" ", args) : null);
 		}
 	}
 }

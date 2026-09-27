@@ -46,7 +46,7 @@ namespace WardensAndDragons
 
 			Option(s, "wad_cn_hosts", "{=WAD_CnHosts}Your hosts", 2, delegate(MenuCallbackArgs a)
 			{
-				if (Host.All().Count == 0)
+				if (Host.Mine().Count == 0)
 				{
 					a.IsEnabled = false;
 					a.Tooltip = Styles.Line("You have no host in the field.");

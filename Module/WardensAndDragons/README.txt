@@ -1,4 +1,41 @@
-Wardens & Dragons  v2.8.0  -  THE SMALL COUNCIL
+Wardens & Dragons  v2.9.0  -  HOSTS AGAINST HOSTS
+
+
+v2.9.0 - HOSTS AGAINST HOSTS
+
+  OTHER RULERS BUY HOSTS TOO
+
+    Every week, a ruler at war may spend part of their gold on a host of
+    their own - three times as likely once an enemy of theirs already has
+    one in the field, so a host of yours will be answered. Veterans if they
+    are rich, men-at-arms if not, levies if that is all they can afford;
+    commanded by a lord of the ruling house. You hear of it by raven when
+    it is raised against you, and in passing when it is not.
+
+    A ruler sends their host after an enemy host within reach first, and at
+    the nearest enemy castle otherwise, and picks a new target when the
+    old one falls or is gone. Rulers at war with each other will throw
+    their hosts at each other. When a ruler's host has served its season,
+    the lord who led it keeps only the men they had before.
+
+  BRING THEM TO BATTLE
+
+    A new order for your own hosts (Court -> The small council -> Your
+    hosts): "Bring an enemy host or army to battle". Pick any enemy host
+    or army in the field; they hunt it down wherever it goes.
+
+    The Hand's report lists every other ruler's host, and which are at war
+    with you.
+
+      ai_hosts_enabled=true       ai_host_weekly_chance=10
+      ai_host_spend_percent=40    ai_host_min_men=2000
+      ai_host_max_per_realm=1
+
+  TESTING
+
+      wad.ai_host [realm]    an enemy ruler (or the one named) musters a
+                             host now
+
 
 
 v2.8.0 - THE SMALL COUNCIL

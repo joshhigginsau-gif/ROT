@@ -229,3 +229,17 @@ done whose edits had never been written to disk. It is worth continuing.
 - `CouncilDialogue.cs`: `hero_main_options` → `wad_cn_*`; actions run on
   `ConversationEndOneShot`. `CouncilMenu.cs`: Court → The small council.
 - The assassination feature that was planned here was dropped.
+
+## v2.9.0 — hosts against hosts
+
+- `Host.Rec` gains `Owner` (clan id; blank = player, for v2.8.0 saves) and `Base` (party size
+  before the host was added). `Host.Mine()` is the player's; the model patches cover all hosts.
+- `AiMuster` (weekly, `hx:airoll`): each AI-ruled kingdom at war, below `ai_host_max_per_realm`,
+  rolls `ai_host_weekly_chance` (×3 if an enemy of theirs has a host), spends
+  `ai_host_spend_percent` of the ruler's gold. Commander = a ruling-clan lord leading a free
+  party (troops added to it, `Base` = its size) or a partyless lord (new clan party).
+- `AiChoose`: engage an enemy host within 250, else besiege the nearest enemy fortification.
+  `TheirDaily` re-chooses when free, when a target falls, or when an enemy host comes within 100.
+  `Disperse` trims the party back to `max(Base, 60)` rather than destroying it.
+- New order `engage` (`SetMoveEngageParty`, locked) for any host, target from `Foes()`: enemy
+  hosts, then enemy army leader parties.

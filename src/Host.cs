@@ -31,7 +31,10 @@ namespace WardensAndDragons
 		internal const string Men = "men";
 		internal const string Veteran = "veteran";
 
-		// knight | quality | men | price | end | order | target | warned
+		// knight | quality | men | price | end | order | target | warned | owner | base
+		// owner: the clan that paid (blank = yours, from before other lords
+		// could muster). base: how many men the party had before the host was
+		// added to it (0 = the party was raised for the host).
 		internal sealed class Rec
 		{
 			internal string Party = "";
@@ -43,10 +46,33 @@ namespace WardensAndDragons
 			internal string Order = "free";
 			internal string Target = "";
 			internal bool Warned;
+			internal string Owner = "";
+			internal int Base;
+
+			internal bool Mine
+			{
+				get
+				{
+					return Owner == "" || (Clan.PlayerClan != null && Owner == ((MBObjectBase)Clan.PlayerClan).StringId);
+				}
+			}
+
+			internal Clan OwnerClan
+			{
+				get
+				{
+					if (Mine)
+					{
+						return Clan.PlayerClan;
+					}
+					string o = Owner;
+					return Clan.FindFirst((Clan c) => ((MBObjectBase)c).StringId == o);
+				}
+			}
 
 			internal string Pack()
 			{
-				return string.Join("|", new string[8] { Knight, Quality, Raised.ToString(), Price.ToString(), End.ToString(), Order, Target, Warned ? "1" : "0" });
+				return string.Join("|", new string[10] { Knight, Quality, Raised.ToString(), Price.ToString(), End.ToString(), Order, Target, Warned ? "1" : "0", Owner, Base.ToString() });
 			}
 
 			internal static Rec Unpack(string party, string s)
@@ -66,6 +92,11 @@ namespace WardensAndDragons
 				r.Order = p[5];
 				r.Target = p[6];
 				r.Warned = p[7] == "1";
+				if (p.Length >= 10)
+				{
+					r.Owner = p[8];
+					int.TryParse(p[9], out r.Base);
+				}
 				return r;
 			}
 		}
@@ -84,6 +115,11 @@ namespace WardensAndDragons
 				}
 			}
 			return list;
+		}
+
+		internal static List<Rec> Mine()
+		{
+			return All().Where((Rec r) => r.Mine).ToList();
 		}
 
 		private static void Save(Rec r)
@@ -330,7 +366,7 @@ namespace WardensAndDragons
 				}, null);
 		}
 
-		private static List<CharacterObject> Troops(string q)
+		private static List<CharacterObject> Troops(string q, Clan owner = null)
 		{
 			int lo;
 			int hi;
@@ -338,11 +374,19 @@ namespace WardensAndDragons
 			List<CultureObject> cultures = new List<CultureObject>();
 			try
 			{
-				cultures.Add(Clan.PlayerClan.Culture);
-				cultures.Add(Hero.MainHero.Culture);
-				if (Clan.PlayerClan.Kingdom != null)
+				Clan c = owner ?? Clan.PlayerClan;
+				cultures.Add(c.Culture);
+				if (c == Clan.PlayerClan)
 				{
-					cultures.Add(Clan.PlayerClan.Kingdom.Culture);
+					cultures.Add(Hero.MainHero.Culture);
+				}
+				else if (c.Leader != null)
+				{
+					cultures.Add(c.Leader.Culture);
+				}
+				if (c.Kingdom != null)
+				{
+					cultures.Add(c.Kingdom.Culture);
 				}
 			}
 			catch
@@ -404,6 +448,7 @@ namespace WardensAndDragons
 				r.Raised = men;
 				r.Price = cost;
 				r.End = CourtBehavior.Today() + Cfg.HostDays;
+				r.Owner = ((MBObjectBase)Clan.PlayerClan).StringId;
 				Save(r);
 				Guard.SetState(knight, "host");
 				Store.AddDeed(Standing.Date() + "  " + knight.Name + " took command of " + men.ToString("N0") + " " + QualityName(q) + ".");
@@ -430,6 +475,7 @@ namespace WardensAndDragons
 			}
 			List<InquiryElement> els = new List<InquiryElement>();
 			els.Add(new InquiryElement("siege", "Besiege a castle or town", null, true, "They march on it, and do not stop for anything else until the siege is laid."));
+			els.Add(new InquiryElement("engage", "Bring an enemy host or army to battle", null, true, "They hunt it down and fight it, wherever it goes."));
 			els.Add(new InquiryElement("hold", "Hold one of your castles or towns", null, true, "They go there and stay."));
 			els.Add(new InquiryElement("follow", "March with me", null, true, "They join your army and fight your battles. You must be in a realm."));
 			els.Add(new InquiryElement("free", "Free to campaign", null, true, knight.Name + " uses them as they see fit."));
@@ -446,6 +492,9 @@ namespace WardensAndDragons
 						break;
 					case "hold":
 						PickTarget(r, false);
+						break;
+					case "engage":
+						PickFoe(r);
 						break;
 					case "follow":
 						SetOrder(r, "follow", "");
@@ -489,6 +538,49 @@ namespace WardensAndDragons
 				});
 		}
 
+		// Enemy hosts first, then enemy armies, nearest first.
+		internal static List<MobileParty> Foes(IFaction mine, Vec2 at)
+		{
+			List<MobileParty> hosts = All().Select(PartyOf).Where((MobileParty x) => x != null && x.IsActive && x.MapFaction != null && FactionManager.IsAtWarAgainstFaction(x.MapFaction, mine))
+				.OrderBy((MobileParty x) => x.GetPosition2D.Distance(at)).ToList();
+			List<MobileParty> armies = MobileParty.All.Where((MobileParty x) => x.IsActive && x.Army != null && x.Army.LeaderParty == x && !hosts.Contains(x) && x.MapFaction != null
+				&& FactionManager.IsAtWarAgainstFaction(x.MapFaction, mine)).OrderBy((MobileParty x) => x.GetPosition2D.Distance(at)).Take(15).ToList();
+			return hosts.Concat(armies).ToList();
+		}
+
+		private static string FoeName(MobileParty x)
+		{
+			Rec h = All().FirstOrDefault((Rec r) => r.Party == ((MBObjectBase)x).StringId);
+			int men = (x.Army != null && x.Army.LeaderParty == x) ? x.Army.TotalManCount : x.MemberRoster.TotalManCount;
+			string who = (x.LeaderHero != null) ? x.LeaderHero.Name.ToString() : x.Name.ToString();
+			return ((h != null) ? "Host of " : "Army of ") + who + " (" + x.MapFaction.Name + ", " + men.ToString("N0") + " men)";
+		}
+
+		private static void PickFoe(Rec r)
+		{
+			MobileParty p = PartyOf(r);
+			if (p == null)
+			{
+				return;
+			}
+			List<MobileParty> foes = Foes(Clan.PlayerClan.MapFaction, p.GetPosition2D);
+			if (foes.Count == 0)
+			{
+				Flow.Notify("No enemy host or army is in the field.");
+				return;
+			}
+			List<InquiryElement> els = foes.Select((MobileParty x) => new InquiryElement(x, FoeName(x), null, true, "")).ToList();
+			Inquiry.Select("Bring Them to Battle", "Which?", els, 1, 1, "Them", "Not now",
+				delegate(List<InquiryElement> chosen)
+				{
+					MobileParty x = (chosen != null && chosen.Count > 0) ? (chosen[0].Identifier as MobileParty) : null;
+					if (x != null)
+					{
+						SetOrder(r, "engage", ((MBObjectBase)x).StringId);
+					}
+				});
+		}
+
 		private static void SetOrder(Rec r, string order, string target)
 		{
 			MobileParty p = PartyOf(r);
@@ -509,6 +601,11 @@ namespace WardensAndDragons
 
 		private static string Describe(Rec r)
 		{
+			if (r.Order == "engage")
+			{
+				MobileParty f = MobileParty.All.FirstOrDefault((MobileParty x) => ((MBObjectBase)x).StringId == r.Target);
+				return "hunting " + ((f != null && f.LeaderHero != null) ? (f.LeaderHero.Name + "'s men") : "the enemy");
+			}
 			Settlement s = string.IsNullOrEmpty(r.Target) ? null : Settlement.Find(r.Target);
 			switch (r.Order)
 			{
@@ -532,12 +629,41 @@ namespace WardensAndDragons
 				{
 					return;
 				}
-				Settlement s = string.IsNullOrEmpty(r.Target) ? null : Settlement.Find(r.Target);
+				IFaction mine = p.MapFaction;
+				Settlement s = (string.IsNullOrEmpty(r.Target) || r.Order == "engage") ? null : Settlement.Find(r.Target);
 				switch (r.Order)
 				{
-				case "siege":
-					if (s == null || s.MapFaction == Clan.PlayerClan.MapFaction)
+				case "engage":
+				{
+					string tid = r.Target;
+					MobileParty f = MobileParty.All.FirstOrDefault((MobileParty x) => ((MBObjectBase)x).StringId == tid);
+					if (f == null || !f.IsActive || f.MapFaction == null || !FactionManager.IsAtWarAgainstFaction(f.MapFaction, mine))
 					{
+						r.Order = "free";
+						r.Target = "";
+						Save(r);
+						p.Ai.SetDoNotMakeNewDecisions(false);
+						if (r.Mine)
+						{
+							Ravens.Popup("The Hunt Is Over", "The host your men were hunting is no longer in the field.");
+						}
+						return;
+					}
+					p.Ai.SetDoNotMakeNewDecisions(true);
+					p.SetMoveEngageParty(f, MobileParty.NavigationType.Default);
+					break;
+				}
+				case "siege":
+					if (s == null || s.MapFaction == mine)
+					{
+						if (!r.Mine)
+						{
+							r.Order = "free";
+							r.Target = "";
+							Save(r);
+							p.Ai.SetDoNotMakeNewDecisions(false);
+							return;
+						}
 						if (s != null)
 						{
 							Hero kn = Law.Find(r.Knight);
@@ -549,12 +675,13 @@ namespace WardensAndDragons
 						Enforce(r, p, true);
 						return;
 					}
-					if (!FactionManager.IsAtWarAgainstFaction(s.MapFaction, Clan.PlayerClan.MapFaction))
+					if (!FactionManager.IsAtWarAgainstFaction(s.MapFaction, mine))
 					{
 						r.Order = "free";
 						r.Target = "";
 						Save(r);
 						p.Ai.SetDoNotMakeNewDecisions(false);
+						if (r.Mine)
 						Ravens.Popup("Peace", "There is peace with " + s.MapFaction.Name + ", and your host has turned back from " + s.Name + ".");
 						return;
 					}
@@ -569,7 +696,7 @@ namespace WardensAndDragons
 					p.SetMoveBesiegeSettlement(s, MobileParty.NavigationType.Default);
 					break;
 				case "hold":
-					if (s == null || s.MapFaction != Clan.PlayerClan.MapFaction)
+					if (s == null || s.MapFaction != mine)
 					{
 						r.Order = "free";
 						Save(r);
@@ -624,6 +751,11 @@ namespace WardensAndDragons
 
 		internal static void StandDown(Rec r, string why)
 		{
+			if (!r.Mine)
+			{
+				Disperse(r, why);
+				return;
+			}
 			MobileParty p = PartyOf(r);
 			Hero knight = Law.Find(r.Knight);
 			Drop(r);
@@ -678,7 +810,12 @@ namespace WardensAndDragons
 					return;
 				}
 				int today = CourtBehavior.Today();
-				foreach (Rec r in All())
+				foreach (Rec r in All().Where((Rec x) => !x.Mine).ToList())
+				{
+					TheirDaily(r, today);
+				}
+				AiMuster(today);
+				foreach (Rec r in Mine())
 				{
 					MobileParty p = PartyOf(r);
 					Hero knight = Law.Find(r.Knight);
@@ -711,6 +848,305 @@ namespace WardensAndDragons
 			catch (Exception e)
 			{
 				Log.Once("hostdaily", "the hosts' tick failed: " + e.Message);
+			}
+		}
+
+		// ------------------------------------------------------------------
+		// other rulers' hosts
+
+		private const string AiRollKey = "hx:airoll";
+
+		private static bool AtWarWithMe(IFaction f)
+		{
+			try
+			{
+				return f != null && Clan.PlayerClan.MapFaction != null && FactionManager.IsAtWarAgainstFaction(f, Clan.PlayerClan.MapFaction);
+			}
+			catch
+			{
+				return false;
+			}
+		}
+
+		private static bool FreeLordParty(MobileParty p)
+		{
+			return p != null && p.IsActive && p.IsLordParty && p != MobileParty.MainParty && p.Army == null && p.MapEvent == null && p.BesiegedSettlement == null && !Is(p);
+		}
+
+		// Once a week: a ruler at war with gold to spare may buy a host -
+		// likelier if an enemy of theirs already has one in the field.
+		private static void AiMuster(int today)
+		{
+			if (!Cfg.AiHosts || today - Store.GetI(AiRollKey, -9999) < 7)
+			{
+				return;
+			}
+			Store.SetI(AiRollKey, today);
+			foreach (Kingdom k in Kingdom.All.ToList())
+			{
+				try
+				{
+					if (k == null || k.IsEliminated || k.RulingClan == null || k.RulingClan == Clan.PlayerClan)
+					{
+						continue;
+					}
+					Hero ruler = k.Leader;
+					if (ruler == null || !ruler.IsAlive || ruler.IsPrisoner)
+					{
+						continue;
+					}
+					List<Kingdom> foes = Kingdom.All.Where((Kingdom o) => o != k && !o.IsEliminated && FactionManager.IsAtWarAgainstFaction(o, k)).ToList();
+					if (foes.Count == 0)
+					{
+						continue;
+					}
+					string owner = ((MBObjectBase)k.RulingClan).StringId;
+					if (All().Count((Rec r) => r.Owner == owner) >= Cfg.AiHostMaxPerRealm)
+					{
+						continue;
+					}
+					bool threatened = All().Any((Rec r) =>
+					{
+						MobileParty hp = PartyOf(r);
+						return hp != null && hp.MapFaction != null && FactionManager.IsAtWarAgainstFaction(hp.MapFaction, k);
+					});
+					int chance = Cfg.AiHostWeeklyChance * (threatened ? 3 : 1);
+					if (MBRandom.RandomInt(100) >= chance)
+					{
+						continue;
+					}
+					AiRaise(k, ruler, threatened);
+				}
+				catch (Exception e)
+				{
+					Log.Once("aimuster" + ((MBObjectBase)k).StringId, "a ruler's muster failed: " + e.Message);
+				}
+			}
+		}
+
+		private static void AiRaise(Kingdom k, Hero ruler, bool threatened)
+		{
+			int budget = (int)((long)ruler.Gold * Cfg.AiHostSpendPercent / 100);
+			string q = (budget >= Cfg.AiHostMinMen * Cfg.HostPriceVeteran * 3) ? Veteran : Men;
+			int men = Math.Min(Cfg.HostMaxMen, budget / Price(q));
+			if (men < Cfg.AiHostMinMen)
+			{
+				q = Levy;
+				men = Math.Min(Cfg.HostMaxMen, budget / Price(q));
+			}
+			if (men < Cfg.AiHostMinMen)
+			{
+				return;
+			}
+			Clan clan = k.RulingClan;
+			List<CharacterObject> troops = Troops(q, clan);
+			if (troops.Count == 0)
+			{
+				return;
+			}
+			// A lord of the ruling house to command: one already at the head
+			// of a free party, else one with no party at all.
+			List<Hero> lords = clan.Heroes.Where((Hero h) => h.IsAlive && !h.IsChild && !h.IsPrisoner && h.IsLord).ToList();
+			Hero commander = lords.Where((Hero h) => h.PartyBelongedTo != null && h.PartyBelongedTo.LeaderHero == h && FreeLordParty(h.PartyBelongedTo))
+				.OrderBy((Hero h) => (h == ruler) ? 1 : 0).FirstOrDefault();
+			MobileParty party = (commander != null) ? commander.PartyBelongedTo : null;
+			int basis = (party != null) ? party.MemberRoster.TotalManCount : 0;
+			if (party == null)
+			{
+				commander = lords.FirstOrDefault((Hero h) => h.PartyBelongedTo == null && h.CurrentSettlement != null);
+				if (commander == null)
+				{
+					return;
+				}
+				party = MobilePartyHelper.CreateNewClanMobileParty(commander, clan);
+				if (party == null)
+				{
+					return;
+				}
+			}
+			int cost = men * Price(q);
+			ruler.ChangeHeroGold(-cost);
+			Fill(party, troops, q, men);
+			Rec r = new Rec();
+			r.Party = ((MBObjectBase)party).StringId;
+			r.Knight = ((MBObjectBase)commander).StringId;
+			r.Quality = q;
+			r.Raised = men;
+			r.Price = cost;
+			r.End = CourtBehavior.Today() + Cfg.HostDays;
+			r.Owner = ((MBObjectBase)clan).StringId;
+			r.Base = basis;
+			Save(r);
+			AiChoose(r, party);
+			Log.Write("host raised by " + k.Name + ": " + men + " " + q + " under " + commander.Name + " (" + r.Party + "), " + Describe(r) + (threatened ? " - answering an enemy host" : ""));
+			string news = k.Name + " has bought a host: " + men.ToString("N0") + " " + QualityName(q) + " under " + commander.Name + ", " + Describe(r) + ".";
+			if (AtWarWithMe(k))
+			{
+				Ravens.Popup("A Host Gathers", news + "\n\nYour own hosts can be sent to bring them to battle: Court -> The small council -> Your hosts.");
+			}
+			else
+			{
+				Flow.Notify(news);
+			}
+		}
+
+		// Where a ruler sends a host: at an enemy host within reach, else at
+		// the nearest enemy castle.
+		private static void AiChoose(Rec r, MobileParty p)
+		{
+			IFaction mine = p.MapFaction;
+			Vec2 at = p.GetPosition2D;
+			MobileParty foe = Foes(mine, at).FirstOrDefault((MobileParty x) => Is(x) && x.GetPosition2D.Distance(at) < 250f);
+			if (foe != null)
+			{
+				r.Order = "engage";
+				r.Target = ((MBObjectBase)foe).StringId;
+			}
+			else
+			{
+				Settlement s = Settlement.All.Where((Settlement x) => x.IsFortification && x.MapFaction != null && FactionManager.IsAtWarAgainstFaction(x.MapFaction, mine))
+					.OrderBy((Settlement x) => x.GetPosition2D.Distance(at)).FirstOrDefault();
+				r.Order = (s != null) ? "siege" : "free";
+				r.Target = (s != null) ? ((MBObjectBase)s).StringId : "";
+			}
+			Save(r);
+			Enforce(r, p, true);
+		}
+
+		private static void TheirDaily(Rec r, int today)
+		{
+			MobileParty p = PartyOf(r);
+			Hero lord = Law.Find(r.Knight);
+			if (p == null || !p.IsActive || lord == null || !lord.IsAlive || lord.IsPrisoner || p.LeaderHero != lord)
+			{
+				Drop(r);
+				Clan owner = r.OwnerClan;
+				string what = ((owner != null && owner.Kingdom != null) ? owner.Kingdom.Name.ToString() : "A realm") + "'s host under " + ((lord != null) ? lord.Name.ToString() : "its lord") + " is broken.";
+				Log.Write(what);
+				if (owner != null && AtWarWithMe(owner.MapFaction))
+				{
+					Ravens.Popup("A Host Broken", what);
+					Store.AddDeed(Standing.Date() + "  " + what);
+				}
+				return;
+			}
+			if (today >= r.End)
+			{
+				Disperse(r, "their service is done");
+				return;
+			}
+			if (p.MapEvent != null)
+			{
+				return;
+			}
+			// An enemy host close by is worth more than a castle.
+			if (r.Order == "siege" && p.BesiegedSettlement == null)
+			{
+				Vec2 at = p.GetPosition2D;
+				if (Foes(p.MapFaction, at).Any((MobileParty x) => Is(x) && x.GetPosition2D.Distance(at) < 100f))
+				{
+					AiChoose(r, p);
+					return;
+				}
+			}
+			if (r.Order == "free")
+			{
+				AiChoose(r, p);
+				return;
+			}
+			Enforce(r, p, false);
+		}
+
+		// A ruler's host going home: the lord keeps the party they had.
+		private static void Disperse(Rec r, string why)
+		{
+			MobileParty p = PartyOf(r);
+			Drop(r);
+			try
+			{
+				if (p != null && p.IsActive)
+				{
+					p.Ai.SetDoNotMakeNewDecisions(false);
+					int keep = Math.Max(r.Base, 60);
+					int excess = p.MemberRoster.TotalManCount - keep;
+					foreach (TroopRosterElement e in p.MemberRoster.GetTroopRoster().Where((TroopRosterElement x) => x.Character != null && !x.Character.IsHero).OrderByDescending((TroopRosterElement x) => x.Number).ToList())
+					{
+						if (excess <= 0)
+						{
+							break;
+						}
+						int n = Math.Min(excess, e.Number);
+						int wounded = Math.Min(n, e.WoundedNumber);
+						p.MemberRoster.AddToCounts(e.Character, -n, false, -wounded, 0, true, -1);
+						excess -= n;
+					}
+				}
+			}
+			catch (Exception e)
+			{
+				Log.Write("dispersing a host failed: " + e.Message);
+			}
+			Clan owner = r.OwnerClan;
+			Log.Write("host dispersed (" + r.Party + ", " + ((owner != null) ? owner.Name.ToString() : "?") + "): " + why);
+			if (owner != null && AtWarWithMe(owner.MapFaction))
+			{
+				Flow.Notify(((owner.Kingdom != null) ? owner.Kingdom.Name.ToString() : owner.Name.ToString()) + "'s host has gone home: " + why + ".");
+			}
+		}
+
+		// Cheat: a ruler at war with you (or the one named) buys a host now.
+		internal static string ForceAi(string name)
+		{
+			Kingdom k = Kingdom.All.Where((Kingdom x) => !x.IsEliminated && x.RulingClan != Clan.PlayerClan && x.Leader != null && x.Leader.IsAlive)
+				.OrderByDescending((Kingdom x) => (!string.IsNullOrEmpty(name) && x.Name.ToString().ToLowerInvariant().Contains(name.ToLowerInvariant())) ? 2 : (AtWarWithMe(x) ? 1 : 0)).FirstOrDefault();
+			if (k == null)
+			{
+				return "No other ruler to muster a host.";
+			}
+			int need = Cfg.AiHostMinMen * Cfg.HostPriceMen * 100 / Math.Max(1, Cfg.AiHostSpendPercent) * 5;
+			if (k.Leader.Gold < need)
+			{
+				k.Leader.ChangeHeroGold(need - k.Leader.Gold);
+			}
+			int before = All().Count;
+			AiRaise(k, k.Leader, false);
+			return (All().Count > before) ? (k.Name + " has mustered a host. See the log, or the Hand's report.") : (k.Name + " could not muster: no free lord of their house to command.");
+		}
+
+		// Everyone else's hosts, for the Hand's report.
+		internal static string Theirs()
+		{
+			StringBuilder sb = new StringBuilder();
+			foreach (Rec r in All().Where((Rec x) => !x.Mine))
+			{
+				MobileParty p = PartyOf(r);
+				Hero lord = Law.Find(r.Knight);
+				if (p == null)
+				{
+					continue;
+				}
+				sb.Append((p.MapFaction != null) ? p.MapFaction.Name.ToString() : "?").Append(": ").Append(p.MemberRoster.TotalManCount.ToString("N0")).Append(" under ")
+				  .Append((lord != null) ? lord.Name.ToString() : "?").Append(", ").Append(Describe(r)).Append(AtWarWithMe(p.MapFaction) ? "  - AT WAR WITH YOU" : "").Append(".\n");
+			}
+			return sb.ToString();
+		}
+
+		private static void Fill(MobileParty party, List<CharacterObject> troops, string q, int men)
+		{
+			int lo;
+			int hi;
+			Band(q, out lo, out hi);
+			List<int> weights = troops.Select((CharacterObject t) => t.Tier - lo + 1).ToList();
+			int total = Math.Max(1, weights.Sum());
+			int given = 0;
+			for (int i = 0; i < troops.Count; i++)
+			{
+				int n = (i == troops.Count - 1) ? (men - given) : (men * weights[i] / total);
+				if (n > 0)
+				{
+					party.MemberRoster.AddToCounts(troops[i], n, false, 0, 0, true, -1);
+					given += n;
+				}
 			}
 		}
 
@@ -747,7 +1183,7 @@ namespace WardensAndDragons
 		// Cheat: the nearest host's term ends tomorrow.
 		internal static bool EndSoon()
 		{
-			Rec r = All().OrderBy((Rec x) => x.End).FirstOrDefault();
+			Rec r = Mine().OrderBy((Rec x) => x.End).FirstOrDefault();
 			if (r == null)
 			{
 				return false;
@@ -763,7 +1199,7 @@ namespace WardensAndDragons
 
 		internal static void Pick()
 		{
-			List<Rec> all = All();
+			List<Rec> all = Mine();
 			if (all.Count == 0)
 			{
 				Flow.Notify("You have no host in the field.");
@@ -790,7 +1226,7 @@ namespace WardensAndDragons
 		{
 			StringBuilder sb = new StringBuilder();
 			int today = CourtBehavior.Today();
-			foreach (Rec r in All())
+			foreach (Rec r in Mine())
 			{
 				Hero k = Law.Find(r.Knight);
 				MobileParty p = PartyOf(r);
@@ -803,7 +1239,7 @@ namespace WardensAndDragons
 		internal static string Attention()
 		{
 			int today = CourtBehavior.Today();
-			Rec r = All().Where((Rec x) => x.End - today <= 7).OrderBy((Rec x) => x.End).FirstOrDefault();
+			Rec r = Mine().Where((Rec x) => x.End - today <= 7).OrderBy((Rec x) => x.End).FirstOrDefault();
 			if (r == null)
 			{
 				return null;

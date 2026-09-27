@@ -530,6 +530,11 @@ namespace WardensAndDragons
 			{
 				sb.Append("\nYour hosts:\n").Append(hosts);
 			}
+			string theirs = Host.Theirs();
+			if (theirs.Length > 0)
+			{
+				sb.Append("\nOther rulers' hosts:\n").Append(theirs);
+			}
 			Army army = CouncilArmy();
 			if (army != null)
 			{
