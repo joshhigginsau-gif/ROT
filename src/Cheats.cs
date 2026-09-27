@@ -73,6 +73,10 @@ namespace WardensAndDragons
 				"  wad.host_end                the next host's service ends tomorrow",
 				"  wad.ai_host [realm]         an enemy ruler (or the one named) musters a host now",
 				"",
+				"PARLEY",
+				"  wad.parley_odds             the odds at the siege you are leading",
+				"  wad.starve                  the castle you besiege runs out of food",
+				"",
 				"YOUR HOUSE",
 				"  wad.culture list            every culture your mods define",
 				"  wad.culture <name> [holdings]  your house (and holdings) take that culture",
@@ -771,6 +775,32 @@ namespace WardensAndDragons
 				return "Load a campaign first.";
 			}
 			return Host.ForceAi((args != null && args.Count > 0) ? string.Join(" ", args) : null);
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("parley_odds", "wad")]
+		public static string ParleyOdds(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			return Parley.Odds();
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("starve", "wad")]
+		public static string Starve(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			Settlement s = Parley.Besieged();
+			if (s == null || s.Town == null)
+			{
+				return "You are not leading a siege.";
+			}
+			s.Town.FoodStocks = 0f;
+			return s.Name + " has eaten its last.";
 		}
 	}
 }

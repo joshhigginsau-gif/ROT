@@ -114,6 +114,36 @@ namespace WardensAndDragons
 			}
 		}
 
+		// The same fight on any arena scene, from anywhere - a duel before the
+		// walls, where there is no town around you to open an arena in.
+		internal static bool OpenScene(string scene, List<CharacterObject> ours, List<CharacterObject> theirs, float health, Action<bool, List<CharacterObject>> onEnd, out string why)
+		{
+			why = null;
+			try
+			{
+				MissionState.OpenNew("ArenaDuelMission", SandBoxMissions.CreateSandBoxMissionInitializerRecord(scene, "", false, (DecalAtlasGroup)3),
+					(InitializeMissionBehaviorsDelegate)((Mission mission) => new MissionBehavior[]
+					{
+						new MissionOptionsComponent(),
+						new TrialFight(ours, theirs, health, onEnd),
+						new MissionFacialAnimationHandler(),
+						new MissionAgentPanicHandler(),
+						new AgentHumanAILogic(),
+						new ArenaAgentStateDeciderLogic(),
+						new VisualTrackerMissionBehavior(),
+						new CampaignMissionComponent(),
+						new EquipmentControllerLeaveLogic()
+					}), true, true);
+				return true;
+			}
+			catch (Exception e)
+			{
+				why = "the lists could not be raised: " + e.Message;
+				Log.Write("opening the duel failed: " + e);
+				return false;
+			}
+		}
+
 		public override void AfterStart()
 		{
 			_ended = false;

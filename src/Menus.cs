@@ -191,6 +191,7 @@ internal static class Menus
 		GuardMenu.Register(s);
 		RavensMenu.Register(s);
 		CouncilMenu.Register(s);
+		ParleyMenu.Register(s);
 		s.AddGameMenu("wad_realm", "{=!}{WAD_REALM}", (OnInitDelegate)delegate
 		{
 			SetRealmText();

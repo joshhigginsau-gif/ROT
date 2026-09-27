@@ -243,3 +243,20 @@ done whose edits had never been written to disk. It is worth continuing.
   `Disperse` trims the party back to `max(Base, 60)` rather than destroying it.
 - New order `engage` (`SetMoveEngageParty`, locked) for any host, target from `Foes()`: enemy
   hosts, then enemy army leader parties.
+
+## v2.10.0 — parley at the walls
+
+- `Parley.cs`, `ParleyMenu.cs`. Option on vanilla `menu_siege_strategies` when the player leads
+  the besieger camp (`PlayerSiege.PlayerSide == Attacker`, `MainParty.BesiegerCamp.LeaderParty
+  == MainParty`) → menu `wad_parley`.
+- Surrender mirrors `KingdomManager.SiegeCompleted`: garrison roster cleared, lord parties inside
+  `LeaveSettlementAction` (or `TakePrisonerAction` when seized), influence award,
+  `BesiegerCamp.RemoveAllSiegeParties()`, `settlement.Party.MemberRoster.Clear()`,
+  `ChangeOwnerOfSettlementAction.ApplyBySiege(kingdom leader, MainHero, s)`, then
+  `PlayerSiege.FinalizePlayerSiege()` + `PlayerEncounter.Finish(true)`.
+- Single combat: `TrialFight.OpenScene` (no location logic) on the nearest town's arena scene;
+  result in `pa:result`/`pa:duel`, settled on GameMenuOpened/hourly with a one-button inquiry
+  whose callback surrenders or lifts the siege (`BesiegerCamp = null` + `PlayerEncounter.Finish`).
+  Truce `pa:truce:<id>` checked on `OnSiegeEventStartedEvent`.
+- Odds are deliberately harsh (player's request): single combat easy, terms need starvation,
+  gold in millions, Charm needs 3 of 3.

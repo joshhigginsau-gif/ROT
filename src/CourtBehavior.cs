@@ -67,6 +67,14 @@ public class CourtBehavior : CampaignBehaviorBase
 			Ravens.Settle();
 		});
 		CampaignEvents.HourlyTickEvent.AddNonSerializedListener((object)this, (Action)Ravens.Settle);
+		// Parley at the walls: single combat is settled off the field, and a
+		// truce sworn after losing one is remembered.
+		CampaignEvents.GameMenuOpened.AddNonSerializedListener((object)this, (Action<MenuCallbackArgs>)delegate
+		{
+			Parley.Settle();
+		});
+		CampaignEvents.HourlyTickEvent.AddNonSerializedListener((object)this, (Action)Parley.Settle);
+		CampaignEvents.OnSiegeEventStartedEvent.AddNonSerializedListener((object)this, (Action<TaleWorlds.CampaignSystem.Siege.SiegeEvent>)Parley.OnSiegeStarted);
 	}
 
 	public override void SyncData(IDataStore ds)

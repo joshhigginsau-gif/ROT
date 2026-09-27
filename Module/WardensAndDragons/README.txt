@@ -1,4 +1,46 @@
-Wardens & Dragons  v2.9.0  -  HOSTS AGAINST HOSTS
+Wardens & Dragons  v2.10.0  -  PARLEY AT THE WALLS
+
+
+v2.10.0 - PARLEY AT THE WALLS
+
+  When you lead a siege and the camp is up, the siege menu offers "Ride
+  out under a banner of parley". The lord inside comes to the gate (or the
+  castellan, if no lord is home), and you see both sides' strength, their
+  food, and how long they have held. Then:
+
+  CHALLENGE THEM TO SINGLE COMBAT - the easiest road
+    They accept 9 times in 10 if the lord is brave, otherwise 2 in 3. A
+    real duel, you against their lord or the castellan's champion. Win and
+    the castle yields and the lord is your prisoner. Lose and you lift the
+    siege and swear not to come back for 30 days - coming back anyway costs
+    20 Honour. Whoever falls has trial_death_chance of never rising. If
+    they refuse, their own men saw it, and terms get easier.
+
+  OFFER TERMS - once a day
+    The garrison marches out, the lords go free. Hard: in practice they
+    have to be starving, or besieged for weeks, or hopelessly outnumbered
+    and all three help. Brave lords hold out longer.
+
+  OFFER GOLD - in the millions
+    1,500,000 for a castle, 3,000,000 for a town, more the richer it is -
+    enough to buy a lord out of his post and his honour. Honourable lords
+    mostly refuse; starving or dishonourable ones mostly don't. Paid only
+    if they accept; they fall out with their own liege for it.
+
+  TALK THEM ROUND - once a siege
+    Three arguments - reason, your word, or fear - and every one must
+    land. Charm drives all three, and you learn from trying. One failure
+    and the gate closes; a bad one and they are insulted.
+
+  When the gates open under terms or talk, you choose: let them march out
+  as you promised (Honour +2), or seize the lords as they come out (Honour
+  -15, Dread +10, a charge of oathbreaking, and every house hears of it).
+
+  TESTING
+
+      wad.parley_odds    the odds at the siege you are leading
+      wad.starve         the castle you besiege runs out of food
+
 
 
 v2.9.0 - HOSTS AGAINST HOSTS
