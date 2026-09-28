@@ -20,7 +20,7 @@ public class SubModule : MBSubModuleBase
 		base.OnSubModuleLoad();
 		Log.Init();
 		Cfg.Load();
-		Log.Write("=== Wardens & Dragons v2.11.2 - knights of the realm ===");
+		Log.Write("=== Wardens & Dragons v2.12.0 - the iron bank ===");
 		Log.Write("config read from: " + Cfg.LoadedFrom);
 		Log.Write("config in effect: " + Cfg.Describe());
 		try

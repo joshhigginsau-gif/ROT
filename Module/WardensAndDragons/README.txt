@@ -1,4 +1,39 @@
-Wardens & Dragons  v2.11.2  -  KNIGHTS OF THE REALM
+Wardens & Dragons  v2.12.0  -  THE IRON BANK
+
+
+v2.12.0 - THE IRON BANK WILL HAVE ITS DUE  (Court -> The Iron Bank)
+
+  BORROWING
+    Braavos will lend you enough for a host you could never afford. Your
+    credit grows with your house's tier, towns, castles and renown, and
+    with the Bank's opinion of you. Interest runs 10-30% depending on that
+    opinion; you repay in 4, 8 or 12 payments, one every 21 days. Pay
+    early or clear the debt whenever you like - the Bank thinks better of
+    you for it. One loan at a time.
+
+  THE CLOCK
+    Each payment is taken on the day it falls due. If you cannot pay:
+      first missed payment    a polite letter, and 10% added to the debt
+      second                  the Bank stops asking and starts investing:
+                              it funds a host for your strongest enemy,
+                              sized to your debt, sent to hunt you down -
+                              and again every six weeks until you pay
+      third                   you are in default; the Bank will lend you
+                              nothing more until it is paid
+    If nobody is at war with you, the Bank waits - and the debt grows.
+
+  RULERS BORROW TOO
+    A ruler short of gold for a host may borrow it from the Bank, and has
+    84 days to pay it back. One who cannot is in trouble: if you are at war
+    with them, the Bank offers YOU a cheap loan to finish them; otherwise it
+    pays one of their enemies to see to it.
+
+  The Master of Coin will tell you what you owe.
+
+  TESTING
+
+      wad.bank_due    your next payment to the Bank is due today
+
 
 
 v2.11.2 - THE HOUSE'S OWN PAGE

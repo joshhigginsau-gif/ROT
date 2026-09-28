@@ -80,6 +80,9 @@ namespace WardensAndDragons
 				"KNIGHTS",
 				"  wad.knight_leave            the newest knight's house leaves your service",
 				"",
+				"THE IRON BANK",
+				"  wad.bank_due                your next payment to the Bank is due today",
+				"",
 				"YOUR HOUSE",
 				"  wad.culture list            every culture your mods define",
 				"  wad.culture <name> [holdings]  your house (and holdings) take that culture",
@@ -814,6 +817,16 @@ namespace WardensAndDragons
 				return "Load a campaign first.";
 			}
 			return Knighting.LeaveNow();
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("bank_due", "wad")]
+		public static string BankDue(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			return IronBank.DueNow();
 		}
 	}
 }

@@ -127,6 +127,11 @@ internal static class Menus
 			AddBranch(s, "wad_court", "wad_opt_knights", "{=WAD_Knights}Knights of the realm", "wad_knights", 5,
 				() => "Knight anyone you like. They found a house with no land, and ride for you as a free company.");
 		}
+		if (Cfg.Bank)
+		{
+			AddBranch(s, "wad_court", "wad_opt_bank", "{=WAD_Bank}The Iron Bank", "wad_bank", 5,
+				() => "Borrow from Braavos. The Iron Bank will have its due.");
+		}
 		if (Cfg.Ravens)
 		{
 			AddBranch(s, "wad_court", "wad_opt_ravens", "{=WAD_Ravens}Ravens", "wad_ravens", 8,
@@ -198,6 +203,7 @@ internal static class Menus
 		CouncilMenu.Register(s);
 		ParleyMenu.Register(s);
 		KnightsMenu.Register(s);
+		BankMenu.Register(s);
 		s.AddGameMenu("wad_realm", "{=!}{WAD_REALM}", (OnInitDelegate)delegate
 		{
 			SetRealmText();

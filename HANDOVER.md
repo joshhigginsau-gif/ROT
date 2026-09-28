@@ -280,3 +280,14 @@ done whose edits had never been written to disk. It is worth continuing.
   `knight_leave_relation`). Vanilla mercenary AI may hire them elsewhere afterwards.
 - v2.11.1: knight houses named by `Knighting.HouseName(culture)` (Westerosi/Essosi syllable banks, unique vs Clan.All) with an `Inquiry.Text` prompt; `Story` randomised (openings × deed × quirk × trait, shuffled, words); kin no longer candidates; `Titles.Unser` strips 'Lord/Lady Ser' for every hero.
 - v2.11.2: knight houses get `Clan.EncyclopediaText` (saveable, private setter, via `Bastard.Set`) from `Knighting.HouseStory`; words shared with the knight's page and stored as the 4th field of `kn:`; `Append` adds dated leave/return lines; `Knighting.Repair` backfills empty pages at launch.
+
+## v2.12.0 — the Iron Bank
+
+- `IronBank.cs`, `BankMenu.cs`. Player loan `ib:loan` = principal|owed|instalment|due|left|missed|lastFunded;
+  standing `ib:standing` (-100..100) moves the limit and rate. Daily: pay if gold ≥ instalment,
+  else missed++, +`bank_penalty_percent`, standing −15; missed ≥ 2 → every `bank_fund_every_days`
+  `Host.AiRaise(strongest enemy kingdom, leader, true, funded=min(owed, cap), hunt=MainParty)`.
+- `Host.AiRaise` is now internal, returns bool, and takes `funded` (Bank money; ruler pays nothing)
+  and `hunt` (engage order). When a ruler is short it calls `IronBank.AiBorrow` (50%, capped,
+  `ib:ai:<kingdom>` = owed|due). AI default → a cheap loan offered to the player if at war with
+  them, else a funded host for one of their enemies.

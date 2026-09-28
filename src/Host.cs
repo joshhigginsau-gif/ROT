@@ -924,9 +924,20 @@ namespace WardensAndDragons
 			}
 		}
 
-		private static void AiRaise(Kingdom k, Hero ruler, bool threatened)
+		// funded: gold the Iron Bank puts up (the ruler pays nothing); hunt: a
+		// party the host is sent after.
+		internal static bool AiRaise(Kingdom k, Hero ruler, bool threatened, int funded = 0, MobileParty hunt = null)
 		{
-			int budget = (int)((long)ruler.Gold * Cfg.AiHostSpendPercent / 100);
+			int budget = (funded > 0) ? funded : (int)((long)ruler.Gold * Cfg.AiHostSpendPercent / 100);
+			if (funded <= 0 && budget / Cfg.HostPriceMen < Cfg.AiHostMinMen)
+			{
+				// Short of gold: the Bank may lend it.
+				int loan = IronBank.AiBorrow(k, ruler, Cfg.AiHostMinMen * Cfg.HostPriceMen * 2 - budget);
+				if (loan > 0)
+				{
+					budget += loan;
+				}
+			}
 			string q = (budget >= Cfg.AiHostMinMen * Cfg.HostPriceVeteran * 3) ? Veteran : Men;
 			int men = Math.Min(Cfg.HostMaxMen, budget / Price(q));
 			if (men < Cfg.AiHostMinMen)
@@ -936,13 +947,13 @@ namespace WardensAndDragons
 			}
 			if (men < Cfg.AiHostMinMen)
 			{
-				return;
+				return false;
 			}
 			Clan clan = k.RulingClan;
 			List<CharacterObject> troops = Troops(q, clan);
 			if (troops.Count == 0)
 			{
-				return;
+				return false;
 			}
 			// A lord of the ruling house to command: one already at the head
 			// of a free party, else one with no party at all.
@@ -956,16 +967,19 @@ namespace WardensAndDragons
 				commander = lords.FirstOrDefault((Hero h) => h.PartyBelongedTo == null && h.CurrentSettlement != null);
 				if (commander == null)
 				{
-					return;
+					return false;
 				}
 				party = MobilePartyHelper.CreateNewClanMobileParty(commander, clan);
 				if (party == null)
 				{
-					return;
+					return false;
 				}
 			}
 			int cost = men * Price(q);
-			ruler.ChangeHeroGold(-cost);
+			if (funded <= 0)
+			{
+				ruler.ChangeHeroGold(-Math.Min(cost, ruler.Gold));
+			}
 			Fill(party, troops, q, men);
 			Rec r = new Rec();
 			r.Party = ((MBObjectBase)party).StringId;
@@ -978,8 +992,15 @@ namespace WardensAndDragons
 			r.Base = basis;
 			Save(r);
 			AiChoose(r, party);
+			if (hunt != null && hunt.IsActive && hunt.MapFaction != null && FactionManager.IsAtWarAgainstFaction(hunt.MapFaction, party.MapFaction))
+			{
+				r.Order = "engage";
+				r.Target = ((MBObjectBase)hunt).StringId;
+				Save(r);
+				Enforce(r, party, true);
+			}
 			Log.Write("host raised by " + k.Name + ": " + men + " " + q + " under " + commander.Name + " (" + r.Party + "), " + Describe(r) + (threatened ? " - answering an enemy host" : ""));
-			string news = k.Name + " has bought a host: " + men.ToString("N0") + " " + QualityName(q) + " under " + commander.Name + ", " + Describe(r) + ".";
+			string news = k.Name + ((funded > 0) ? " has been given a host by the Iron Bank: " : " has bought a host: ") + men.ToString("N0") + " " + QualityName(q) + " under " + commander.Name + ", " + Describe(r) + ".";
 			if (AtWarWithMe(k))
 			{
 				Ravens.Popup("A Host Gathers", news + "\n\nYour own hosts can be sent to bring them to battle: Court -> The small council -> Your hosts.");
@@ -988,6 +1009,7 @@ namespace WardensAndDragons
 			{
 				Flow.Notify(news);
 			}
+			return true;
 		}
 
 		// Where a ruler sends a host: at an enemy host within reach, else at

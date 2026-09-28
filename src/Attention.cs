@@ -85,6 +85,19 @@ namespace WardensAndDragons
 				{
 				}
 
+				// --- the Iron Bank ---
+				try
+				{
+					string ib = IronBank.Attention();
+					if (ib != null)
+					{
+						list.Add(ib);
+					}
+				}
+				catch
+				{
+				}
+
 				// --- the ravens ---
 				try
 				{
