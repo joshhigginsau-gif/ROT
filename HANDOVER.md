@@ -306,3 +306,18 @@ done whose edits had never been written to disk. It is worth continuing.
   captain), funder = worst-relation ruler (prefers at war), castle farthest from your home,
   `ApplyByGift`, `Bastard.Crown` (now internal) + `ChangeKingdomName("The <Colour> Crown")`,
   `DeclareWarAction.ApplyByDefault`. State → landed; the son is the next rival (gen+1, cap 5).
+
+## v2.13.1 — hosts take ship
+
+- Hosts had no ships and were ordered with `NavigationType.Default` (land only), so targets over
+  water were never reached. `Host.Fleet(p)` gives one `new Ship(hull)` per 500 men (max 20) via
+  `ChangeShipOwnerAction.ApplyByMobilePartyCreation`; hulls from clan template → culture template →
+  any `ShipHull`. Called from `Raise`, `Fill` (AI/Bank/Exile hosts) and the top of `Enforce` (so
+  old hosts get ships). Whether they can actually sail is the nav model's call (War Sails).
+- `Host.Nav(p, s)` = `AiHelper.GetBestNavigationTypeAndAdjustedDistanceOfSettlementForMobileParty`;
+  None → the host can't get there. Engage/follow use `NavAny` (capability). Council's
+  `HoldBanners` uses `Host.Nav` too (falls back to Default).
+- Voyage fallback (siege/hold): Nav None, or 3 days without moving (`hk:<party>` = x|y|days) →
+  `Embark`: `hv:<party>` = target|landing day (5–12 days by distance), parked in place; on the day
+  `SetPositionAfterMapChange(s.GatePosition)` and the order resumes. Cleared by `SetOrder`/`Drop`.
+  Cheat `wad.host_voyage`.

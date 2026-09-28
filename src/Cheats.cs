@@ -787,6 +787,16 @@ namespace WardensAndDragons
 			return Host.ForceAi((args != null && args.Count > 0) ? string.Join(" ", args) : null);
 		}
 
+		[CommandLineFunctionality.CommandLineArgumentFunction("host_voyage", "wad")]
+		public static string HostVoyage(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			return Host.ForceVoyage();
+		}
+
 		[CommandLineFunctionality.CommandLineArgumentFunction("parley_odds", "wad")]
 		public static string ParleyOdds(List<string> args)
 		{

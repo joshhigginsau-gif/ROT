@@ -1,4 +1,28 @@
-Wardens & Dragons  v2.13.0  -  THE COMPANY THAT COMES BACK
+Wardens & Dragons  v2.13.1  -  HOSTS TAKE SHIP
+
+
+v2.13.1 - HOSTS CAN CROSS THE SEA
+
+  Hosts were raised with no ships and ordered to march by land only, so a
+  host in Essos told to besiege Sunspear stood on the shore for ever.
+
+  Now every host (yours, other rulers', the Iron Bank's) is given a fleet
+  when it is raised - one ship per 500 men, up to 20 - and hosts already
+  in the field get theirs on the next day's tick. They are ordered by the
+  best way there, land or sea, as the game's own lords are.
+
+  If the sea is still in the way (War Sails not loaded, or the game will
+  not let them sail), or a host marching on a place has not moved for
+  three days, it takes ship instead: a voyage of 5-12 days, then it is put
+  ashore before its target and carries on with its orders. A raven tells
+  you when it sails and when it lands. New orders cancel a voyage.
+
+  The realm's banners called by the small council now also march by the
+  best way, land or sea.
+
+  Test: wad.host_voyage puts your first host with a siege/hold order on a
+  ship at once. The log shows "host fleet: N ship(s) ... (naval=True/False)"
+  - naval=True means they will sail themselves.
 
 
 v2.13.0 - EXILE, AND THE COMPANY THAT COMES BACK

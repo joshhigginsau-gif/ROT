@@ -466,7 +466,8 @@ namespace WardensAndDragons
 			if (!army.IsWaitingForArmyMembers())
 			{
 				lead.Ai.SetDoNotMakeNewDecisions(true);
-				lead.SetMoveBesiegeSettlement(s, MobileParty.NavigationType.Default);
+				MobileParty.NavigationType nav = Host.Nav(lead, s);
+				lead.SetMoveBesiegeSettlement(s, (nav == MobileParty.NavigationType.None) ? MobileParty.NavigationType.Default : nav);
 			}
 		}
 

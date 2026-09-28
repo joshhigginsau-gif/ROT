@@ -7,6 +7,7 @@ using HarmonyLib;
 using Helpers;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
+using TaleWorlds.CampaignSystem.Naval;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.Roster;
 using TaleWorlds.CampaignSystem.Settlements;
@@ -131,6 +132,8 @@ namespace WardensAndDragons
 		private static void Drop(Rec r)
 		{
 			Store.Set(Prefix + r.Party, null);
+			Store.Set(VoyagePrefix + r.Party, null);
+			Store.Set(StuckPrefix + r.Party, null);
 			_ids.Remove(r.Party);
 		}
 
@@ -477,6 +480,7 @@ namespace WardensAndDragons
 				r.End = CourtBehavior.Today() + Cfg.HostDays;
 				r.Owner = ((MBObjectBase)Clan.PlayerClan).StringId;
 				Save(r);
+				Fleet(party);
 				Guard.SetState(knight, "host");
 				Store.AddDeed(Standing.Date() + "  " + knight.Name + " took command of " + men.ToString("N0") + " " + QualityName(q) + ".");
 				Log.Write("host raised: " + men + " " + q + " under " + knight.Name + " (" + r.Party + ") for " + cost);
@@ -622,6 +626,9 @@ namespace WardensAndDragons
 			r.Order = order;
 			r.Target = target;
 			Save(r);
+			// New orders: any voyage under way is for the old target.
+			Store.Set(VoyagePrefix + r.Party, null);
+			Store.Set(StuckPrefix + r.Party, null);
 			Enforce(r, p, true);
 			Flow.Notify("Orders sent: " + Describe(r) + ".");
 		}
@@ -647,12 +654,241 @@ namespace WardensAndDragons
 			}
 		}
 
+		// ------------------------------------------------------------------
+		// the sea
+		//
+		// A party raised from nothing owns no ships, and without ships the
+		// game will only march it by land: a host in Essos told to besiege
+		// Sunspear stands on the shore for ever. So every host is given a
+		// fleet, is ordered with whatever navigation it has, and when the sea
+		// still stands in the way it is carried over: a voyage of some days,
+		// then the host is put ashore before its target.
+
+		private const string VoyagePrefix = "hv:";   // target | landing day
+		private const string StuckPrefix = "hk:";    // x | y | days without moving
+
+		internal static void Fleet(MobileParty p)
+		{
+			try
+			{
+				if (p == null || !p.IsActive || p.Party == null || ((IEnumerable<Ship>)p.Ships).Any())
+				{
+					return;
+				}
+				List<ShipHull> hulls = new List<ShipHull>();
+				Clan clan = p.ActualClan;
+				if (clan != null && clan.DefaultPartyTemplate != null)
+				{
+					hulls.AddRange(clan.DefaultPartyTemplate.ShipHulls.Select((ShipTemplateStack x) => x.ShipHull).Where((ShipHull x) => x != null));
+				}
+				CultureObject culture = (clan != null) ? clan.Culture : null;
+				if (hulls.Count == 0 && culture != null && culture.DefaultPartyTemplate != null)
+				{
+					hulls.AddRange(culture.DefaultPartyTemplate.ShipHulls.Select((ShipTemplateStack x) => x.ShipHull).Where((ShipHull x) => x != null));
+				}
+				if (hulls.Count == 0)
+				{
+					MBReadOnlyList<ShipHull> any = MBObjectManager.Instance.GetObjectTypeList<ShipHull>();
+					if (any != null)
+					{
+						hulls.AddRange(any.Where((ShipHull x) => x != null));
+					}
+				}
+				if (hulls.Count == 0)
+				{
+					Log.Once("hostfleetnone", "host fleet: the game knows no ships (War Sails not loaded?) - hosts will be ferried instead");
+					return;
+				}
+				int n = Math.Max(1, Math.Min(20, p.MemberRoster.TotalManCount / 500));
+				for (int i = 0; i < n; i++)
+				{
+					ChangeShipOwnerAction.ApplyByMobilePartyCreation(p.Party, new Ship(hulls[MBRandom.RandomInt(hulls.Count)]));
+				}
+				bool naval = false;
+				try
+				{
+					naval = p.HasNavalNavigationCapability;
+				}
+				catch
+				{
+				}
+				Log.Write("host fleet: " + n + " ship(s) for " + p.Name + " (naval=" + naval + ")");
+			}
+			catch (Exception e)
+			{
+				Log.Once("hostfleet" + ((MBObjectBase)p).StringId, "host fleet failed: " + e.Message);
+			}
+		}
+
+		private static bool CanSail(MobileParty p)
+		{
+			try
+			{
+				return p.HasNavalNavigationCapability;
+			}
+			catch
+			{
+				return false;
+			}
+		}
+
+		// The best way to a settlement for this party, or None when the sea is
+		// in the way and it cannot sail.
+		internal static MobileParty.NavigationType Nav(MobileParty p, Settlement s)
+		{
+			try
+			{
+				MobileParty.NavigationType best;
+				float dist;
+				bool fromPort;
+				AiHelper.GetBestNavigationTypeAndAdjustedDistanceOfSettlementForMobileParty(p, s, false, out best, out dist, out fromPort);
+				if (best != MobileParty.NavigationType.None)
+				{
+					return best;
+				}
+				if (CanSail(p))
+				{
+					return p.NavigationCapability;
+				}
+				return MobileParty.NavigationType.None;
+			}
+			catch (Exception e)
+			{
+				Log.Once("hostnav" + ((MBObjectBase)p).StringId, "host navigation failed: " + e.Message);
+				return MobileParty.NavigationType.Default;
+			}
+		}
+
+		// For chasing a party: everything it has.
+		private static MobileParty.NavigationType NavAny(MobileParty p)
+		{
+			return CanSail(p) ? p.NavigationCapability : MobileParty.NavigationType.Default;
+		}
+
+		private static bool AtSea(Rec r)
+		{
+			return !string.IsNullOrEmpty(Store.Get(VoyagePrefix + r.Party));
+		}
+
+		internal static void Embark(Rec r, MobileParty p, Settlement s)
+		{
+			Vec2 a = p.GetPosition2D;
+			Vec2 b = s.GetPosition2D;
+			int days = Math.Max(5, Math.Min(12, 5 + (int)(a.Distance(b) / 60f)));
+			int land = CourtBehavior.Today() + days;
+			Store.Set(VoyagePrefix + r.Party, ((MBObjectBase)s).StringId + "|" + land);
+			Store.Set(StuckPrefix + r.Party, null);
+			p.Ai.SetDoNotMakeNewDecisions(true);
+			p.SetMoveGoToPoint(p.Position, MobileParty.NavigationType.Default);
+			Log.Write("host voyage: " + p.Name + " -> " + s.Name + ", lands day " + land);
+			if (r.Mine)
+			{
+				Hero kn = Law.Find(r.Knight);
+				Ravens.Popup("The Host Takes Ship", ((kn != null) ? kn.Name.ToString() : "Your knight") + " cannot march to " + s.Name + ": the sea is in the way. The host has hired every hull in the harbour. Expect them ashore before " + s.Name + " in about " + days + " days.");
+			}
+		}
+
+		// True while the voyage lasts (the host is left alone); lands it on
+		// the day.
+		private static bool Voyage(Rec r, MobileParty p)
+		{
+			string v = Store.Get(VoyagePrefix + r.Party);
+			if (string.IsNullOrEmpty(v))
+			{
+				return false;
+			}
+			string[] parts = v.Split('|');
+			int land = 0;
+			if (parts.Length > 1)
+			{
+				int.TryParse(parts[1], out land);
+			}
+			Settlement s = Settlement.Find(parts[0]);
+			if (s == null)
+			{
+				Store.Set(VoyagePrefix + r.Party, null);
+				return false;
+			}
+			if (CourtBehavior.Today() < land)
+			{
+				p.Ai.SetDoNotMakeNewDecisions(true);
+				p.SetMoveGoToPoint(p.Position, MobileParty.NavigationType.Default);
+				return true;
+			}
+			Store.Set(VoyagePrefix + r.Party, null);
+			try
+			{
+				if (p.Army != null && p.Army.LeaderParty != p)
+				{
+					p.Army = null;
+				}
+				p.SetPositionAfterMapChange(s.GatePosition);
+				Log.Write("host landed: " + p.Name + " before " + s.Name);
+				if (r.Mine)
+				{
+					Hero kn = Law.Find(r.Knight);
+					Ravens.Popup("Ashore", ((kn != null) ? kn.Name.ToString() : "Your host") + " has landed before " + s.Name + ".");
+				}
+			}
+			catch (Exception e)
+			{
+				Log.Write("landing the host failed: " + e.Message);
+			}
+			return false;
+		}
+
+		// A host that has not moved for three days while marching on a place
+		// is taken to be stuck at the water's edge.
+		private static bool Stuck(Rec r, MobileParty p)
+		{
+			Vec2 at = p.GetPosition2D;
+			string[] parts = (Store.Get(StuckPrefix + r.Party) ?? "").Split('|');
+			float x;
+			float y;
+			int days = 0;
+			if (parts.Length == 3 && float.TryParse(parts[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out x)
+				&& float.TryParse(parts[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out y)
+				&& int.TryParse(parts[2], out days) && new Vec2(x, y).Distance(at) < 1f)
+			{
+				days++;
+			}
+			else
+			{
+				days = 0;
+			}
+			Store.Set(StuckPrefix + r.Party, at.x.ToString(System.Globalization.CultureInfo.InvariantCulture) + "|" + at.y.ToString(System.Globalization.CultureInfo.InvariantCulture) + "|" + days);
+			return days >= 3;
+		}
+
+		// Test: put your first host on a ship for its target now.
+		internal static string ForceVoyage()
+		{
+			Rec r = Mine().FirstOrDefault((Rec x) => (x.Order == "siege" || x.Order == "hold") && !string.IsNullOrEmpty(x.Target));
+			if (r == null)
+			{
+				return "None of your hosts is ordered to a siege or a hold.";
+			}
+			MobileParty p = PartyOf(r);
+			Settlement s = Settlement.Find(r.Target);
+			if (p == null || s == null)
+			{
+				return "That host or its target is gone.";
+			}
+			Embark(r, p, s);
+			return p.Name + " takes ship for " + s.Name + ".";
+		}
+
 		// Daily, and when an order is given: keep them to it.
 		private static void Enforce(Rec r, MobileParty p, bool fresh)
 		{
 			try
 			{
 				if (p.MapEvent != null)
+				{
+					return;
+				}
+				Fleet(p);
+				if (Voyage(r, p))
 				{
 					return;
 				}
@@ -677,7 +913,7 @@ namespace WardensAndDragons
 						return;
 					}
 					p.Ai.SetDoNotMakeNewDecisions(true);
-					p.SetMoveEngageParty(f, MobileParty.NavigationType.Default);
+					p.SetMoveEngageParty(f, NavAny(p));
 					break;
 				}
 				case "siege":
@@ -720,7 +956,15 @@ namespace WardensAndDragons
 						return;
 					}
 					p.Ai.SetDoNotMakeNewDecisions(true);
-					p.SetMoveBesiegeSettlement(s, MobileParty.NavigationType.Default);
+					{
+						MobileParty.NavigationType nav = Nav(p, s);
+						if (nav == MobileParty.NavigationType.None || (!fresh && p.CurrentSettlement == null && p.BesiegedSettlement == null && Stuck(r, p)))
+						{
+							Embark(r, p, s);
+							return;
+						}
+						p.SetMoveBesiegeSettlement(s, nav);
+					}
 					break;
 				case "hold":
 					if (s == null || s.MapFaction != mine)
@@ -733,7 +977,13 @@ namespace WardensAndDragons
 					p.Ai.SetDoNotMakeNewDecisions(true);
 					if (fresh || p.CurrentSettlement != s)
 					{
-						p.SetMoveDefendSettlement(s, false, MobileParty.NavigationType.Default);
+						MobileParty.NavigationType nav = Nav(p, s);
+						if (nav == MobileParty.NavigationType.None || (!fresh && p.CurrentSettlement == null && Stuck(r, p)))
+						{
+							Embark(r, p, s);
+							return;
+						}
+						p.SetMoveDefendSettlement(s, false, nav);
 					}
 					break;
 				case "follow":
@@ -759,7 +1009,7 @@ namespace WardensAndDragons
 						}
 					}
 					p.Ai.SetDoNotMakeNewDecisions(true);
-					p.SetMoveEscortParty(MobileParty.MainParty, MobileParty.NavigationType.Default, false);
+					p.SetMoveEscortParty(MobileParty.MainParty, NavAny(p), false);
 					break;
 				}
 				default:
@@ -1197,6 +1447,7 @@ namespace WardensAndDragons
 					given += n;
 				}
 			}
+			Fleet(party);
 		}
 
 		private static int RenewCost(Rec r)
