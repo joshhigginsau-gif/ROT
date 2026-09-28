@@ -278,3 +278,4 @@ done whose edits had never been written to disk. It is worth continuing.
   service: `ChangeKingdomAction.ApplyByJoinFactionAsMercenary(..., DaysFromNow(contract))`.
 - Weekly: serving houses may `ApplyByLeaveKingdomAsMercenary` (more likely below
   `knight_leave_relation`). Vanilla mercenary AI may hire them elsewhere afterwards.
+- v2.11.1: knight houses named by `Knighting.HouseName(culture)` (Westerosi/Essosi syllable banks, unique vs Clan.All) with an `Inquiry.Text` prompt; `Story` randomised (openings × deed × quirk × trait, shuffled, words); kin no longer candidates; `Titles.Unser` strips 'Lord/Lady Ser' for every hero.

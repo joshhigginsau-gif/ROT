@@ -72,7 +72,12 @@ namespace WardensAndDragons
 				foreach (Hero h in Clan.PlayerClan.Heroes.Where((Hero x) => x.IsAlive && !x.IsChild && !x.IsPrisoner && x != Hero.MainHero && x != heir && !Guard.IsSworn(x)))
 				{
 					bool companion = h.IsWanderer || h.CompanionOf == Clan.PlayerClan;
-					list.Add(new Candidate { Kind = companion ? "companion" : "kin", Hero = h, Label = h.Name + (companion ? "  - your companion" : "  - of your blood, and your house") });
+					if (!companion)
+					{
+						// Blood of your house is not knighted out of it.
+						continue;
+					}
+					list.Add(new Candidate { Kind = "companion", Hero = h, Label = h.Name + "  - your companion" });
 				}
 				foreach (Hero h in Hero.MainHero.CompanionsInParty.Where((Hero x) => x.IsAlive && !Guard.IsSworn(x) && !list.Any((Candidate c) => c.Hero == x)))
 				{
@@ -121,7 +126,7 @@ namespace WardensAndDragons
 					Candidate c = (chosen != null && chosen.Count > 0) ? (chosen[0].Identifier as Candidate) : null;
 					if (c != null)
 					{
-						Knight(c);
+						NameIt(c);
 					}
 				});
 		}
@@ -129,7 +134,31 @@ namespace WardensAndDragons
 		// ------------------------------------------------------------------
 		// the ceremony
 
-		private static void Knight(Candidate c)
+		private static void NameIt(Candidate c)
+		{
+			CultureObject culture = (c.Troop != null) ? c.Troop.Culture : ((c.Hero != null) ? c.Hero.Culture : Clan.PlayerClan.Culture);
+			string suggestion = HouseName(culture);
+			Inquiry.Text("A House of Their Own", "What will the house be called? (Leave it as it is to take the herald's suggestion.)", suggestion, "So be it", "Let the herald choose",
+				delegate(string text)
+				{
+					string name = (text ?? "").Trim();
+					if (name.Length == 0)
+					{
+						name = suggestion;
+					}
+					if (!name.StartsWith("House ", StringComparison.OrdinalIgnoreCase))
+					{
+						name = "House " + name;
+					}
+					Knight(c, name);
+				},
+				delegate
+				{
+					Knight(c, suggestion);
+				});
+		}
+
+		private static void Knight(Candidate c, string houseName)
 		{
 			try
 			{
@@ -184,7 +213,7 @@ namespace WardensAndDragons
 					Flow.Notify("The knighting could not be done - see the log.");
 					return;
 				}
-				Clan house = Found(h);
+				Clan house = Found(h, houseName);
 				if (house == null)
 				{
 					Flow.Notify("The house could not be founded - see the log.");
@@ -200,7 +229,7 @@ namespace WardensAndDragons
 				Store.Set(Prefix + ((MBObjectBase)house).StringId, ((MBObjectBase)h).StringId + "|" + CourtBehavior.Today() + "|" + origin);
 				Store.AddDeed(Standing.Date() + "  Knighted " + h.Name + ", who founded " + house.Name + ".");
 				Log.Write("knighted " + h.Name + " (" + origin + "), " + house.Name + " (" + ((MBObjectBase)house).StringId + ")");
-				Ravens.Popup("Arise, " + h.Name, h.Name + " kneels a " + ((c.Kind == "soldier") ? "soldier" : ((c.Kind == "kin") ? "younger child of your house" : "wanderer")) +
+				Ravens.Popup("Arise, " + h.Name, h.Name + " kneels a " + ((c.Kind == "soldier") ? "soldier" : ((c.Kind == "companion") ? "companion" : "wanderer")) +
 					" and rises a knight, and the heralds write a new name in their rolls: " + house.Name + ".\n\nIt holds no land and no keep. It rides for your realm as a free company, paid as sellswords are - and like sellswords, it may go when it pleases.");
 			}
 			catch (Exception e)
@@ -210,7 +239,7 @@ namespace WardensAndDragons
 		}
 
 		// A house with a name and arms, and nothing else.
-		private static Clan Found(Hero h)
+		private static Clan Found(Hero h, string name)
 		{
 			try
 			{
@@ -221,7 +250,6 @@ namespace WardensAndDragons
 				{
 					return null;
 				}
-				string name = Lore.HouseName();
 				Bastard.Set(house, "Name", new TextObject("{=!}" + name, (Dictionary<string, object>)null));
 				Bastard.Set(house, "InformalName", new TextObject("{=!}" + name.Replace("House ", ""), (Dictionary<string, object>)null));
 				house.Culture = h.Culture ?? Clan.PlayerClan.Culture;
@@ -314,46 +342,197 @@ namespace WardensAndDragons
 		}
 
 		// ------------------------------------------------------------------
+		// what the heralds call them
+
+		private static readonly string[] WestA = { "Ash", "Black", "Bright", "Crane", "Dun", "Fair", "Grey", "Hard", "High", "Iron", "Long", "Oak", "Red", "Rook", "Stone", "Storm", "Thorn", "Cold", "Deep", "Hollow", "Brack", "Tall", "Rush", "Wyn", "Mar", "Hay", "Crow", "Salt", "Elm", "Heron", "Cask", "Wick" };
+
+		private static readonly string[] WestB = { "wood", "ford", "wick", "ton", "well", "mere", "hill", "stone", "brook", "vale", "more", "ley", "hart", "shaw", "by", "field", "holt", "burn", "den", "gate", "moor", "cliff" };
+
+		private static readonly string[] EastA = { "Var", "Mael", "Tor", "Qar", "Vel", "Dar", "Sael", "Rhae", "Ves", "Nor", "Zhar", "Mys", "Oth", "Lor", "Bel", "Tyr" };
+
+		private static readonly string[] EastB = { "yon", "ys", "aris", "enos", "aro", "ion", "ahar", "eris", "oros", "ane", "aqo", "ello", "ivar", "aros" };
+
+		private static bool Essos(CultureObject c)
+		{
+			if (c == null)
+			{
+				return false;
+			}
+			string k = (((MBObjectBase)c).StringId + " " + c.Name).ToLowerInvariant();
+			foreach (string w in new string[15] { "volant", "pentos", "braav", "lys", "myr", "tyrosh", "qohor", "norvos", "lorath", "ghis", "yunkai", "meereen", "astapor", "valyr", "essos" })
+			{
+				if (k.Contains(w))
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
+		internal static string HouseName(CultureObject culture)
+		{
+			bool east = Essos(culture);
+			for (int i = 0; i < 40; i++)
+			{
+				string n = east ? (EastA[MBRandom.RandomInt(EastA.Length)] + EastB[MBRandom.RandomInt(EastB.Length)]) : (WestA[MBRandom.RandomInt(WestA.Length)] + WestB[MBRandom.RandomInt(WestB.Length)]);
+				string full = "House " + n;
+				if (!Clan.All.Any((Clan c) => c != null && c.Name != null && (c.Name.ToString() == full || c.Name.ToString() == n)))
+				{
+					return full;
+				}
+			}
+			return "House " + WestA[MBRandom.RandomInt(WestA.Length)] + WestB[MBRandom.RandomInt(WestB.Length)] + "e";
+		}
+
+		// ------------------------------------------------------------------
 		// the page in the book
+
+		private static readonly string[] Quirks =
+		{
+			"sings badly and often, and will not be talked out of it",
+			"will not ride a grey horse, and has never said why",
+			"keeps a list of every man {he} has killed, and reads it on feast days",
+			"prays to every god anyone has ever named to {him}, just in case",
+			"cannot read, and has memorised the Seven-Pointed Star by ear to hide it",
+			"carries a wooden sword from childhood in {his} saddlebag",
+			"has never lost at dice, which is its own kind of reputation",
+			"eats standing up, the way {he} learned to in the ranks",
+			"names every horse {he} owns after a lord {he} has outlived",
+			"is famous in three taverns for a song about {himself} that {he} did not write",
+			"sleeps with {his} boots on and a knife under the pillow, even in a castle",
+			"will fight any man who calls {him} common, and has",
+			"sends half of every purse home to a village nobody else has heard of",
+			"has a laugh you can hear across a battlefield",
+			"never drinks before a fight, and never stops after one",
+			"remembers the name of every man who ever served under {him}"
+		};
+
+		private static readonly string[] Words =
+		{
+			"We Hold", "Steel Remembers", "No Debt Unpaid", "From Nothing", "First Through the Breach", "Earned, Not Given",
+			"The Road Is Long", "Sworn and Paid", "We Answer", "Blood and Coin", "Never Knelt Twice", "Last Off the Field",
+			"Ask Our Enemies", "By Our Own Hand", "Rise", "Hold the Line"
+		};
+
+		private static string Pick(string[] a)
+		{
+			return a[MBRandom.RandomInt(a.Length)];
+		}
+
+		private static string Sub(string text, Hero h)
+		{
+			return text.Replace("{he}", h.IsFemale ? "she" : "he").Replace("{him}", h.IsFemale ? "her" : "him").Replace("{his}", h.IsFemale ? "her" : "his")
+				.Replace("{himself}", h.IsFemale ? "herself" : "himself");
+		}
+
+		private static string Place(Hero h)
+		{
+			try
+			{
+				List<Settlement> near = Settlement.All.Where((Settlement s) => (s.IsTown || s.IsCastle) && s.Culture == h.Culture).ToList();
+				if (near.Count == 0)
+				{
+					near = Settlement.All.Where((Settlement s) => s.IsTown || s.IsCastle).ToList();
+				}
+				return near[MBRandom.RandomInt(near.Count)].Name.ToString();
+			}
+			catch
+			{
+				return "a place nobody remembers";
+			}
+		}
+
+		private static string Deed(Hero h)
+		{
+			string at = Place(h);
+			string[] deeds =
+			{
+				"{he} held a ford alone for the better part of an hour at " + at + ", and has the scars to show for every minute of it",
+				"{he} was the last off the walls when " + at + " fell, and carried two men down with {him}",
+				"{he} won a purse at the tourney at " + at + ", and spent it all before the next dawn",
+				"{he} once carried a wounded captain three leagues out of an ambush near " + at,
+				"{he} took a banner at " + at + " that {he} still will not give back",
+				"{he} broke a lance on a lord's son at " + at + " and has been paying for it ever since",
+				"{he} talked a garrison at " + at + " into opening its gates, and never tells the same story about how",
+				"{he} lost two fingers at " + at + " and learned to fight left-handed within the year",
+				"{he} was left for dead after a skirmish near " + at + " and walked home anyway",
+				"{he} kept a village near " + at + " from being burned, which nobody paid {him} for",
+				"{he} swam a flooded river at " + at + " with {his} sword in {his} teeth",
+				"{he} held the rear of a rout at " + at + " until there was nobody left to hold it for",
+				"{he} unhorsed a hedge knight thrice {his} size at " + at + " with a borrowed lance",
+				"{he} guarded a merchant's gold from " + at + " to the sea and did not steal a coin of it",
+				"{he} escaped from the cells at " + at + " with a spoon and a great deal of patience",
+				"{he} was knighted in all but name on the field at " + at + ", years before anyone made it true"
+			};
+			return Sub(Pick(deeds), h);
+		}
 
 		private static string Story(Hero h, string kind, CharacterObject troop, Clan house)
 		{
-			string he = h.IsFemale ? "she" : "he";
-			string his = h.IsFemale ? "her" : "his";
-			string place = (h.BornSettlement != null) ? h.BornSettlement.Name.ToString() : "a place nobody remembers";
-			string culture = (h.Culture != null) ? h.Culture.Name.ToString() : "the east";
+			string name = (h.FirstName != null) ? h.FirstName.ToString() : h.Name.ToString();
+			string place = (h.BornSettlement != null) ? h.BornSettlement.Name.ToString() : Place(h);
+			string culture = (h.Culture != null) ? h.Culture.Name.ToString() : "far";
 			string ruler = Hero.MainHero.Name.ToString();
-			StringBuilder sb = new StringBuilder();
+			string trooped = (troop != null) ? troop.Name.ToString() : "a soldier";
+			string[] openings;
 			switch (kind)
 			{
 			case "soldier":
-				sb.Append(Name(h)).Append(" was born common in ").Append(place).Append(", and served in the ranks of ").Append(ruler).Append("'s host as ")
-				  .Append((troop != null) ? troop.Name.ToString() : "a soldier").Append(" through more battles than ").Append(he).Append(" will speak of. ");
+				openings = new string[4]
+				{
+					name + " was born common in " + place + ", and served in the ranks of " + ruler + "'s host as " + trooped + " through more battles than {he} will speak of.",
+					"The son of nobody in particular from " + place + ", " + name + " took the coin of " + ruler + "'s host and fought as " + trooped + " until there was nobody left in the company older than {him}.",
+					name + " came out of " + place + " with nothing but {his} own two hands, and put them to work as " + trooped + " in " + ruler + "'s service.",
+					"Nobody in " + place + " expected much of " + name + ", who went for a soldier young and served as " + trooped + " under " + ruler + "'s banner for years."
+				};
 				break;
 			case "wanderer":
-				sb.Append(Name(h)).Append(" came out of ").Append(culture).Append(" lands with a sword and no master, and sold both for years in the taverns and the free companies of the realm. ");
-				break;
-			case "kin":
-				sb.Append(Name(h)).Append(" was born of the blood of ").Append(Clan.PlayerClan.Name).Append(", too far down the line ever to hold its seat. ");
+				openings = new string[4]
+				{
+					name + " came out of " + culture + " lands with a sword and no master, and sold both for years in the taverns and free companies of the realm.",
+					"Born in " + place + ", " + name + " has been a hedge knight in all but the name, and a sellsword when the name did not pay.",
+					name + " has walked more roads than most lords have heard of, and fought on more sides of more wars than {he} admits to.",
+					"The taverns of " + place + " knew " + name + " long before any lord did - as a sword for hire, and a good one."
+				};
 				break;
 			default:
-				sb.Append(Name(h)).Append(" rode at ").Append(ruler).Append("'s side as a companion, for no better reason than that it paid and the company was good. ");
+				openings = new string[4]
+				{
+					name + " rode at " + ruler + "'s side as a companion, for no better reason at first than that it paid and the company was good.",
+					"Born in " + place + ", " + name + " fell in with " + ruler + " on the road and never quite found a reason to leave.",
+					name + " followed " + ruler + " out of a tavern one night on a promise of work, and stayed for the wars.",
+					"A wanderer out of " + culture + " lands, " + name + " has been at " + ruler + "'s shoulder longer than most of the lords at court."
+				};
 				break;
 			}
-			sb.Append(Trait(h)).Append(" ");
-			sb.Append("On ").Append(Standing.Date()).Append(", ").Append(ruler).Append(" knighted ").Append(him(h)).Append(", and ").Append(he).Append(" founded ").Append(house.Name)
-			  .Append(" - a house with a name and arms and no land at all, which rides for the crown as a free company, and owes it exactly as much as it is paid.");
+			List<string> middle = new List<string>
+			{
+				"It is told that " + Deed(h) + ".",
+				Sub(name + " " + Pick(Quirks) + ".", h),
+				Trait(h)
+			};
+			// Shuffle the middle so no two pages run the same way.
+			for (int i = middle.Count - 1; i > 0; i--)
+			{
+				int j = MBRandom.RandomInt(i + 1);
+				string t = middle[i];
+				middle[i] = middle[j];
+				middle[j] = t;
+			}
+			string[] endings =
+			{
+				"On " + Standing.Date() + " " + ruler + " knighted {him}, and {he} founded " + house.Name + ", whose words are \"" + Pick(Words) + "\". It holds no land at all, and rides for the crown as a free company, owing it exactly as much as it is paid.",
+				ruler + " gave {him} the accolade on " + Standing.Date() + ". " + house.Name + " took the words \"" + Pick(Words) + "\" and not an acre of ground, and serves the crown as sellswords serve - well, and for as long as the purse lasts.",
+				"Knighted by " + ruler + " on " + Standing.Date() + ", {he} founded " + house.Name + " (\"" + Pick(Words) + "\"): a house with a name and arms, no keep, and a free company that goes where the coin is."
+			};
+			StringBuilder sb = new StringBuilder();
+			sb.Append(Sub(Pick(openings), h)).Append(" ");
+			foreach (string m in middle.Take(2 + MBRandom.RandomInt(2)))
+			{
+				sb.Append(m).Append(" ");
+			}
+			sb.Append("\n\n").Append(Sub(Pick(endings), h));
 			return sb.ToString();
-		}
-
-		private static string him(Hero h)
-		{
-			return h.IsFemale ? "her" : "him";
-		}
-
-		private static string Name(Hero h)
-		{
-			return (h.FirstName != null) ? h.FirstName.ToString() : h.Name.ToString();
 		}
 
 		private static string Trait(Hero h)

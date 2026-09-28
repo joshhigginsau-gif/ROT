@@ -40,7 +40,7 @@ namespace WardensAndDragons
 				}
 				else
 				{
-					a.Tooltip = Styles.Line("A soldier of your host, a companion, a wanderer in this town, or a younger child of your house. " + Cfg.KnightCost.ToString("N0") + " gold.");
+					a.Tooltip = Styles.Line("A soldier of your host, a companion, or a wanderer in this town. " + Cfg.KnightCost.ToString("N0") + " gold.");
 				}
 				return true;
 			}, (GameMenuOption.OnConsequenceDelegate)delegate

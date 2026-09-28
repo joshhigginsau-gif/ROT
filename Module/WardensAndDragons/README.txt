@@ -1,4 +1,24 @@
-Wardens & Dragons  v2.11.0  -  KNIGHTS OF THE REALM
+Wardens & Dragons  v2.11.1  -  KNIGHTS OF THE REALM
+
+
+v2.11.1 - A NAME OF THEIR OWN
+
+  Every knight's house was being named after the Bastard's sword. Each new
+  house now gets its own name from the heralds - Westerosi-sounding for
+  knights from Westeros, Essosi for those from across the sea - and you
+  are asked what it should be called, with the herald's suggestion filled
+  in to keep or change.
+
+  Encyclopedia pages are now each their own: where they came from, a deed
+  they are known for, a habit or two, their nature, and their house's
+  words, in a different order every time.
+
+  Children and blood of your house can no longer be knighted out of it -
+  only soldiers, companions and wanderers.
+
+  And "Lord Ser Brozho" is plain "Ser Brozho" now: Realm of Thrones' rank
+  is no longer put in front of any knight's Ser.
+
 
 
 v2.11.0 - KNIGHTS OF THE REALM  (Court -> Knights of the realm)

@@ -26,6 +26,24 @@ namespace WardensAndDragons
 		// "King Lucerys Velaryon". Putting a style in front of that reads
 		// badly, so a lesser rank is replaced by the style and a royal one
 		// keeps the hero as he is: a king is not styled Dragon Rider.
+		// "Lord Ser X" -> "Ser X"; null when there is nothing to strip.
+		private static string Unser(string name)
+		{
+			if (string.IsNullOrEmpty(name))
+			{
+				return null;
+			}
+			string bare = name.TrimStart(' ', '\t', '\u200B');
+			foreach (string r in Lesser)
+			{
+				if (r != "Ser " && bare.StartsWith(r + "Ser ", StringComparison.OrdinalIgnoreCase))
+				{
+					return bare.Substring(r.Length);
+				}
+			}
+			return null;
+		}
+
 		private static readonly string[] Lesser = { "Lord ", "Lady ", "Ser ", "Maester ", "Septon ", "Septa " };
 
 		private static readonly string[] Royal = { "King ", "Queen ", "Prince ", "Princess ", "Khal ", "Khaleesi ", "High King " };
@@ -230,6 +248,13 @@ namespace WardensAndDragons
 						}
 					}
 					text = bare + cloak;
+				}
+				// Any knight, not only the white cloaks: RoT's rank in front of
+				// "Ser" doubles it ("Lord Ser Brozho"). A knight is Ser.
+				string unser = Unser(text ?? plain);
+				if (unser != null)
+				{
+					text = unser;
 				}
 				if (text == null)
 				{
