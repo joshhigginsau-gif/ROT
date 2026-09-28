@@ -1,4 +1,38 @@
-Wardens & Dragons  v2.10.4  -  PARLEY AT THE WALLS
+Wardens & Dragons  v2.11.0  -  KNIGHTS OF THE REALM
+
+
+v2.11.0 - KNIGHTS OF THE REALM  (Court -> Knights of the realm)
+
+  As a ruler you may knight anyone:
+
+      a soldier of your host (tier 3 and up)
+      one of your companions
+      a wanderer in the town you are in
+      a younger child of your house (not you, not your named heir)
+
+  It costs 15,000 gold - the purse, the arms and the men. The new knight is
+  styled Ser and founds a house of their own, with a name and a banner and
+  no land, no castle, no keep. The house raises a company of about twenty
+  men and rides for your realm as a free company: mercenaries, paid as
+  sellswords are, fighting in your wars and your armies.
+
+  And like sellswords, they go when they please. Once the first contract
+  is up, a knight's house that thinks little of you is likely to ride out -
+  and a free company may take service with anyone, your enemies included.
+  "Ask a free company back" offers a house that left a new contract, if it
+  still thinks well of you.
+
+  Every knight gets a page in the encyclopedia: where they came from, what
+  they are known for, and the day you knighted them.
+
+      knight_cost=15000          knight_starting_men=20
+      knight_contract_days=42    knight_leave_relation=-10
+      knight_leave_chance=15     knight_rehire_cost=5000
+
+  TESTING
+
+      wad.knight_leave    the newest knight's house leaves your service
+
 
 
 v2.10.4 - NOBODY WAGERS A CASTLE LIGHTLY

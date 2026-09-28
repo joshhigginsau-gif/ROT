@@ -77,6 +77,9 @@ namespace WardensAndDragons
 				"  wad.parley_odds             the odds at the siege you are leading",
 				"  wad.starve                  the castle you besiege runs out of food",
 				"",
+				"KNIGHTS",
+				"  wad.knight_leave            the newest knight's house leaves your service",
+				"",
 				"YOUR HOUSE",
 				"  wad.culture list            every culture your mods define",
 				"  wad.culture <name> [holdings]  your house (and holdings) take that culture",
@@ -801,6 +804,16 @@ namespace WardensAndDragons
 			}
 			s.Town.FoodStocks = 0f;
 			return s.Name + " has eaten its last.";
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("knight_leave", "wad")]
+		public static string KnightLeave(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			return Knighting.LeaveNow();
 		}
 	}
 }

@@ -192,6 +192,7 @@ public class CourtBehavior : CampaignBehaviorBase
 				Treachery.Daily();
 				Council.Daily();
 				Host.Daily();
+				Knighting.Weekly();
 				SettleTheDead();
 				Titles.Invalidate();
 				if (num - Store.LastDriftDay >= Cfg.DaysPerSeason)

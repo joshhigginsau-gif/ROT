@@ -777,13 +777,13 @@ namespace WardensAndDragons
 			}
 		}
 
-		private static string Hex(uint colour)
+		internal static string Hex(uint colour)
 		{
 			return "0x" + colour.ToString("X8");
 		}
 
 		// What the palette hands back for an id it does not recognise.
-		private static bool Bad(uint colour)
+		internal static bool Bad(uint colour)
 		{
 			return colour == 0xDEADBEEFu || colour == 0xFFFFFFFFu;
 		}
@@ -791,7 +791,7 @@ namespace WardensAndDragons
 		// Call a public method on the clan if this build has it, and shrug if
 		// it does not. Used for the housekeeping calls that differ between
 		// game versions and are not worth a hard dependency.
-		private static void Call(Clan c, string method)
+		internal static void Call(Clan c, string method)
 		{
 			try
 			{
@@ -809,7 +809,7 @@ namespace WardensAndDragons
 
 		// Tell the rest of the game a clan now exists, so war stances and the
 		// faction lists are rebuilt for it.
-		private static void Announce(Clan house)
+		internal static void Announce(Clan house)
 		{
 			try
 			{
@@ -852,7 +852,7 @@ namespace WardensAndDragons
 			}
 		}
 
-		private static void Set(Clan c, string prop, object value)
+		internal static void Set(Clan c, string prop, object value)
 		{
 			try
 			{

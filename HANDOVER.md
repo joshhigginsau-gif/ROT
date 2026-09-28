@@ -264,3 +264,17 @@ done whose edits had never been written to disk. It is worth continuing.
 - v2.10.2: siege single combat moved to `FieldDuel`: the map-patch battle scene (`SceneModel.GetBattleSceneForMapPatch`) opened as "Camp" (vanilla camp views: weapons, HUD, lock, spectator; no crowd, no settlement). Fighters placed on the first tick, 12 m apart on navmesh near the boundary centroid. No ground → `FieldDuel.Failed` → `Parley.Decide` on skill.
 - v2.10.3: siege single combat uses RoT's own duel via reflection (`RotDuel.cs`): private static `ROTDuelsBehavior.OpenDuelMission(scene, hero, false, friendly=true, inside=false)`, result read from private `_duelFightResult` (None/PlayerWon/PlayerLost) and cleared with `ResetDuelResult()`; RoT's own post-duel menu only opens on `_duelStarted`, which we never set. The foe must be a hero (RoT reads its clan banner): the lord inside, else an adult of the owning clan.
 - v2.10.4: challenge acceptance by the fighter's Valor (75/45/12/3, ± skill gap, starvation, player Honour), once a day (`pa:siege` field 4). After a won duel the garrison may renege (`parley_renege_chance_*` by the house's Honor, +15 if the sworn lord died): castle kept, fighter still captured, Oathbreaking charge, `pa:siege` field 5 = no more duels and terms +25.
+
+## v2.11.0 — knights of the realm
+
+- `Knighting.cs`, `KnightsMenu.cs` (records `kn:<clanId>` = hero|day|origin). Ruler only
+  (`Council.Rules`). Candidates: party soldiers tier ≥ 3 (via `Guard.KnightSoldier`), clan heroes
+  and companions (not you, not the named heir, not sworn Kingsguard), wanderers in the settlement.
+- `Found`: `Clan.CreateClan("wad_knight_<n>_<day>")`, name `Lore.HouseName()`, random banner
+  with the Bastard's colour fix (Bastard.Set/Bad/Call/Announce made internal), tier
+  `knight_house_tier`, `SetLeader`, home = player's home settlement. Companions are released
+  with `RemoveCompanionAction.ApplyByByTurningToLord` first (Clan getter reads CompanionOf).
+- Company: `MobilePartyHelper.CreateNewClanMobileParty` + `knight_starting_men` troops;
+  service: `ChangeKingdomAction.ApplyByJoinFactionAsMercenary(..., DaysFromNow(contract))`.
+- Weekly: serving houses may `ApplyByLeaveKingdomAsMercenary` (more likely below
+  `knight_leave_relation`). Vanilla mercenary AI may hire them elsewhere afterwards.
