@@ -261,3 +261,4 @@ done whose edits had never been written to disk. It is worth continuing.
 - Odds are deliberately harsh (player's request): single combat easy, terms need starvation,
   gold in millions, Charm needs 3 of 3.
 - v2.10.1: `MissionAudienceHandler.GetRandomAudienceCharacterToSpawn` reads `Settlement.CurrentSettlement.Culture` (null in a siege camp → crash). Harmony prefix (by type name) substitutes the besieged settlement's townsfolk when outside a settlement; if unpatched, `Parley.Decide` resolves the duel on weapon skills.
+- v2.10.2: siege single combat moved to `FieldDuel`: the map-patch battle scene (`SceneModel.GetBattleSceneForMapPatch`) opened as "Camp" (vanilla camp views: weapons, HUD, lock, spectator; no crowd, no settlement). Fighters placed on the first tick, 12 m apart on navmesh near the boundary centroid. No ground → `FieldDuel.Failed` → `Parley.Decide` on skill.

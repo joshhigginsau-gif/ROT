@@ -1,4 +1,16 @@
-Wardens & Dragons  v2.10.1  -  PARLEY AT THE WALLS
+Wardens & Dragons  v2.10.2  -  PARLEY AT THE WALLS
+
+
+v2.10.2 - THE GROUND BETWEEN THE ARMIES
+
+  Single combat at a siege still crashed: it borrowed a town's arena while
+  you were camped outside every town. It is now fought on the open field
+  where your siege camp stands - the same battlefield any field battle
+  there would load - with your weapons, health, target lock and the
+  spectator camera, and no arena around it. You and their champion start
+  twelve paces apart. If no open ground can be found on that field, the
+  combat is decided on your weapon skills instead of crashing.
+
 
 
 v2.10.1 - THE GAUNTLET

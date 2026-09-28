@@ -601,31 +601,18 @@ namespace WardensAndDragons
 
 		private static void Fight(Settlement s, Hero lord, CharacterObject champ)
 		{
-			Settlement lists = Settlement.All.Where((Settlement x) => x.IsTown && x.LocationComplex != null && x.LocationComplex.GetLocationWithId("arena") != null)
-				.OrderBy((Settlement x) => x.GetPosition2D.Distance(s.GetPosition2D)).FirstOrDefault();
-			if (lists == null)
-			{
-				Flow.Notify("There is no ground fit for it.");
-				return;
-			}
-			string scene = lists.LocationComplex.GetLocationWithId("arena").GetSceneName(lists.Town.GetWallLevel());
 			_crowd = s.Culture;
 			Store.Set(DuelKey, ((MBObjectBase)s).StringId + "|" + ((lord != null) ? ((MBObjectBase)lord).StringId : "") + "|" + ((MBObjectBase)champ).StringId);
-			Log.Write("parley at " + s.Name + ": single combat against " + champ.Name + " (lists from " + lists.Name + ")");
-			if (_crowdFailed || !_crowdPatched)
-			{
-				Decide(s, lord, champ);
-				return;
-			}
+			Log.Write("parley at " + s.Name + ": single combat against " + champ.Name + " on the field");
 			string why;
-			bool ok = TrialFight.OpenScene(scene, new List<CharacterObject>(), new List<CharacterObject> { champ }, (float)Cfg.TrialHealth, delegate(bool won, List<CharacterObject> fallen)
+			bool ok = FieldDuel.Open(champ, (float)Cfg.TrialHealth, delegate(bool won, List<CharacterObject> fallen)
 			{
 				Store.Set(ResultKey, (won ? "1" : "0") + "|" + Ravens.Ids(fallen));
 			}, out why);
 			if (!ok)
 			{
-				Store.Set(DuelKey, null);
-				Flow.Notify("The duel could not be staged: " + why);
+				Log.Write("parley at " + s.Name + ": " + why);
+				Decide(s, lord, champ);
 			}
 		}
 
@@ -640,6 +627,23 @@ namespace WardensAndDragons
 				}
 				string result = Store.Get(ResultKey);
 				string duel = Store.Get(DuelKey);
+				if (FieldDuel.Failed && string.IsNullOrEmpty(result) && !string.IsNullOrEmpty(duel))
+				{
+					FieldDuel.Failed = false;
+					string[] dd = duel.Split('|');
+					Settlement ds = Settlement.Find(dd[0]);
+					Hero dl = (dd.Length > 1 && dd[1].Length > 0) ? Law.Find(dd[1]) : null;
+					CharacterObject dc = (dd.Length > 2) ? MBObjectManager.Instance.GetObject<CharacterObject>(dd[2]) : null;
+					if (ds != null && dc != null)
+					{
+						Decide(ds, dl, dc);
+					}
+					else
+					{
+						Store.Set(DuelKey, null);
+					}
+					return;
+				}
 				if (string.IsNullOrEmpty(result) || string.IsNullOrEmpty(duel))
 				{
 					return;
