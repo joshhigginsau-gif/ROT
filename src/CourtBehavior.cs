@@ -147,6 +147,7 @@ public class CourtBehavior : CampaignBehaviorBase
 			Ravens.Reset();
 			Host.Load();
 			Host.Patch();
+			Parley.PatchCrowd();
 			Menus.Register(starter);
 			Dialogue.Add(starter);
 			CouncilDialogue.Add(starter);

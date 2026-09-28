@@ -260,3 +260,4 @@ done whose edits had never been written to disk. It is worth continuing.
   Truce `pa:truce:<id>` checked on `OnSiegeEventStartedEvent`.
 - Odds are deliberately harsh (player's request): single combat easy, terms need starvation,
   gold in millions, Charm needs 3 of 3.
+- v2.10.1: `MissionAudienceHandler.GetRandomAudienceCharacterToSpawn` reads `Settlement.CurrentSettlement.Culture` (null in a siege camp → crash). Harmony prefix (by type name) substitutes the besieged settlement's townsfolk when outside a settlement; if unpatched, `Parley.Decide` resolves the duel on weapon skills.

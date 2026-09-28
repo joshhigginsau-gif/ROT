@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
+using HarmonyLib;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.CampaignSystem.CharacterDevelopment;
@@ -523,6 +525,80 @@ namespace WardensAndDragons
 				}, null);
 		}
 
+		// The arena crowd dresses its spectators from the town you are standing
+		// in - and before the walls you are standing in no town at all, which
+		// crashed the game. Outside a settlement, the crowd is the camp
+		// followers of the castle's own culture instead.
+		private static bool _crowdPatched;
+		private static CultureObject _crowd;
+
+		internal static void PatchCrowd()
+		{
+			if (_crowdPatched)
+			{
+				return;
+			}
+			_crowdPatched = true;
+			try
+			{
+				Type t = AccessTools.TypeByName("SandBox.View.Missions.MissionAudienceHandler");
+				MethodInfo m = (t != null) ? AccessTools.Method(t, "GetRandomAudienceCharacterToSpawn") : null;
+				if (m == null)
+				{
+					Log.Write("parley: the arena crowd was not found; single combat at a siege will be decided without a duel");
+					_crowdPatched = false;
+					_crowdFailed = true;
+					return;
+				}
+				new Harmony("community.wardens.and.dragons.parley").Patch(m, new HarmonyMethod(typeof(Parley).GetMethod("CrowdPrefix", BindingFlags.Static | BindingFlags.NonPublic)));
+				Log.Write("parley: crowd patched on MissionAudienceHandler.GetRandomAudienceCharacterToSpawn");
+			}
+			catch (Exception e)
+			{
+				_crowdFailed = true;
+				Log.Write("parley: patching the arena crowd failed: " + e.Message);
+			}
+		}
+
+		private static bool _crowdFailed;
+
+		private static bool CrowdPrefix(ref CharacterObject __result)
+		{
+			try
+			{
+				if (Settlement.CurrentSettlement != null)
+				{
+					return true;
+				}
+				CultureObject c = _crowd ?? Hero.MainHero.Culture;
+				CharacterObject who = (MBRandom.RandomFloat < 0.65f) ? c.Townsman : c.Townswoman;
+				who = who ?? c.Townsman ?? c.Townswoman;
+				if (who == null)
+				{
+					return true;
+				}
+				__result = who;
+				return false;
+			}
+			catch
+			{
+				return true;
+			}
+		}
+
+		// No duel to be had: decided on skill instead.
+		private static void Decide(Settlement s, Hero lord, CharacterObject champ)
+		{
+			Func<CharacterObject, int> arms = (CharacterObject c) => Math.Max(c.GetSkillValue(DefaultSkills.OneHanded), Math.Max(c.GetSkillValue(DefaultSkills.TwoHanded), c.GetSkillValue(DefaultSkills.Polearm)));
+			int mine = arms(CharacterObject.PlayerCharacter);
+			int theirs = arms(champ) + ((Trait(lord, DefaultTraits.Valor) > 0) ? 10 : 0);
+			int chance = Clamp(50 + (mine - theirs) / 3, 10, 90);
+			bool won = MBRandom.RandomInt(100) < chance;
+			Log.Write("parley at " + s.Name + ": single combat decided without a duel (" + chance + "%)");
+			Store.Set(ResultKey, (won ? "1" : "0") + "|" + ((MBObjectBase)(won ? champ : CharacterObject.PlayerCharacter)).StringId);
+			Settle();
+		}
+
 		private static void Fight(Settlement s, Hero lord, CharacterObject champ)
 		{
 			Settlement lists = Settlement.All.Where((Settlement x) => x.IsTown && x.LocationComplex != null && x.LocationComplex.GetLocationWithId("arena") != null)
@@ -533,8 +609,14 @@ namespace WardensAndDragons
 				return;
 			}
 			string scene = lists.LocationComplex.GetLocationWithId("arena").GetSceneName(lists.Town.GetWallLevel());
+			_crowd = s.Culture;
 			Store.Set(DuelKey, ((MBObjectBase)s).StringId + "|" + ((lord != null) ? ((MBObjectBase)lord).StringId : "") + "|" + ((MBObjectBase)champ).StringId);
 			Log.Write("parley at " + s.Name + ": single combat against " + champ.Name + " (lists from " + lists.Name + ")");
+			if (_crowdFailed || !_crowdPatched)
+			{
+				Decide(s, lord, champ);
+				return;
+			}
 			string why;
 			bool ok = TrialFight.OpenScene(scene, new List<CharacterObject>(), new List<CharacterObject> { champ }, (float)Cfg.TrialHealth, delegate(bool won, List<CharacterObject> fallen)
 			{

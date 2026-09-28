@@ -1,4 +1,15 @@
-Wardens & Dragons  v2.10.0  -  PARLEY AT THE WALLS
+Wardens & Dragons  v2.10.1  -  PARLEY AT THE WALLS
+
+
+v2.10.1 - THE GAUNTLET
+
+  Throwing down the gauntlet at a siege crashed the game. The arena's
+  crowd dresses its spectators from the town you are standing in, and in
+  a siege camp you are standing in no town at all. Outside a settlement
+  the crowd is now the camp followers of the castle's own culture. If the
+  crowd cannot be found on your version, the combat is decided on your
+  weapon skills against theirs instead of crashing.
+
 
 
 v2.10.0 - PARLEY AT THE WALLS
