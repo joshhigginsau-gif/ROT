@@ -160,6 +160,8 @@ public class CourtBehavior : CampaignBehaviorBase
 			// Sworn knights from before the ceremony existed get the white
 			// armour now.
 			Guard.Repair();
+			// Knights' houses from before they had pages get them now.
+			Knighting.Repair();
 		// One-time, for anyone upgrading: hand any privy-council seat still
 		// holding one of our old duties back to a Bellum default, now that
 		// ours no longer exist.

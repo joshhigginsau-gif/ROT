@@ -279,3 +279,4 @@ done whose edits had never been written to disk. It is worth continuing.
 - Weekly: serving houses may `ApplyByLeaveKingdomAsMercenary` (more likely below
   `knight_leave_relation`). Vanilla mercenary AI may hire them elsewhere afterwards.
 - v2.11.1: knight houses named by `Knighting.HouseName(culture)` (Westerosi/Essosi syllable banks, unique vs Clan.All) with an `Inquiry.Text` prompt; `Story` randomised (openings × deed × quirk × trait, shuffled, words); kin no longer candidates; `Titles.Unser` strips 'Lord/Lady Ser' for every hero.
+- v2.11.2: knight houses get `Clan.EncyclopediaText` (saveable, private setter, via `Bastard.Set`) from `Knighting.HouseStory`; words shared with the knight's page and stored as the 4th field of `kn:`; `Append` adds dated leave/return lines; `Knighting.Repair` backfills empty pages at launch.

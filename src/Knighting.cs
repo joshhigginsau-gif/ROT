@@ -223,10 +223,12 @@ namespace WardensAndDragons
 				Standing.Change(Cfg.KnightHonour, 0, "Knighted " + h.Name);
 				Company(h, house, c.Troop);
 				Serve(house);
-				string story = Story(h, c.Kind, c.Troop, house);
+				string words = Pick(Words);
+				string story = Story(h, c.Kind, c.Troop, house, words);
+				Bastard.Set(house, "EncyclopediaText", new TextObject("{=!}" + HouseStory(house, h, c.Kind, c.Troop, words), (Dictionary<string, object>)null));
 				string before = (h.EncyclopediaText != null) ? h.EncyclopediaText.ToString() : "";
 				h.EncyclopediaText = new TextObject("{=!}" + ((c.Kind == "soldier" || string.IsNullOrEmpty(before)) ? "" : (before + "\n\n")) + story, (Dictionary<string, object>)null);
-				Store.Set(Prefix + ((MBObjectBase)house).StringId, ((MBObjectBase)h).StringId + "|" + CourtBehavior.Today() + "|" + origin);
+				Store.Set(Prefix + ((MBObjectBase)house).StringId, ((MBObjectBase)h).StringId + "|" + CourtBehavior.Today() + "|" + origin + "|" + words);
 				Store.AddDeed(Standing.Date() + "  Knighted " + h.Name + ", who founded " + house.Name + ".");
 				Log.Write("knighted " + h.Name + " (" + origin + "), " + house.Name + " (" + ((MBObjectBase)house).StringId + ")");
 				Ravens.Popup("Arise, " + h.Name, h.Name + " kneels a " + ((c.Kind == "soldier") ? "soldier" : ((c.Kind == "companion") ? "companion" : "wanderer")) +
@@ -467,7 +469,7 @@ namespace WardensAndDragons
 			return Sub(Pick(deeds), h);
 		}
 
-		private static string Story(Hero h, string kind, CharacterObject troop, Clan house)
+		private static string Story(Hero h, string kind, CharacterObject troop, Clan house, string words)
 		{
 			string name = (h.FirstName != null) ? h.FirstName.ToString() : h.Name.ToString();
 			string place = (h.BornSettlement != null) ? h.BornSettlement.Name.ToString() : Place(h);
@@ -521,9 +523,9 @@ namespace WardensAndDragons
 			}
 			string[] endings =
 			{
-				"On " + Standing.Date() + " " + ruler + " knighted {him}, and {he} founded " + house.Name + ", whose words are \"" + Pick(Words) + "\". It holds no land at all, and rides for the crown as a free company, owing it exactly as much as it is paid.",
-				ruler + " gave {him} the accolade on " + Standing.Date() + ". " + house.Name + " took the words \"" + Pick(Words) + "\" and not an acre of ground, and serves the crown as sellswords serve - well, and for as long as the purse lasts.",
-				"Knighted by " + ruler + " on " + Standing.Date() + ", {he} founded " + house.Name + " (\"" + Pick(Words) + "\"): a house with a name and arms, no keep, and a free company that goes where the coin is."
+				"On " + Standing.Date() + " " + ruler + " knighted {him}, and {he} founded " + house.Name + ", whose words are \"" + words + "\". It holds no land at all, and rides for the crown as a free company, owing it exactly as much as it is paid.",
+				ruler + " gave {him} the accolade on " + Standing.Date() + ". " + house.Name + " took the words \"" + words + "\" and not an acre of ground, and serves the crown as sellswords serve - well, and for as long as the purse lasts.",
+				"Knighted by " + ruler + " on " + Standing.Date() + ", {he} founded " + house.Name + " (\"" + words + "\"): a house with a name and arms, no keep, and a free company that goes where the coin is."
 			};
 			StringBuilder sb = new StringBuilder();
 			sb.Append(Sub(Pick(openings), h)).Append(" ");
@@ -533,6 +535,131 @@ namespace WardensAndDragons
 			}
 			sb.Append("\n\n").Append(Sub(Pick(endings), h));
 			return sb.ToString();
+		}
+
+		// The house's own page.
+		internal static string HouseStory(Clan house, Hero knight, string kind, CharacterObject troop, string words)
+		{
+			string ruler = Hero.MainHero.Name.ToString();
+			string realm = (Clan.PlayerClan.Kingdom != null) ? Clan.PlayerClan.Kingdom.Name.ToString() : Clan.PlayerClan.Name.ToString();
+			string who = (knight != null) ? knight.Name.ToString() : "a knight whose name the heralds have mislaid";
+			string place = (knight != null && knight.BornSettlement != null) ? knight.BornSettlement.Name.ToString() : ((knight != null) ? Place(knight) : "nowhere in particular");
+			string field = (knight != null) ? Place(knight) : "a field long since ploughed";
+			string bare = house.Name.ToString().Replace("House ", "");
+			string when = Standing.Date();
+			string founding;
+			switch (kind)
+			{
+			case "wanderer":
+				founding = house.Name + " was founded on " + when + ", when " + ruler + " knighted " + who + " - a sword for hire who had never before had anything to call " + Own(knight) + " but the sword.";
+				break;
+			case "companion":
+				founding = house.Name + " was founded on " + when + ", when " + ruler + " knighted " + who + ", who had ridden at the crown's side for years with no more title than a friend has.";
+				break;
+			default:
+				founding = house.Name + " was founded on " + when + ", when " + ruler + " took " + who + " out of the ranks - where " + Pronoun(knight) + " had served as " + ((troop != null) ? troop.Name.ToString() : "a common soldier") + " - and made " + Object(knight) + " a knight.";
+				break;
+			}
+			string[] names =
+			{
+				"The name is taken from " + place + ", where the founder was born and which has never before produced anybody the heralds needed to write down.",
+				"The name is said to come from a ford near " + field + " where the founder held the crossing, though the ford has another name on every map.",
+				"It takes its name from the founder's mother's people, who would be astonished to hear it.",
+				"\"" + bare + "\" was what the founder's company called " + Object(knight) + " in the ranks; the heralds made it respectable.",
+				"The name belongs to a ruined hold near " + place + " that the founder has never owned, and says one day " + Pronoun(knight) + " will.",
+				"Nobody is quite sure where the name comes from, and the founder tells it differently every time " + Pronoun(knight) + " is asked.",
+				"The founder chose the name on the morning of the knighting, and has pretended ever since that it is very old.",
+				"The name was bought, with the arms, from a herald who needed the money more than the house needed the history."
+			};
+			string[] known =
+			{
+				"Its company is known for fighting hard and asking for its pay the same evening.",
+				"It is known for paying its men on the day, which makes it the envy of better houses.",
+				"It is known for never looting a village it did not have to, which costs it men every year.",
+				"It is known for looting everything that is not nailed down, and some things that are.",
+				"Its men are known for their songs, which are loud, many, and mostly about the founder.",
+				"Its riders are known for their horses, which are better than the house can afford.",
+				"Its crossbowmen are known up and down the realm, and hired twice over when they can be.",
+				"It is known for keeping its word, which in a free company is rarer than steel.",
+				"It is known to have sold its word more than once, but never, yet, in the middle of a battle.",
+				"It is known for holding a line after better men have left it."
+			};
+			List<string> middle = new List<string> { Pick(names), Pick(known) };
+			if (MBRandom.RandomInt(2) == 0)
+			{
+				middle.Reverse();
+			}
+			StringBuilder sb = new StringBuilder();
+			sb.Append(founding).Append(" ");
+			sb.Append(middle[0]).Append(" ").Append(middle[1]).Append(" ");
+			sb.Append("Its words are \"").Append(words).Append("\".");
+			sb.Append("\n\n").Append("It holds no land, no keep and no village; its seat is wherever its company makes camp. It rides for ").Append(realm)
+			  .Append(" as a free company, paid as sellswords are, and may take its swords elsewhere whenever it chooses.");
+			return sb.ToString();
+		}
+
+		private static string Pronoun(Hero h)
+		{
+			return (h != null && h.IsFemale) ? "she" : "he";
+		}
+
+		private static string Object(Hero h)
+		{
+			return (h != null && h.IsFemale) ? "her" : "him";
+		}
+
+		private static string Own(Hero h)
+		{
+			return (h != null && h.IsFemale) ? "her own" : "his own";
+		}
+
+		// A new line of the house's history on its page.
+		internal static void Append(Clan house, string line)
+		{
+			try
+			{
+				string before = (house.EncyclopediaText != null) ? house.EncyclopediaText.ToString() : "";
+				Bastard.Set(house, "EncyclopediaText", new TextObject("{=!}" + before + ((before.Length > 0) ? "\n\n" : "") + line, (Dictionary<string, object>)null));
+			}
+			catch
+			{
+			}
+		}
+
+		// Houses knighted before they had pages get one now.
+		internal static void Repair()
+		{
+			try
+			{
+				if (!Cfg.Knights || !Store.Initialized)
+				{
+					return;
+				}
+				int n = 0;
+				foreach (Clan c in Houses())
+				{
+					if (c.EncyclopediaText != null && c.EncyclopediaText.ToString().Length > 0)
+					{
+						continue;
+					}
+					string[] rec = (Store.Get(Prefix + ((MBObjectBase)c).StringId) ?? "").Split('|');
+					Hero h = (rec.Length > 0 && rec[0].Length > 0) ? Law.Find(rec[0]) : c.Leader;
+					string origin = (rec.Length > 2) ? rec[2] : "companion";
+					string kind = origin.StartsWith("soldier") ? "soldier" : ((origin == "wanderer") ? "wanderer" : "companion");
+					CharacterObject troop = origin.StartsWith("soldier:") ? MBObjectManager.Instance.GetObject<CharacterObject>(origin.Substring(8)) : null;
+					string words = (rec.Length > 3 && rec[3].Length > 0) ? rec[3] : Pick(Words);
+					Bastard.Set(c, "EncyclopediaText", new TextObject("{=!}" + HouseStory(c, h ?? c.Leader, kind, troop, words), (Dictionary<string, object>)null));
+					n++;
+				}
+				if (n > 0)
+				{
+					Log.Write("knights' houses given their pages on load: " + n);
+				}
+			}
+			catch (Exception e)
+			{
+				Log.Write("repairing the knights' houses failed: " + e.Message);
+			}
 		}
 
 		private static string Trait(Hero h)
@@ -636,6 +763,7 @@ namespace WardensAndDragons
 				return;
 			}
 			Log.Write(c.Name + " left your service: " + why);
+			Append(c, "On " + Standing.Date() + " it rode out of " + ((Clan.PlayerClan.Kingdom != null) ? Clan.PlayerClan.Kingdom.Name.ToString() : "the crown") + "'s service - " + why + ".");
 			Store.AddDeed(Standing.Date() + "  " + c.Name + " rode out of your service.");
 			Ravens.Popup("A Free Company Rides Out", c.Name + " has left your service - " + why + ". They were knighted by your hand, and owe you nothing but the name.");
 		}
@@ -672,6 +800,7 @@ namespace WardensAndDragons
 					}
 					Hero.MainHero.ChangeHeroGold(-Cfg.KnightRehireCost);
 					Serve(c);
+					Append(c, "On " + Standing.Date() + " it took service with " + ((Clan.PlayerClan.Kingdom != null) ? Clan.PlayerClan.Kingdom.Name.ToString() : "the crown") + " again.");
 					Ravens.Popup("Back in Service", c.Name + " rides for your realm again.");
 				});
 		}

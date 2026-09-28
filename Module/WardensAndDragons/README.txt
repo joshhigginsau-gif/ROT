@@ -1,4 +1,17 @@
-Wardens & Dragons  v2.11.1  -  KNIGHTS OF THE REALM
+Wardens & Dragons  v2.11.2  -  KNIGHTS OF THE REALM
+
+
+v2.11.2 - THE HOUSE'S OWN PAGE
+
+  Every house founded by a knighting now has its own encyclopedia page:
+  when and why it was founded, where its name comes from, what its company
+  is known for, its words (the same words as on its knight's page), and
+  that it holds no land and rides as a free company. When the house leaves
+  your service or comes back, a dated line is added to its page.
+
+  Houses you knighted before this version get their page the next time you
+  load the game.
+
 
 
 v2.11.1 - A NAME OF THEIR OWN
