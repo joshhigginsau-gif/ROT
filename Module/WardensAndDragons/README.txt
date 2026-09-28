@@ -1,4 +1,19 @@
-Wardens & Dragons  v2.10.2  -  PARLEY AT THE WALLS
+Wardens & Dragons  v2.10.3  -  PARLEY AT THE WALLS
+
+
+v2.10.3 - REALM OF THRONES' OWN DUEL
+
+  Single combat at a siege now uses Realm of Thrones' own duel on the
+  field - the same mission RoT opens when you duel a lord in an encounter,
+  on the same battlefields, with RoT's own swaps for the few scenes it
+  knows are broken. The result comes back to the parley: win and the
+  castle yields, lose and the siege lifts. RoT's own after-duel menu does
+  not open.
+
+  When no lord is inside, a knight of the house that holds the castle
+  comes out to fight for it. If RoT's duel cannot be found, the combat is
+  decided on weapon skills instead.
+
 
 
 v2.10.2 - THE GROUND BETWEEN THE ARMIES

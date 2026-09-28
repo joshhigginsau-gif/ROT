@@ -106,6 +106,18 @@ namespace WardensAndDragons
 			}
 			try
 			{
+				Hero knight = (s.OwnerClan != null) ? s.OwnerClan.Heroes.Where((Hero h) => h.IsAlive && !h.IsChild && !h.IsPrisoner && h != Hero.MainHero && h.PartyBelongedTo != MobileParty.MainParty)
+					.OrderByDescending((Hero h) => h.GetSkillValue(DefaultSkills.OneHanded)).FirstOrDefault() : null;
+				if (knight != null)
+				{
+					return knight.CharacterObject;
+				}
+			}
+			catch
+			{
+			}
+			try
+			{
 				MobileParty g = s.Town.GarrisonParty;
 				if (g != null)
 				{
@@ -506,7 +518,7 @@ namespace WardensAndDragons
 				Flow.Notify("There is nobody on the walls to fight.");
 				return;
 			}
-			string who = (lord != null) ? lord.Name.ToString() : ("the castellan's champion, " + champ.Name);
+			string who = (lord != null) ? lord.Name.ToString() : ((champ.IsHero && champ.HeroObject.Clan != null) ? (champ.Name + ", who comes out for " + champ.HeroObject.Clan.Name) : ("the castellan's champion, " + champ.Name));
 			Inquiry.Confirm("Single Combat", "You challenge " + who + " to meet you in single combat, before both armies. If you win, " + s.Name + " yields. If you lose, you lift the siege and swear not to return for " +
 				Cfg.ParleyTruceDays + " days.\n\nWhoever falls has a " + Cfg.TrialDeathChance + "% chance of never rising" + (Cfg.TrialPlayerCanDie ? " - you included." : "."),
 				"Throw down the gauntlet", "Not today",
@@ -599,21 +611,28 @@ namespace WardensAndDragons
 			Settle();
 		}
 
+		private const string RotKey = "pa:rot";
+
 		private static void Fight(Settlement s, Hero lord, CharacterObject champ)
 		{
 			_crowd = s.Culture;
-			Store.Set(DuelKey, ((MBObjectBase)s).StringId + "|" + ((lord != null) ? ((MBObjectBase)lord).StringId : "") + "|" + ((MBObjectBase)champ).StringId);
-			Log.Write("parley at " + s.Name + ": single combat against " + champ.Name + " on the field");
-			string why;
-			bool ok = FieldDuel.Open(champ, (float)Cfg.TrialHealth, delegate(bool won, List<CharacterObject> fallen)
+			// Whoever fights for the walls: the lord, or a knight of the house.
+			Hero foe = lord ?? (champ.IsHero ? champ.HeroObject : null);
+			Store.Set(DuelKey, ((MBObjectBase)s).StringId + "|" + ((foe != null) ? ((MBObjectBase)foe).StringId : "") + "|" + ((MBObjectBase)champ).StringId);
+			Log.Write("parley at " + s.Name + ": single combat against " + champ.Name);
+			if (foe == null)
 			{
-				Store.Set(ResultKey, (won ? "1" : "0") + "|" + Ravens.Ids(fallen));
-			}, out why);
-			if (!ok)
-			{
-				Log.Write("parley at " + s.Name + ": " + why);
 				Decide(s, lord, champ);
+				return;
 			}
+			string why;
+			if (RotDuel.Open(foe, out why))
+			{
+				Store.Set(RotKey, "1");
+				return;
+			}
+			Log.Write("parley at " + s.Name + ": " + why);
+			Decide(s, foe, champ);
 		}
 
 		// Off the field, never on it.
@@ -625,8 +644,18 @@ namespace WardensAndDragons
 				{
 					return;
 				}
-				string result = Store.Get(ResultKey);
 				string duel = Store.Get(DuelKey);
+				bool rotWon;
+				if (Store.Get(RotKey) == "1" && !string.IsNullOrEmpty(duel) && RotDuel.TakeResult(out rotWon))
+				{
+					Store.Set(RotKey, null);
+					string[] rd = duel.Split('|');
+					Hero rf = (rd.Length > 1 && rd[1].Length > 0) ? Law.Find(rd[1]) : null;
+					string loser = rotWon ? ((rf != null) ? rf.CharacterObject.StringId : ((rd.Length > 2) ? rd[2] : "")) : CharacterObject.PlayerCharacter.StringId;
+					Store.Set(ResultKey, (rotWon ? "1" : "0") + "|" + loser);
+					Log.Write("rot duel: " + (rotWon ? "won" : "lost"));
+				}
+				string result = Store.Get(ResultKey);
 				if (FieldDuel.Failed && string.IsNullOrEmpty(result) && !string.IsNullOrEmpty(duel))
 				{
 					FieldDuel.Failed = false;
