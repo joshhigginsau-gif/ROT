@@ -64,7 +64,13 @@ namespace WardensAndDragons
 			string[] a = (Store.Get(SiegeKey) ?? "").Split('|');
 			if (a.Length < 4 || a[0] != ((MBObjectBase)s).StringId)
 			{
-				a = new string[4] { ((MBObjectBase)s).StringId, "-1", "0", "0" };
+				a = new string[6] { ((MBObjectBase)s).StringId, "-1", "0", "0", "-1", "0" };
+				Store.Set(SiegeKey, string.Join("|", a));
+			}
+			if (a.Length < 6)
+			{
+				// A record from before challenges were once a day.
+				a = new string[6] { a[0], a[1], a[2], a[3], "-1", "0" };
 				Store.Set(SiegeKey, string.Join("|", a));
 			}
 			return a;
@@ -252,6 +258,7 @@ namespace WardensAndDragons
 			c += Store.Dread / 10;
 			c -= (Trait(lord, DefaultTraits.Valor) > 0) ? 15 : 0;
 			c += (st[2] == "1") ? 10 : 0;
+			c += (st[5] == "1") ? 25 : 0;
 			return Clamp(c, 1, 75);
 		}
 
@@ -279,15 +286,55 @@ namespace WardensAndDragons
 			return Clamp(c, 5, 90);
 		}
 
+		// Nobody wagers a castle lightly. Only the brave come down.
 		internal static int ChallengeChance(Settlement s)
 		{
-			Hero lord = Lord(s);
-			if (lord == null)
+			CharacterObject champ = Champion(s);
+			Hero fighter = Lord(s) ?? ((champ != null && champ.IsHero) ? champ.HeroObject : null);
+			if (fighter == null)
 			{
-				// A castellan's champion is glad of the chance.
-				return 90;
+				return 2;
 			}
-			return (Trait(lord, DefaultTraits.Valor) > 0) ? 90 : 65;
+			int valor = Trait(fighter, DefaultTraits.Valor);
+			int c = (valor >= 2) ? 75 : ((valor == 1) ? 45 : ((valor == 0) ? 12 : 3));
+			int gap = Arms(fighter.CharacterObject) - Arms(CharacterObject.PlayerCharacter);
+			c += (gap < -60) ? -15 : ((gap >= 60) ? 10 : 0);
+			c += (Hunger(s) == 2) ? 10 : 0;
+			c += (Store.Honour - 50) / 10;
+			c += (State(s)[2] == "1") ? 5 : 0;
+			return Clamp(c, 2, 85);
+		}
+
+		private static int Arms(CharacterObject c)
+		{
+			try
+			{
+				return Math.Max(c.GetSkillValue(DefaultSkills.OneHanded), Math.Max(c.GetSkillValue(DefaultSkills.TwoHanded), c.GetSkillValue(DefaultSkills.Polearm)));
+			}
+			catch
+			{
+				return 0;
+			}
+		}
+
+		internal static string CanChallenge(Settlement s)
+		{
+			string[] st = State(s);
+			if (st[5] == "1")
+			{
+				return "They broke their word after the last one. There will be no more single combat at this siege.";
+			}
+			int day;
+			int.TryParse(st[4], out day);
+			return (day == CourtBehavior.Today()) ? "You have already thrown down the gauntlet today. Try again tomorrow." : null;
+		}
+
+		private static int RenegeChance(Hero fighter, bool swornDead)
+		{
+			Hero head = (fighter != null && fighter.Clan != null && fighter.Clan.Leader != null) ? fighter.Clan.Leader : fighter;
+			int honor = Trait(head, DefaultTraits.Honor);
+			int c = (honor > 0) ? Cfg.ParleyRenegeHonourable : ((honor < 0) ? Cfg.ParleyRenegeDishonourable : Cfg.ParleyRenegeNeutral);
+			return Clamp(c + (swornDead ? 15 : 0), 0, 100);
 		}
 
 		private static int CharmChance(Settlement s, string arg)
@@ -507,7 +554,7 @@ namespace WardensAndDragons
 		internal static void Challenge()
 		{
 			Settlement s = Besieged();
-			if (s == null)
+			if (s == null || CanChallenge(s) != null)
 			{
 				return;
 			}
@@ -524,12 +571,16 @@ namespace WardensAndDragons
 				"Throw down the gauntlet", "Not today",
 				delegate
 				{
-					if (MBRandom.RandomInt(100) >= ChallengeChance(s))
+					int chance = ChallengeChance(s);
+					string[] st0 = State(s);
+					st0[4] = CourtBehavior.Today().ToString();
+					Put(st0);
+					if (MBRandom.RandomInt(100) >= chance)
 					{
 						string[] st = State(s);
 						st[2] = "1";
 						Put(st);
-						Log.Write("parley at " + s.Name + ": challenge refused");
+						Log.Write("parley at " + s.Name + ": challenge refused (" + chance + "%)");
 						Ravens.Popup("The Challenge Refused", who + " will not come down. Their own men watched them refuse - and men who have watched that are easier to talk to.");
 						return;
 					}
@@ -716,9 +767,15 @@ namespace WardensAndDragons
 					catch
 					{
 					}
-					Store.AddDeed(Standing.Date() + "  Won " + s.Name + " in single combat against " + who + ".");
 					Log.Write("parley at " + s.Name + ": single combat won" + (lordDies ? " (the lord died)" : ""));
 					Hero captive = (lord != null && lord.IsAlive && !lordDies) ? lord : null;
+					int renege = RenegeChance(lord, lordDies);
+					if (MBRandom.RandomInt(100) < renege)
+					{
+						Reneged(s, lord, captive, who, lordDies, renege);
+						return;
+					}
+					Store.AddDeed(Standing.Date() + "  Won " + s.Name + " in single combat against " + who + ".");
 					InformationManager.ShowInquiry(new InquiryData("Single Combat", text, true, false, "Take the castle", null, delegate
 					{
 						Surrender(s, "duel", null, captive);
@@ -748,6 +805,36 @@ namespace WardensAndDragons
 			{
 				Log.Write("settling the single combat failed: " + e);
 			}
+		}
+
+		// They lost in the field, before both armies - and the gates stay shut.
+		private static void Reneged(Settlement s, Hero fighter, Hero captive, string who, bool died, int chance)
+		{
+			Log.Write("parley at " + s.Name + ": they broke their word (" + chance + "%)");
+			string[] st = State(s);
+			st[5] = "1";
+			Put(st);
+			if (captive != null && captive.IsAlive && !captive.IsPrisoner)
+			{
+				try
+				{
+					TakePrisonerAction.Apply(MobileParty.MainParty.Party, captive);
+				}
+				catch (Exception e)
+				{
+					Log.Write("taking " + captive.Name + " failed: " + e.Message);
+				}
+			}
+			Hero head = (fighter != null && fighter.Clan != null && fighter.Clan.Leader != null && fighter.Clan.Leader.IsAlive) ? fighter.Clan.Leader : null;
+			if (head != null)
+			{
+				Law.Record(Law.Oathbreaking, head, Hero.MainHero, fighter, false);
+			}
+			Store.AddDeed(Standing.Date() + "  Beat " + who + " in single combat for " + s.Name + " - and " + s.Name + " kept its gates shut.");
+			string text = died
+				? (who + " did not rise. But the man who swore is dead, and the men on the walls say they never swore anything. The gates stay shut.")
+				: (who + " yielded, and is your prisoner. But the gates of " + s.Name + " stay shut: " + who + " swore it, and " + s.Name + " never did.");
+			Ravens.Popup("The Gates Stay Shut", text + "\n\nThere will be no more single combat at this siege. With their lord in your chains, terms are far likelier now.");
 		}
 
 		// ------------------------------------------------------------------

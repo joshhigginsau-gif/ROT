@@ -51,7 +51,14 @@ namespace WardensAndDragons
 
 			Option(s, "wad_pa_duel", "{=WAD_PaDuel}Challenge them to single combat", 0, delegate(MenuCallbackArgs a, Settlement st)
 			{
-				a.Tooltip = Styles.Line("Win, and the castle yields. Lose, and you lift the siege and swear not to return for " + Cfg.ParleyTruceDays + " days. They accept " + Parley.ChallengeChance(st) + "% of the time.");
+				string why = Parley.CanChallenge(st);
+				if (why != null)
+				{
+					a.IsEnabled = false;
+					a.Tooltip = Styles.Line(why);
+					return;
+				}
+				a.Tooltip = Styles.Line("Win, and the castle yields. Lose, and you lift the siege and swear not to return for " + Cfg.ParleyTruceDays + " days. They accept " + Parley.ChallengeChance(st) + "% - only the brave wager a castle on one fight. Once a day.");
 			}, Parley.Challenge);
 
 			Option(s, "wad_pa_terms", "{=WAD_PaTerms}Offer terms", 1, delegate(MenuCallbackArgs a, Settlement st)

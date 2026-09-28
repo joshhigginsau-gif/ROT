@@ -1,4 +1,29 @@
-Wardens & Dragons  v2.10.3  -  PARLEY AT THE WALLS
+Wardens & Dragons  v2.10.4  -  PARLEY AT THE WALLS
+
+
+v2.10.4 - NOBODY WAGERS A CASTLE LIGHTLY
+
+  Single combat was too easy to get. Whether they come down now depends
+  on the courage of whoever fights for the walls:
+
+      Valor 2+   75%      Valor 1   45%      Valor 0   12%      craven 3%
+
+  Less if they can see you would beat them (their best weapon skill 60
+  or more below yours), more if they outmatch you, if they are starving,
+  or if you are known to keep your word. You may throw down the gauntlet
+  once a day.
+
+  And winning is not always the end of it. When their champion falls, the
+  garrison may keep the gates shut anyway - 5% under an honourable house,
+  20% an ordinary one, 40% a dishonourable one, and more if the lord who
+  swore it died in the fight. You still take the lord you beat, their
+  house is charged with oathbreaking, there is no more single combat at
+  that siege, and with their lord in your chains terms become far likelier.
+
+      parley_renege_chance_honourable=5
+      parley_renege_chance_neutral=20
+      parley_renege_chance_dishonourable=40
+
 
 
 v2.10.3 - REALM OF THRONES' OWN DUEL
