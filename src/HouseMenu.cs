@@ -307,6 +307,11 @@ namespace WardensAndDragons
 			{
 				sb.Append("\nTHE REVERSED BANNER\n").Append(banner).Append("\n");
 			}
+			string exile = Exile.Summary();
+			if (!string.IsNullOrEmpty(exile))
+			{
+				sb.Append("\nACROSS THE NARROW SEA\n").Append(exile).Append("\n");
+			}
 			else if (Cfg.Bastard)
 			{
 				sb.Append("\n  Somewhere there is a child of this house nobody wrote down.\n");

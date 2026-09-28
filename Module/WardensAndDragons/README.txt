@@ -1,4 +1,40 @@
-Wardens & Dragons  v2.12.0  -  THE IRON BANK
+Wardens & Dragons  v2.13.0  -  THE COMPANY THAT COMES BACK
+
+
+v2.13.0 - EXILE, AND THE COMPANY THAT COMES BACK
+
+  Beat the bastard - take every castle and town his claim holds - and he
+  does not die. He takes ship across the Narrow Sea with the men who would
+  not kneel. If he is your prisoner you choose: let him take ship (Honour
+  +3), or the axe (Dread +10) - in which case his champion carries his son
+  over the water instead, as Bittersteel did. If he is already dead, the
+  same.
+
+  In Essos they found a sellsword company - The Ashen Company, The Crimson
+  Company, and so on - a real house with a real army that grows every
+  season. Other rulers may hire it. It will never take your gold.
+
+  Ten to twenty years later (a Bannerlord year is 84 days) it comes back:
+  his son, grown up across the sea on stories about you, lands with the
+  whole company and the gold of whichever ruler hates you most, takes one
+  of your castles, is proclaimed king and declares war. Beat him, and the
+  next generation takes ship. Five times, if you let it.
+
+  It works both ways: if you took up the bastard's banner yourself and won,
+  it is your half-brother, the old house's heir, who takes ship.
+
+  The company, its captain and the returning son all get encyclopedia
+  pages, and your house page shows what waits across the sea.
+
+      exile_years_min=10    exile_years_max=20    exile_start_men=1500
+      exile_growth_men=250  exile_max_men=8000    exile_fund_cap=3000000
+      exile_max_generations=5
+
+  TESTING
+
+      wad.exile_now       the current claimant is beaten and takes ship
+      wad.exile_return    the company lands tomorrow
+
 
 
 v2.12.0 - THE IRON BANK WILL HAVE ITS DUE  (Court -> The Iron Bank)

@@ -83,6 +83,10 @@ namespace WardensAndDragons
 				"THE IRON BANK",
 				"  wad.bank_due                your next payment to the Bank is due today",
 				"",
+				"EXILE",
+				"  wad.exile_now               the claimant is beaten and takes ship",
+				"  wad.exile_return            the exiles' company lands tomorrow",
+				"",
 				"YOUR HOUSE",
 				"  wad.culture list            every culture your mods define",
 				"  wad.culture <name> [holdings]  your house (and holdings) take that culture",
@@ -827,6 +831,26 @@ namespace WardensAndDragons
 				return "Load a campaign first.";
 			}
 			return IronBank.DueNow();
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("exile_now", "wad")]
+		public static string ExileNow(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			return Exile.Now();
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("exile_return", "wad")]
+		public static string ExileReturn(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			return Exile.ReturnNow();
 		}
 	}
 }

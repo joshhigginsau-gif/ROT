@@ -590,7 +590,7 @@ namespace WardensAndDragons
 		}
 
 		// A lord template of the right culture to build the hero from.
-		private static CharacterObject Template(CultureObject culture)
+		internal static CharacterObject Template(CultureObject culture)
 		{
 			try
 			{
@@ -877,7 +877,7 @@ namespace WardensAndDragons
 		// banner and colours from the founding house, seats them as the ruling
 		// clan and announces it. A clan cannot be joined by other houses; only
 		// a kingdom can, which is what makes the defection below possible.
-		private static Kingdom Crown(Clan house, Hero him, Settlement seat)
+		internal static Kingdom Crown(Clan house, Hero him, Settlement seat)
 		{
 			try
 			{
@@ -1087,6 +1087,12 @@ namespace WardensAndDragons
 
 				faction.SetValue(Campaign.Current, house, null);
 				moved = true;
+				// Remembered for the exile: if you win as the bastard, it is
+				// this house's heir who takes ship.
+				if (old != null)
+				{
+					Store.Set("bs:old", ((MBObjectBase)old).StringId);
+				}
 				ChangePlayerCharacterAction.Apply(him);
 				Guard.Abandon(old);
 

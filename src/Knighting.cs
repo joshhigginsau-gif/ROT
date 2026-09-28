@@ -354,7 +354,7 @@ namespace WardensAndDragons
 
 		private static readonly string[] EastB = { "yon", "ys", "aris", "enos", "aro", "ion", "ahar", "eris", "oros", "ane", "aqo", "ello", "ivar", "aros" };
 
-		private static bool Essos(CultureObject c)
+		internal static bool Essos(CultureObject c)
 		{
 			if (c == null)
 			{

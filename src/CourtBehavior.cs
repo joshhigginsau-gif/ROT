@@ -146,6 +146,7 @@ public class CourtBehavior : CampaignBehaviorBase
 			Guard.Reset();
 			Ravens.Reset();
 			Host.Load();
+			Exile.Load();
 			Host.Patch();
 			Parley.PatchCrowd();
 			Log.Write("rot duel available: " + RotDuel.Available);
@@ -196,6 +197,7 @@ public class CourtBehavior : CampaignBehaviorBase
 				Host.Daily();
 				Knighting.Weekly();
 				IronBank.Daily();
+				Exile.Daily();
 				SettleTheDead();
 				Titles.Invalidate();
 				if (num - Store.LastDriftDay >= Cfg.DaysPerSeason)

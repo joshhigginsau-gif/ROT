@@ -149,9 +149,36 @@ namespace WardensAndDragons
 			}
 		}
 
+		// Parties that are not hosts but need the same keeping: the exiles'
+		// company waiting across the sea.
+		private static readonly HashSet<string> _protected = new HashSet<string>();
+
+		internal static void Protect(string partyId)
+		{
+			if (!string.IsNullOrEmpty(partyId))
+			{
+				_protected.Add(partyId);
+			}
+		}
+
+		internal static void Unprotect(string partyId)
+		{
+			_protected.Remove(partyId ?? "");
+		}
+
+		internal static void ClearProtected()
+		{
+			_protected.Clear();
+		}
+
 		internal static bool Is(MobileParty p)
 		{
-			return p != null && _ids.Count > 0 && _ids.Contains(((MBObjectBase)p).StringId);
+			if (p == null || (_ids.Count == 0 && _protected.Count == 0))
+			{
+				return false;
+			}
+			string id = ((MBObjectBase)p).StringId;
+			return _ids.Contains(id) || _protected.Contains(id);
 		}
 
 		internal static MobileParty PartyOf(Rec r)
@@ -366,7 +393,7 @@ namespace WardensAndDragons
 				}, null);
 		}
 
-		private static List<CharacterObject> Troops(string q, Clan owner = null)
+		internal static List<CharacterObject> Troops(string q, Clan owner = null)
 		{
 			int lo;
 			int hi;
@@ -1153,7 +1180,7 @@ namespace WardensAndDragons
 			return sb.ToString();
 		}
 
-		private static void Fill(MobileParty party, List<CharacterObject> troops, string q, int men)
+		internal static void Fill(MobileParty party, List<CharacterObject> troops, string q, int men)
 		{
 			int lo;
 			int hi;

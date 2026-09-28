@@ -291,3 +291,18 @@ done whose edits had never been written to disk. It is worth continuing.
   and `hunt` (engage order). When a ruler is short it calls `IronBank.AiBorrow` (50%, capped,
   `ib:ai:<kingdom>` = owed|due). AI default → a cheap loan offered to the player if at war with
   them, else a funded host for one of their enemies.
+
+## v2.13.0 — exile, and the company that comes back
+
+- `Exile.cs` (keys `ex:*`: state exiled/landed/done/deciding, rival, house, company, captain, heir,
+  return day, gen, men, party). Rival: `bs:head` (or the old house `bs:old`, now written by
+  `Bastard.Become`, when the player took up the banner); after a landing, the son.
+- Beaten when the rival's house (or realm, if ruling) holds no fortifications. Prisoner of yours →
+  ship/axe choice; alive → ships; dead → champion + son. `Ship`: new clan "The <Colour> Company",
+  captain teleported to an Essos town (`Knighting.Essos`), party via `CreateNewClanMobileParty`,
+  filled with `Host.Fill` and kept with `Host.Protect` (non-host ids in the patch set).
+- Waiting: +men every 21 days, hired as mercenaries by rich AI rulers at war (never the player),
+  until a year before the landing. Landing: son (existing adult, else created with Father =
+  captain), funder = worst-relation ruler (prefers at war), castle farthest from your home,
+  `ApplyByGift`, `Bastard.Crown` (now internal) + `ChangeKingdomName("The <Colour> Crown")`,
+  `DeclareWarAction.ApplyByDefault`. State → landed; the son is the next rival (gen+1, cap 5).
