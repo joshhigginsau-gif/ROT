@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using HarmonyLib;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.CampaignSystem.CharacterDevelopment;
@@ -588,67 +587,6 @@ namespace WardensAndDragons
 				}, null);
 		}
 
-		// The arena crowd dresses its spectators from the town you are standing
-		// in - and before the walls you are standing in no town at all, which
-		// crashed the game. Outside a settlement, the crowd is the camp
-		// followers of the castle's own culture instead.
-		private static bool _crowdPatched;
-		private static CultureObject _crowd;
-
-		internal static void PatchCrowd()
-		{
-			if (_crowdPatched)
-			{
-				return;
-			}
-			_crowdPatched = true;
-			try
-			{
-				Type t = AccessTools.TypeByName("SandBox.View.Missions.MissionAudienceHandler");
-				MethodInfo m = (t != null) ? AccessTools.Method(t, "GetRandomAudienceCharacterToSpawn") : null;
-				if (m == null)
-				{
-					Log.Write("parley: the arena crowd was not found; single combat at a siege will be decided without a duel");
-					_crowdPatched = false;
-					_crowdFailed = true;
-					return;
-				}
-				new Harmony("community.wardens.and.dragons.parley").Patch(m, new HarmonyMethod(typeof(Parley).GetMethod("CrowdPrefix", BindingFlags.Static | BindingFlags.NonPublic)));
-				Log.Write("parley: crowd patched on MissionAudienceHandler.GetRandomAudienceCharacterToSpawn");
-			}
-			catch (Exception e)
-			{
-				_crowdFailed = true;
-				Log.Write("parley: patching the arena crowd failed: " + e.Message);
-			}
-		}
-
-		private static bool _crowdFailed;
-
-		private static bool CrowdPrefix(ref CharacterObject __result)
-		{
-			try
-			{
-				if (Settlement.CurrentSettlement != null)
-				{
-					return true;
-				}
-				CultureObject c = _crowd ?? Hero.MainHero.Culture;
-				CharacterObject who = (MBRandom.RandomFloat < 0.65f) ? c.Townsman : c.Townswoman;
-				who = who ?? c.Townsman ?? c.Townswoman;
-				if (who == null)
-				{
-					return true;
-				}
-				__result = who;
-				return false;
-			}
-			catch
-			{
-				return true;
-			}
-		}
-
 		// No duel to be had: decided on skill instead.
 		private static void Decide(Settlement s, Hero lord, CharacterObject champ)
 		{
@@ -666,7 +604,6 @@ namespace WardensAndDragons
 
 		private static void Fight(Settlement s, Hero lord, CharacterObject champ)
 		{
-			_crowd = s.Culture;
 			// Whoever fights for the walls: the lord, or a knight of the house.
 			Hero foe = lord ?? (champ.IsHero ? champ.HeroObject : null);
 			Store.Set(DuelKey, ((MBObjectBase)s).StringId + "|" + ((foe != null) ? ((MBObjectBase)foe).StringId : "") + "|" + ((MBObjectBase)champ).StringId);
@@ -707,23 +644,6 @@ namespace WardensAndDragons
 					Log.Write("rot duel: " + (rotWon ? "won" : "lost"));
 				}
 				string result = Store.Get(ResultKey);
-				if (FieldDuel.Failed && string.IsNullOrEmpty(result) && !string.IsNullOrEmpty(duel))
-				{
-					FieldDuel.Failed = false;
-					string[] dd = duel.Split('|');
-					Settlement ds = Settlement.Find(dd[0]);
-					Hero dl = (dd.Length > 1 && dd[1].Length > 0) ? Law.Find(dd[1]) : null;
-					CharacterObject dc = (dd.Length > 2) ? MBObjectManager.Instance.GetObject<CharacterObject>(dd[2]) : null;
-					if (ds != null && dc != null)
-					{
-						Decide(ds, dl, dc);
-					}
-					else
-					{
-						Store.Set(DuelKey, null);
-					}
-					return;
-				}
 				if (string.IsNullOrEmpty(result) || string.IsNullOrEmpty(duel))
 				{
 					return;

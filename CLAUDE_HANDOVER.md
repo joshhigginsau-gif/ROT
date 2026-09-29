@@ -2,8 +2,9 @@
 
 Paste or upload this file at the start of a new chat. It explains everything
 needed to carry on. The detailed history of changes is in `HANDOVER.md` (in
-the repo), and the player-facing notes are in
-`Module/WardensAndDragons/README.txt`.
+the repo). The player-facing notes are in `Module/WardensAndDragons`:
+`README.txt` describes what is in the mod now, and `CHANGELOG.txt` has what
+changed in each version.
 
 ## What this is
 
@@ -12,15 +13,22 @@ C#. It adds a Game of Thrones political layer (House of the Dragon era) to a
 **Realm of Thrones (RoT)** campaign. It runs alongside Bellum Civile, RoT
 Dynasty & Succession and War Sails (NavalDLC).
 
-- **Current version:** v2.13.1. The player has tested every feature in game
-  and confirmed they work.
+- **Current version:** v2.13.2, a tidy-up with no gameplay change: dead code
+  and unused settings removed, README split into a guide and a changelog.
+  v2.13.1 was tested in game feature by feature; v2.13.2 needs a load and a
+  siege parley duel to confirm nothing moved.
 - **Repo:** https://github.com/joshhigginsau-gif/ROT, branch
   `claude/bannerlord-rot-mod-jqh7py`.
-- **Source:** `src/*.cs`, about 67 files. The mod itself is in
-  `Module/WardensAndDragons` (`SubModule.xml`, `README.txt`, and `bin/` with
-  the DLL and `config.txt`).
-- **Build:** run `dotnet build -c Release` in `src/`. The DLL is written into
-  `Module/WardensAndDragons/bin/Win64_Shipping_Client`. The older `build.sh`
+- **Source:** `src/*.cs`, about 68 files. Much of it is ILSpy output from an
+  earlier recovery (explicit casts, `(HarmonyMethod)null`, `//IL_` comments);
+  new code is written by hand and does not need to copy that style. The mod
+  itself is in `Module/WardensAndDragons` (`SubModule.xml`, `README.txt`,
+  `CHANGELOG.txt`, and `bin/` with the DLL and `config.txt`).
+- **Build:** run `dotnet build -c Release` in `src/`. It restores BUTR's
+  reference assemblies from NuGet, so no game install is needed, but the
+  machine must reach NuGet. The DLL is copied into both
+  `Module/WardensAndDragons/bin/Win64_Shipping_Client` and
+  `bin/Gaming.Desktop.x64_Shipping_Client`. The older `build.sh`
   (Mono `mcs` against a `refs/` folder) is described in `HANDOVER.md`.
 - **Log:** the mod writes `wardens_dragons.log` next to the DLL. The player
   sends this log after every test, and it is the main way to debug.
@@ -32,8 +40,10 @@ Dynasty & Succession and War Sails (NavalDLC).
    - the `Log.Write("=== Wardens & Dragons vX - ... ===")` header in
      `src/SubModule.cs`;
    - `<Version value="vX"/>` in `Module/WardensAndDragons/SubModule.xml`.
-3. Add a new section at the **top** of `README.txt` for the player, including
-   test steps and cheats. Add a short technical section at the end of
+3. Add a new section at the **top** of `CHANGELOG.txt` for the player,
+   including test steps and cheats. If the change adds, removes or reshapes a
+   feature, update its part of `README.txt` too, so the guide always
+   describes the mod as it is. Add a short technical section at the end of
    `HANDOVER.md`.
 4. Commit and push, then zip `Module/WardensAndDragons` for the player.
 5. Tell the player how to test it and ask for the log.
@@ -65,16 +75,24 @@ the log back.
   - a field;
   - a parse case (`if (flag) { X = ...; }`, with `flag2` for bools);
   - a line in the `Default()` text;
-  - an `AppendSection` chain. The sections run Kingsguard → Ravens → The small
-    council → Parley → Knights → The Iron Bank → Exile, with Exile last.
+  - for a new section, an `AppendSection` call. The chain runs Harrenhal →
+    Wardens and oaths → Dragons → … → Knights → The Iron Bank → Exile, with
+    Exile last; a new section goes after Exile (and Exile's `until` changes to
+    the new header).
 
-  New keys only reach an existing `config.txt` if they come in a new section.
+  New keys reach an existing `config.txt` either way: `AppendSection` adds a
+  missing section whole, and `AppendMissingKeys` adds any key missing from an
+  existing section, with its comment lines, under
+  `# ---------- Added by a newer version ----------`. Unknown keys in a
+  player's file are ignored, so removing a setting is safe.
 - **Output:**
   - `Log.Write` / `Log.Once(key, msg)` for the log file;
   - `Ravens.Popup(title, text)` for a raven, which is a popup;
   - `Flow.Notify` for a message in the corner;
   - `Store.AddDeed` for the house chronicle.
-- **Harmony:** patches are postfixes only (the one prefix is `Laws.Listen`).
+- **Harmony:** patches are postfixes only. The one prefix is
+  `Laws.HeirChosen` on SandBox's `OnHeirSelectionOver`, installed by
+  `Laws.Listen`.
   Patch the **concrete** RoT model types, not the abstract ones. For example,
   hosts patch `ROTPartyWageModel.GetTotalWage`,
   `ROTMobilePartyFoodConsumptionModel`, `ROTPartySizeLimitModel` and
@@ -123,7 +141,7 @@ the log back.
     navmesh snapping.
 - **The small council** (`Council.cs`, `CouncilMenu.cs`,
   `CouncilDialogue.cs`): the ruler's council in the lord's hall, and calling
-  the banners. Prefix `sc:`.
+  the banners. Prefix `cn:` (`sc:` belongs to the succession).
 - **Hosts** (`Host.cs`): armies bought with gold, up to about 25,000, under a
   Kingsguard knight, serving for a season.
   - Record `hs:<party>` = knight|quality|men|price|end|order|target|warned|
@@ -140,7 +158,9 @@ the log back.
   - Terms need starvation; gold costs millions; Charm needs 3 of 3.
   - Single combat is the easiest road: acceptance depends on Valor
     (75/45/12/3%), one try a day, and the garrison may go back on its word.
-  - Uses RoT's own duel. `FieldDuel.cs` is no longer used for sieges.
+  - Uses RoT's own duel (`RotDuel.cs`). If it cannot open, the combat is
+    decided on weapon skills (`Parley.Decide`). The old `FieldDuel.cs` and
+    the arena-crowd prefix were removed in v2.13.2.
 - **Knights of the realm** (`Knighting.cs`, `KnightsMenu.cs`): the ruler
   knights anyone into a landless house.
   - The house serves as a mercenary company and can leave whenever it likes.
@@ -206,5 +226,6 @@ the log back.
     enemy party across the sea is not ferried.
   - Council armies choose sea routes but are not ferried.
   - Harrenhal's curse never visibly escalates.
-  - New config keys don't appear in an existing `config.txt`.
-  - Compiler warning: `Parley._crowdFailed` is unused.
+  - `unlawful_heir_penalty` does nothing: `Laws.Penalty()` has had no
+    callers since the support scores were cut in v2.0.0, so naming an heir
+    against the law is free. Ask the player what it should cost.

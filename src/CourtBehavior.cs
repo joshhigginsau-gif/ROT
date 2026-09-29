@@ -148,7 +148,6 @@ public class CourtBehavior : CampaignBehaviorBase
 			Host.Load();
 			Exile.Load();
 			Host.Patch();
-			Parley.PatchCrowd();
 			Log.Write("rot duel available: " + RotDuel.Available);
 			Menus.Register(starter);
 			Dialogue.Add(starter);

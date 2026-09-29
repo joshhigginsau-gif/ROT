@@ -321,3 +321,20 @@ done whose edits had never been written to disk. It is worth continuing.
   `Embark`: `hv:<party>` = target|landing day (5–12 days by distance), parked in place; on the day
   `SetPositionAfterMapChange(s.GatePosition)` and the order resumes. Cleared by `SetOrder`/`Drop`.
   Cheat `wad.host_voyage`.
+
+## v2.13.2 — sweeping out
+
+- No gameplay change. Removed `FieldDuel.cs` (its `Open` had no callers since v2.10.3) and, in
+  `Parley.cs`, the arena-crowd prefix on `MissionAudienceHandler.GetRandomAudienceCharacterToSpawn`
+  (`PatchCrowd`, `CrowdPrefix`, `_crowd`, `_crowdFailed`), the `FieldDuel.Failed` branch in
+  `Settle`, and the `Parley.PatchCrowd()` call in `CourtBehavior`. The only Harmony prefix left is
+  `Laws.HeirChosen`.
+- `Cfg.cs`: removed 55 fields nothing outside `Cfg` read and the 40 parse cases that fed them
+  (v1 duties, lean, controversy, plots, knife, Great Council, claims/pretender, Iron Bank duty,
+  Dragonkeepers, Royal Fleet). None were in `Default()`, so no player file gains or loses a line;
+  old keys in a player's file hit no `case` and are ignored. Knights comment in `Default()` no
+  longer offers "a younger child of the house" (not allowed since v2.11.1).
+- Found, not changed: `Laws.Penalty()` (`unlawful_heir_penalty`) has no callers since the support
+  scores were cut in v2.0.0, so an unlawful heir costs nothing. Decide with the player.
+- `README.txt` is now a guide to the mod as it is; history moved to `CHANGELOG.txt` (newest first,
+  duplicated v0.9.2 and Great Council sections dropped, pre-v2 history marked as removed).
