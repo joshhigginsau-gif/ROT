@@ -321,3 +321,23 @@ done whose edits had never been written to disk. It is worth continuing.
   `Embark`: `hv:<party>` = target|landing day (5–12 days by distance), parked in place; on the day
   `SetPositionAfterMapChange(s.GatePosition)` and the order resumes. Cleared by `SetOrder`/`Drop`.
   Cheat `wad.host_voyage`.
+
+## v2.14.0 — the generals' war
+
+- `Generals.cs`: tactical orders `raid`/`ambush`/`shadow`/`screen`/`feint`/`avoid` (`Generals.Handles`),
+  dispatched from the top of `Host.Enforce`; hourly checks (`Host.Hourly` → `Generals.Hourly`) spring
+  ambushes (Tactics vs Scouting, `Casualties` kills a share of non-heroes across an army), strike
+  shadowed besiegers (confirm for the player), and screen. State `ht:<party>`; cleared by `SetOrder`/`Drop`.
+- Upkeep replaces the season when `generals_enabled`: `r.End` = next upkeep day (+`DaysPerYear`),
+  `hu:<party>` = asked. `MyUpkeep`/`AskUpkeep`/`PayUpkeep`; unpaid → `Desert` (looter parties via
+  `BanditPartyComponent.CreateLooterParty`, then `StandDown`/`Disperse`). AI: `TheirUpkeep` (ruler gold,
+  `IronBank.AiBorrow`, else desert).
+- AI brain `Generals.Think` (daily from `TheirDaily`; `hg:<party>` last think): threat to own
+  fortification → hold; foe host near → engage/ambush/avoid/raid by `Strength` ratio and traits
+  (Valor/Calculating); stale defensive orders → free → `AiChoose`.
+- Commanders: `Host.Family()` adds free adult clan members; one leading own party keeps it (`r.Base`),
+  `StandDown` trims to base. "follow" retired (old records become free).
+- `Scorpions.cs`: `Chance` (Dorne via culture/kingdom name containing "dorn"), `Launch`/`Resolve`
+  dragon strikes (`hd:<rider>` = rider|dragon|target|from|landHour|escort|mine; escort troops taken out
+  and returned), AI riders weekly (`sx:airoll`), `MapEventEnded` → queued falls settled hourly.
+- Config section "Generals"; cheats `wad.host_upkeep`, `wad.ambush_now`, `wad.dragon_strike`, `wad.host_think`.

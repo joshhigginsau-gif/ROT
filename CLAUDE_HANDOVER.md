@@ -12,7 +12,7 @@ C#. It adds a Game of Thrones political layer (House of the Dragon era) to a
 **Realm of Thrones (RoT)** campaign. It runs alongside Bellum Civile, RoT
 Dynasty & Succession and War Sails (NavalDLC).
 
-- **Current version:** v2.13.1. The player has tested every feature in game
+- **Current version:** v2.14.0 (the generals' war: tactical orders, upkeep, dragons vs scorpions - untested in game at time of writing). The player has tested every feature in game
   and confirmed they work.
 - **Repo:** https://github.com/joshhigginsau-gif/ROT, branch
   `claude/bannerlord-rot-mod-jqh7py`.
@@ -135,6 +135,11 @@ the log back.
     (`Nav`). If the sea still blocks them, they take ship: a 5–12 day voyage,
     then they are put ashore at the target (`hv:` for the voyage, `hk:` to
     detect a stuck host). Cheat `wad.host_voyage`.
+- **The generals' war** (`Generals.cs`, `Scorpions.cs`, v2.14.0): orders raid, ambush, shadow,
+  screen, feint, avoid, dragon strike; yearly upkeep (20%) or the host deserts into bandits; knights
+  or family command (no leading in person - the player's choice); AI generals react to threats,
+  strength and temperament; dragons can be shot down by host scorpions, Dornish hosts best at it.
+  Prefixes `ht:`, `hg:`, `hu:`, `hd:`, `hsx:`.
 - **Parley at sieges** (`Parley.cs`, `ParleyMenu.cs`, `RotDuel.cs`).
   Prefix `pa:`.
   - Terms need starvation; gold costs millions; Charm needs 3 of 3.

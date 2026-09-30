@@ -75,6 +75,10 @@ public class CourtBehavior : CampaignBehaviorBase
 		});
 		CampaignEvents.HourlyTickEvent.AddNonSerializedListener((object)this, (Action)Parley.Settle);
 		CampaignEvents.OnSiegeEventStartedEvent.AddNonSerializedListener((object)this, (Action<TaleWorlds.CampaignSystem.Siege.SiegeEvent>)Parley.OnSiegeStarted);
+		// The generals' war: ambushes and screens act by the hour, and riders
+		// who fought a host may have met its scorpions.
+		CampaignEvents.HourlyTickEvent.AddNonSerializedListener((object)this, (Action)Host.Hourly);
+		CampaignEvents.MapEventEnded.AddNonSerializedListener((object)this, (Action<TaleWorlds.CampaignSystem.MapEvents.MapEvent>)Scorpions.OnMapEventEnded);
 	}
 
 	public override void SyncData(IDataStore ds)

@@ -1,4 +1,70 @@
-Wardens & Dragons  v2.13.1  -  HOSTS TAKE SHIP
+Wardens & Dragons  v2.14.0  -  THE GENERALS' WAR
+
+
+v2.14.0 - THE GENERALS' WAR
+
+  Hosts are now fought like a general would fight them. You choose the
+  tactics from the small council (Court -> The small council -> Your
+  hosts); you never lead them in person.
+
+  WHO COMMANDS
+  A sworn knight, or now one of your own blood - grown, free, not you.
+  One who already leads their own men keeps them as the host's core, and
+  keeps them when it disbands. The pick list shows each one's Tactics,
+  Scouting and temper (bold / cunning): that is what decides how well
+  your orders are carried out.
+
+  UPKEEP
+  No more season's service. A host serves until you stand it down, but
+  once a year its food and upkeep falls due: 20% of what it cost to
+  raise, less for the men it has lost. A raven asks a week ahead. Unpaid,
+  the men do not go home - they scatter into bands of deserters and live
+  off your roads (Honour -2). Other rulers pay theirs, borrow from the
+  Iron Bank, or lose their hosts the same way.
+
+  NEW ORDERS
+  - Raid the lands of a town or castle: burn its villages one by one.
+    Its granaries empty (good for a parley later), Dread +1 / Honour -1
+    a village, and its lord has to come out to you.
+  - Lie in wait for a host or army: the host waits on the road to where
+    they are marching. When they come near, our Tactics against their
+    Scouting: sprung, and they lose 8-20% before the battle; seen, and
+    it is a fair fight. Rash commanders walk into traps; cunning ones
+    smell them. After 5 days without them, it is called off.
+  - Shadow a host or army: follow, never fight. When they sit down to a
+    siege you are asked whether to fall on their backs (10-15% of them
+    die in the siege lines before they can turn).
+  - Screen one of your castles: patrol around it and fall on anything
+    weaker that comes near; fall back inside if it is stronger.
+  - Feint: march openly on one enemy castle, then turn on another after
+    a few days. Enemy generals ride to save the first.
+  - Refuse battle: stay close to an enemy, but fall back to your walls
+    whenever something stronger comes near.
+  - Send a dragon against an enemy host (needs a rider of your house who
+    is not you). They fly with 50-200 picked men from the host. The host
+    shoots back with scorpions: the chance shows before you commit.
+    Brought down: the dragon dies, the rider dies (50%) or is taken, the
+    escort dies fighting. Not brought down: 20-45% of the host burns, and
+    if it falls below 40% of its strength it breaks.
+
+  SCORPIONS
+  Chance to bring a dragon down: 15%, +1% per 1,000 men (to +20%), +10%
+  for veterans, +20% for a DORNISH host, +15% against a hatchling down
+  to -15% against an ancient dragon, less for a skilled rider, +10% if
+  the host was struck in the last 30 days. At most 75%. Any battle a
+  dragon rider fights against a host may also end with a bolt in the
+  dragon (half the chance if the rider's side won).
+
+  THE OTHER GENERALS
+  Other rulers' hosts now think every day: they ride to save a castle a
+  host or army is marching on (a cunning one may see through a feint),
+  attack when clearly stronger (the cunning prefer an ambush), refuse
+  battle when weaker, and raid your lands when evenly matched. Their
+  riders may fly at your hosts. A commander of yours with Scouting over
+  80 warns you of traps and raids.
+
+  Tests: wad.host_upkeep, wad.ambush_now, wad.dragon_strike,
+  wad.host_think. Config: the new "Generals" section of config.txt.
 
 
 v2.13.1 - HOSTS CAN CROSS THE SEA

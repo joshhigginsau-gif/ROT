@@ -123,7 +123,7 @@ namespace WardensAndDragons
 			return All().Where((Rec r) => r.Mine).ToList();
 		}
 
-		private static void Save(Rec r)
+		internal static void Save(Rec r)
 		{
 			Store.Set(Prefix + r.Party, r.Pack());
 			_ids.Add(r.Party);
@@ -132,6 +132,7 @@ namespace WardensAndDragons
 		private static void Drop(Rec r)
 		{
 			Store.Set(Prefix + r.Party, null);
+			Generals.Clear(r.Party);
 			Store.Set(VoyagePrefix + r.Party, null);
 			Store.Set(StuckPrefix + r.Party, null);
 			_ids.Remove(r.Party);
@@ -324,16 +325,36 @@ namespace WardensAndDragons
 		// ------------------------------------------------------------------
 		// mustering
 
+		// Your blood who could take a command: grown, free, not you, not a
+		// white cloak (they come through Guard.Ready), not already at the head
+		// of a host, and either with you, idle in a hall, or leading their own
+		// men (who become the core of the host).
+		private static List<Hero> Family()
+		{
+			HashSet<string> busy = new HashSet<string>(All().Select((Rec r) => r.Knight));
+			return Clan.PlayerClan.Heroes.Where((Hero h) => h != null && h.IsAlive && !h.IsChild && !h.IsPrisoner && !h.IsWounded && h != Hero.MainHero && !Guard.IsSworn(h) && !busy.Contains(((MBObjectBase)h).StringId)
+				&& (h.PartyBelongedTo == MobileParty.MainParty
+					|| (h.PartyBelongedTo == null && h.CurrentSettlement != null)
+					|| (h.PartyBelongedTo != null && h.PartyBelongedTo.LeaderHero == h && h.PartyBelongedTo.Army == null && h.PartyBelongedTo.MapEvent == null))).ToList();
+		}
+
+		private static string Hint(Hero h)
+		{
+			string how = Guard.IsSworn(h) ? "Sworn knight" : "Your blood";
+			return how + ". Tactics " + Generals.Skill(h, DefaultSkills.Tactics) + ", Scouting " + Generals.Skill(h, DefaultSkills.Scouting) +
+				(Generals.Reckless(h) ? ". Bold to a fault." : (Generals.Cunning(h) ? ". Cunning." : "."));
+		}
+
 		internal static void Muster()
 		{
-			List<Hero> knights = Guard.Ready();
+			List<Hero> knights = Guard.Ready().Concat(Family()).Distinct().ToList();
 			if (knights.Count == 0)
 			{
-				Flow.Notify("No sworn knight is with you to take command.");
+				Flow.Notify("No sworn knight is with you, and none of your blood is free, to take command.");
 				return;
 			}
-			List<InquiryElement> els = knights.Select((Hero k) => new InquiryElement(k, k.Name.ToString(), null, true, "")).ToList();
-			Inquiry.Select("Muster a Host", "Which of your sworn knights will command it?", els, 1, 1, "Them", "Not today",
+			List<InquiryElement> els = knights.Select((Hero k) => new InquiryElement(k, k.Name.ToString(), null, true, Hint(k))).ToList();
+			Inquiry.Select("Muster a Host", "Who will command it? A sworn knight, or one of your own blood. Their Tactics decides how well they carry out your orders.", els, 1, 1, "Them", "Not today",
 				delegate(List<InquiryElement> chosen)
 				{
 					Hero k = (chosen != null && chosen.Count > 0) ? (chosen[0].Identifier as Hero) : null;
@@ -371,7 +392,7 @@ namespace WardensAndDragons
 				return;
 			}
 			Inquiry.Text("Muster a Host", "How much gold? At " + price + " a man you can afford " + most.ToString("N0") + " " + QualityName(q) +
-				" (at most " + Cfg.HostMaxMen.ToString("N0") + "). They serve " + Cfg.HostDays + " days.",
+				" (at most " + Cfg.HostMaxMen.ToString("N0") + "). They serve until you stand them down, but their food and upkeep costs " + Cfg.HostUpkeepPercent + "% of this again every year.",
 				(most * price).ToString(), "Count it out", "Not today",
 				delegate(string text)
 				{
@@ -388,7 +409,7 @@ namespace WardensAndDragons
 						return;
 					}
 					int cost = men * price;
-					Inquiry.Confirm("Muster a Host", men.ToString("N0") + " " + QualityName(q) + " under " + knight.Name + ", for " + Cfg.HostDays + " days, for " + cost.ToString("N0") + " gold.",
+					Inquiry.Confirm("Muster a Host", men.ToString("N0") + " " + QualityName(q) + " under " + knight.Name + ", for " + cost.ToString("N0") + " gold, and " + (cost / 100 * Cfg.HostUpkeepPercent).ToString("N0") + " a year in upkeep.",
 						"Raise them", "Not today", delegate
 						{
 							Raise(knight, q, men, cost);
@@ -448,7 +469,19 @@ namespace WardensAndDragons
 					Flow.Notify("There are no such soldiers in your lands to raise.");
 					return;
 				}
-				MobileParty party = MobilePartyHelper.CreateNewClanMobileParty(knight, Clan.PlayerClan);
+				// One of your blood already at the head of their own men keeps
+				// them: the host is added around them.
+				MobileParty party = null;
+				int basis = 0;
+				if (knight.PartyBelongedTo != null && knight.PartyBelongedTo != MobileParty.MainParty && knight.PartyBelongedTo.LeaderHero == knight)
+				{
+					party = knight.PartyBelongedTo;
+					basis = party.MemberRoster.TotalManCount;
+				}
+				else
+				{
+					party = MobilePartyHelper.CreateNewClanMobileParty(knight, Clan.PlayerClan);
+				}
 				if (party == null)
 				{
 					Flow.Notify("The host could not be raised.");
@@ -477,15 +510,20 @@ namespace WardensAndDragons
 				r.Quality = q;
 				r.Raised = men;
 				r.Price = cost;
-				r.End = CourtBehavior.Today() + Cfg.HostDays;
+				r.End = CourtBehavior.Today() + (Cfg.Generals ? Cfg.DaysPerYear : Cfg.HostDays);
 				r.Owner = ((MBObjectBase)Clan.PlayerClan).StringId;
+				r.Base = basis;
 				Save(r);
 				Fleet(party);
-				Guard.SetState(knight, "host");
+				if (Guard.IsSworn(knight))
+				{
+					Guard.SetState(knight, "host");
+				}
 				Store.AddDeed(Standing.Date() + "  " + knight.Name + " took command of " + men.ToString("N0") + " " + QualityName(q) + ".");
-				Log.Write("host raised: " + men + " " + q + " under " + knight.Name + " (" + r.Party + ") for " + cost);
+				Log.Write("host raised: " + men + " " + q + " under " + knight.Name + " (" + r.Party + ") for " + cost + (basis > 0 ? (", around their own " + basis) : ""));
 				Ravens.Popup("The Host Is Mustered",
-					men.ToString("N0") + " " + QualityName(q) + " stand under " + knight.Name + "'s command, paid through the next " + Cfg.HostDays + " days.\n\nGive them their orders from the small council: Court -> The small council -> Your hosts.");
+					men.ToString("N0") + " " + QualityName(q) + " stand under " + knight.Name + "'s command. " + (Cfg.Generals ? ("Their food and upkeep falls due in a year.") : ("They are paid through the next " + Cfg.HostDays + " days.")) +
+					"\n\nGive them their orders from the small council: Court -> The small council -> Your hosts.");
 			}
 			catch (Exception e)
 			{
@@ -508,10 +546,26 @@ namespace WardensAndDragons
 			els.Add(new InquiryElement("siege", "Besiege a castle or town", null, true, "They march on it, and do not stop for anything else until the siege is laid."));
 			els.Add(new InquiryElement("engage", "Bring an enemy host or army to battle", null, true, "They hunt it down and fight it, wherever it goes."));
 			els.Add(new InquiryElement("hold", "Hold one of your castles or towns", null, true, "They go there and stay."));
-			els.Add(new InquiryElement("follow", "March with me", null, true, "They join your army and fight your battles. You must be in a realm."));
+			if (Cfg.Generals)
+			{
+				els.Add(new InquiryElement("raid", "Raid the lands of an enemy town or castle", null, true, "Burn its villages one by one. Its granaries empty, and its lord must come out to stop you - where you choose. Dread rises, Honour falls."));
+				els.Add(new InquiryElement("ambush", "Lie in wait for an enemy host or army", null, true, "Wait on their road. If our commander's Tactics beats their Scouting, they lose a share of their men before the battle begins. If not, they see it coming."));
+				els.Add(new InquiryElement("shadow", "Shadow an enemy host or army", null, true, "Follow at a distance and never give battle. When they sit down to a siege, you may fall on their backs."));
+				els.Add(new InquiryElement("screen", "Screen one of your castles or towns", null, true, "Patrol around it and fall on any enemy that comes near - unless they are stronger, then fall back inside the walls."));
+				els.Add(new InquiryElement("feint", "Feint at one place, then strike another", null, true, "March openly on one enemy castle; their generals ride to save it. Then turn in the night on the one you want."));
+				els.Add(new InquiryElement("avoid", "Refuse battle", null, true, "Stay close to an enemy, but fall back to your walls whenever a stronger force comes near. Keep the host alive."));
+				if (Scorpions.MyRiders().Count > 0)
+				{
+					els.Add(new InquiryElement("dragon", "Send a dragon against an enemy host", null, true, "A rider of your house flies with picked men from this host to burn an enemy host. Hosts carry scorpions - Dornish ones above all."));
+				}
+			}
 			els.Add(new InquiryElement("free", "Free to campaign", null, true, knight.Name + " uses them as they see fit."));
+			if (Cfg.Generals)
+			{
+				els.Add(new InquiryElement("upkeep", "Pay the year's upkeep now (" + Generals.UpkeepCost(r, p).ToString("N0") + ")", null, true, "Due in " + Math.Max(0, r.End - CourtBehavior.Today()) + " days."));
+			}
 			els.Add(new InquiryElement("down", "Stand them down", null, true, "The men go home. What they were paid is spent."));
-			Inquiry.Select(knight.Name + "'s Host", p.MemberRoster.TotalManCount.ToString("N0") + " men, serving " + Math.Max(0, r.End - CourtBehavior.Today()) + " more days. Now: " + Describe(r) + ".",
+			Inquiry.Select(knight.Name + "'s Host", p.MemberRoster.TotalManCount.ToString("N0") + " men. " + (Cfg.Generals ? ("Upkeep due in " + Math.Max(0, r.End - CourtBehavior.Today()) + " days") : ("Serving " + Math.Max(0, r.End - CourtBehavior.Today()) + " more days")) + ". Now: " + Describe(r) + ".",
 				els, 1, 1, "So ordered", "Not now",
 				delegate(List<InquiryElement> chosen)
 				{
@@ -525,10 +579,25 @@ namespace WardensAndDragons
 						PickTarget(r, false);
 						break;
 					case "engage":
-						PickFoe(r);
+					case "ambush":
+					case "shadow":
+					case "avoid":
+						PickFoe(r, o);
 						break;
-					case "follow":
-						SetOrder(r, "follow", "");
+					case "raid":
+						PickPlace(r, "raid", "Raid Whose Lands?", true);
+						break;
+					case "screen":
+						PickPlace(r, "screen", "Screen Where?", false);
+						break;
+					case "feint":
+						PickFeint(r);
+						break;
+					case "dragon":
+						PickDragon(r);
+						break;
+					case "upkeep":
+						Generals.PayUpkeep(r);
 						break;
 					case "free":
 						SetOrder(r, "free", "");
@@ -587,7 +656,18 @@ namespace WardensAndDragons
 			return ((h != null) ? "Host of " : "Army of ") + who + " (" + x.MapFaction.Name + ", " + men.ToString("N0") + " men)";
 		}
 
-		private static void PickFoe(Rec r)
+		private static string FoeHint(MobileParty x)
+		{
+			Hero h = x.LeaderHero;
+			if (h == null)
+			{
+				return "";
+			}
+			return "Led by " + h.Name + ": Tactics " + Generals.Skill(h, DefaultSkills.Tactics) + ", Scouting " + Generals.Skill(h, DefaultSkills.Scouting) +
+				(Generals.Reckless(h) ? ". Rash." : (Generals.Cunning(h) ? ". Cunning." : ".")) + (Scorpions.Dornish(x) ? " Dornish - their scorpion crews are the best in the world." : "");
+		}
+
+		private static void PickFoe(Rec r, string order = "engage")
 		{
 			MobileParty p = PartyOf(r);
 			if (p == null)
@@ -600,19 +680,130 @@ namespace WardensAndDragons
 				Flow.Notify("No enemy host or army is in the field.");
 				return;
 			}
-			List<InquiryElement> els = foes.Select((MobileParty x) => new InquiryElement(x, FoeName(x), null, true, "")).ToList();
-			Inquiry.Select("Bring Them to Battle", "Which?", els, 1, 1, "Them", "Not now",
+			string title = (order == "ambush") ? "Lie in Wait For" : ((order == "shadow") ? "Shadow" : ((order == "avoid") ? "Keep Clear Of" : "Bring Them to Battle"));
+			List<InquiryElement> els = foes.Select((MobileParty x) => new InquiryElement(x, FoeName(x), null, true, FoeHint(x))).ToList();
+			Inquiry.Select(title, "Which?", els, 1, 1, "Them", "Not now",
 				delegate(List<InquiryElement> chosen)
 				{
 					MobileParty x = (chosen != null && chosen.Count > 0) ? (chosen[0].Identifier as MobileParty) : null;
 					if (x != null)
 					{
-						SetOrder(r, "engage", ((MBObjectBase)x).StringId);
+						SetOrder(r, order, ((MBObjectBase)x).StringId);
 					}
 				});
 		}
 
-		private static void SetOrder(Rec r, string order, string target)
+		// Enemy places (raid) or your own (screen), nearest first.
+		private static void PickPlace(Rec r, string order, string title, bool enemy)
+		{
+			MobileParty p = PartyOf(r);
+			if (p == null)
+			{
+				return;
+			}
+			Vec2 at = p.GetPosition2D;
+			IFaction me = Clan.PlayerClan.MapFaction;
+			List<Settlement> can = Settlement.All.Where((Settlement s) => s.IsFortification && s.MapFaction != null
+					&& (enemy ? (FactionManager.IsAtWarAgainstFaction(s.MapFaction, me) && s.BoundVillages.Any((Village v) => v.VillageState == Village.VillageStates.Normal)) : (s.MapFaction == me)))
+				.OrderBy((Settlement s) => s.GetPosition2D.Distance(at)).Take(25).ToList();
+			if (can.Count == 0)
+			{
+				Flow.Notify(enemy ? "No enemy town or castle has villages left to burn." : "Your realm holds no castle.");
+				return;
+			}
+			List<InquiryElement> els = can.Select((Settlement s) => new InquiryElement(s, s.Name + ((s.OwnerClan != null) ? ("  (" + s.OwnerClan.Name + ")") : ""), null, true,
+				enemy ? (s.BoundVillages.Count((Village v) => v.VillageState == Village.VillageStates.Normal) + " villages standing.") : "")).ToList();
+			Inquiry.Select(title, "Which?", els, 1, 1, "There", "Not now",
+				delegate(List<InquiryElement> chosen)
+				{
+					Settlement s = (chosen != null && chosen.Count > 0) ? (chosen[0].Identifier as Settlement) : null;
+					if (s != null)
+					{
+						SetOrder(r, order, ((MBObjectBase)s).StringId);
+					}
+				});
+		}
+
+		private static void PickFeint(Rec r)
+		{
+			MobileParty p = PartyOf(r);
+			if (p == null)
+			{
+				return;
+			}
+			Vec2 at = p.GetPosition2D;
+			IFaction me = Clan.PlayerClan.MapFaction;
+			List<Settlement> can = Settlement.All.Where((Settlement s) => s.IsFortification && s.MapFaction != null && FactionManager.IsAtWarAgainstFaction(s.MapFaction, me))
+				.OrderBy((Settlement s) => s.GetPosition2D.Distance(at)).Take(25).ToList();
+			if (can.Count < 2)
+			{
+				Flow.Notify("There are not two enemy castles to choose between.");
+				return;
+			}
+			List<InquiryElement> els = can.Select((Settlement s) => new InquiryElement(s, s.Name.ToString(), null, true, "")).ToList();
+			Inquiry.Select("The Feint", "Where do they think you are going?", els, 1, 1, "There", "Not now",
+				delegate(List<InquiryElement> first)
+				{
+					Settlement a = (first != null && first.Count > 0) ? (first[0].Identifier as Settlement) : null;
+					if (a == null)
+					{
+						return;
+					}
+					List<InquiryElement> els2 = can.Where((Settlement s) => s != a).Select((Settlement s) => new InquiryElement(s, s.Name.ToString(), null, true, "")).ToList();
+					Inquiry.Select("The Feint", "And where are you really going?", els2, 1, 1, "There", "Not now",
+						delegate(List<InquiryElement> second)
+						{
+							Settlement b = (second != null && second.Count > 0) ? (second[0].Identifier as Settlement) : null;
+							if (b != null)
+							{
+								Generals.Feint(r, a, b);
+							}
+						});
+				});
+		}
+
+		private static void PickDragon(Rec r)
+		{
+			MobileParty p = PartyOf(r);
+			List<KeyValuePair<Hero, DragonRec>> riders = Scorpions.MyRiders();
+			if (p == null || riders.Count == 0)
+			{
+				Flow.Notify("No rider of your house has a dragon to send.");
+				return;
+			}
+			List<InquiryElement> els = riders.Select((KeyValuePair<Hero, DragonRec> x) => new InquiryElement(x, x.Key.Name + " on " + x.Value.Name, null, true, "The dragon is " + Dragons.SizeOf(x.Value) + ".")).ToList();
+			Inquiry.Select("Send a Dragon", "Who flies?", els, 1, 1, "They fly", "Not now",
+				delegate(List<InquiryElement> chosen)
+				{
+					if (chosen == null || chosen.Count == 0)
+					{
+						return;
+					}
+					KeyValuePair<Hero, DragonRec> rider = (KeyValuePair<Hero, DragonRec>)chosen[0].Identifier;
+					IFaction me = Clan.PlayerClan.MapFaction;
+					Vec2 at = p.GetPosition2D;
+					List<MobileParty> hosts = Foes(me, at).Where((MobileParty x) => Is(x) || x.Army != null).Take(15).ToList();
+					if (hosts.Count == 0)
+					{
+						Flow.Notify("No enemy host is in the field.");
+						return;
+					}
+					List<InquiryElement> els2 = hosts.Select((MobileParty x) => new InquiryElement(x, FoeName(x), null, true,
+						"Chance their scorpions bring " + rider.Value.Name + " down: about " + (int)Scorpions.Chance(x, rider.Value, rider.Key) + "%. " + FoeHint(x))).ToList();
+					Inquiry.Select("Send a Dragon", "Against whom?", els2, 1, 1, "Burn them", "Not now",
+						delegate(List<InquiryElement> chosen2)
+						{
+							MobileParty x = (chosen2 != null && chosen2.Count > 0) ? (chosen2[0].Identifier as MobileParty) : null;
+							MobileParty from = PartyOf(r);
+							if (x != null)
+							{
+								Scorpions.Launch(rider.Key, rider.Value, x, (from != null && from.IsActive) ? from : null, true);
+							}
+						});
+				});
+		}
+
+		internal static void SetOrder(Rec r, string order, string target)
 		{
 			MobileParty p = PartyOf(r);
 			if (p == null)
@@ -629,6 +820,7 @@ namespace WardensAndDragons
 			// New orders: any voyage under way is for the old target.
 			Store.Set(VoyagePrefix + r.Party, null);
 			Store.Set(StuckPrefix + r.Party, null);
+			Store.Set("ht:" + r.Party, null);
 			Enforce(r, p, true);
 			Flow.Notify("Orders sent: " + Describe(r) + ".");
 		}
@@ -647,6 +839,20 @@ namespace WardensAndDragons
 				return "besieging " + ((s != null) ? s.Name.ToString() : "?");
 			case "hold":
 				return "holding " + ((s != null) ? s.Name.ToString() : "?");
+			case "raid":
+				return "raiding the lands of " + ((s != null) ? s.Name.ToString() : "?");
+			case "screen":
+				return "screening " + ((s != null) ? s.Name.ToString() : "?");
+			case "feint":
+				return "marching on " + ((s != null) ? s.Name.ToString() : "?");
+			case "ambush":
+			case "shadow":
+			case "avoid":
+			{
+				MobileParty f = MobileParty.All.FirstOrDefault((MobileParty x) => ((MBObjectBase)x).StringId == r.Target);
+				string who = (f != null && f.LeaderHero != null) ? (f.LeaderHero.Name + "'s men") : "the enemy";
+				return ((r.Order == "ambush") ? "lying in wait for " : ((r.Order == "shadow") ? "shadowing " : "keeping clear of ")) + who;
+			}
 			case "follow":
 				return "marching with you";
 			default:
@@ -760,7 +966,7 @@ namespace WardensAndDragons
 		}
 
 		// For chasing a party: everything it has.
-		private static MobileParty.NavigationType NavAny(MobileParty p)
+		internal static MobileParty.NavigationType NavAny(MobileParty p)
 		{
 			return CanSail(p) ? p.NavigationCapability : MobileParty.NavigationType.Default;
 		}
@@ -879,7 +1085,7 @@ namespace WardensAndDragons
 		}
 
 		// Daily, and when an order is given: keep them to it.
-		private static void Enforce(Rec r, MobileParty p, bool fresh)
+		internal static void Enforce(Rec r, MobileParty p, bool fresh)
 		{
 			try
 			{
@@ -893,6 +1099,11 @@ namespace WardensAndDragons
 					return;
 				}
 				IFaction mine = p.MapFaction;
+				if (Generals.Handles(r.Order))
+				{
+					Generals.Enforce(r, p, fresh);
+					return;
+				}
 				Settlement s = (string.IsNullOrEmpty(r.Target) || r.Order == "engage") ? null : Settlement.Find(r.Target);
 				switch (r.Order)
 				{
@@ -987,31 +1198,17 @@ namespace WardensAndDragons
 					}
 					break;
 				case "follow":
-				{
-					Kingdom k = Clan.PlayerClan.Kingdom;
-					if (k != null)
+					// Nobody leads a host in person any more: those that were
+					// marching with you are free again.
+					if (p.Army != null && p.Army.LeaderParty != p)
 					{
-						if (MobileParty.MainParty.Army == null)
-						{
-							Settlement near = SettlementHelper.FindNearestFortificationToMobileParty(MobileParty.MainParty, MobileParty.NavigationType.Default);
-							k.CreateArmy(Hero.MainHero, near, Army.ArmyTypes.Patrolling);
-						}
-						Army army = MobileParty.MainParty.Army;
-						if (army != null)
-						{
-							p.Ai.SetDoNotMakeNewDecisions(false);
-							if (p.Army != army)
-							{
-								p.Army = army;
-							}
-							army.Cohesion = 100f;
-							break;
-						}
+						p.Army = null;
 					}
-					p.Ai.SetDoNotMakeNewDecisions(true);
-					p.SetMoveEscortParty(MobileParty.MainParty, NavAny(p), false);
+					r.Order = "free";
+					r.Target = "";
+					Save(r);
+					p.Ai.SetDoNotMakeNewDecisions(false);
 					break;
-				}
 				default:
 					if (fresh)
 					{
@@ -1036,6 +1233,33 @@ namespace WardensAndDragons
 			MobileParty p = PartyOf(r);
 			Hero knight = Law.Find(r.Knight);
 			Drop(r);
+			if (r.Base > 0 && p != null && p.IsActive)
+			{
+				// One of your blood who led their own men before: the host
+				// goes, their own retinue stays with them.
+				try
+				{
+					p.Ai.SetDoNotMakeNewDecisions(false);
+					int excess = p.MemberRoster.TotalManCount - r.Base;
+					foreach (TroopRosterElement e in p.MemberRoster.GetTroopRoster().Where((TroopRosterElement x) => x.Character != null && !x.Character.IsHero).OrderByDescending((TroopRosterElement x) => x.Number).ToList())
+					{
+						if (excess <= 0)
+						{
+							break;
+						}
+						int n = Math.Min(excess, e.Number);
+						p.MemberRoster.AddToCounts(e.Character, -n, false, -Math.Min(n, e.WoundedNumber), 0, true, -1);
+						excess -= n;
+					}
+				}
+				catch (Exception e)
+				{
+					Log.Write("standing the host down failed: " + e.Message);
+				}
+				Log.Write("host stood down (" + r.Party + "): " + why);
+				Ravens.Popup("The Host Goes Home", ((knight != null) ? (knight.Name + "'s host") : "The host") + " is disbanded. " + why + ((knight != null) ? ("\n\n" + knight.Name + " keeps their own retinue.") : ""));
+				return;
+			}
 			try
 			{
 				if (p != null && p.IsActive)
@@ -1052,7 +1276,7 @@ namespace WardensAndDragons
 							p.MemberRoster.AddToCounts(e.Character, -e.Number, false, -e.WoundedNumber, 0, true, -1);
 						}
 					}
-					if (knight != null && knight.IsAlive && !knight.IsPrisoner)
+					if (knight != null && knight.IsAlive && !knight.IsPrisoner && knight.PartyBelongedTo == p)
 					{
 						AddHeroToPartyAction.Apply(knight, MobileParty.MainParty, false);
 					}
@@ -1066,7 +1290,7 @@ namespace WardensAndDragons
 			{
 				Log.Write("standing the host down failed: " + e.Message);
 			}
-			if (knight != null && knight.IsAlive)
+			if (knight != null && knight.IsAlive && Guard.IsSworn(knight))
 			{
 				Guard.SetState(knight, "guard");
 			}
@@ -1092,6 +1316,7 @@ namespace WardensAndDragons
 					TheirDaily(r, today);
 				}
 				AiMuster(today);
+				Scorpions.AiWeekly(today);
 				foreach (Rec r in Mine())
 				{
 					MobileParty p = PartyOf(r);
@@ -1108,16 +1333,26 @@ namespace WardensAndDragons
 						Ravens.Popup("A Host Lost", ((knight != null) ? knight.Name.ToString() : "Your knight") + how);
 						continue;
 					}
-					if (today >= r.End)
+					if (Cfg.Generals)
 					{
-						StandDown(r, "Their season's service is done.");
-						continue;
+						if (Generals.MyUpkeep(r, p, knight, today))
+						{
+							continue;
+						}
 					}
-					if (!r.Warned && r.End - today <= 7)
+					else
 					{
-						r.Warned = true;
-						Save(r);
-						Renewal(r, knight);
+						if (today >= r.End)
+						{
+							StandDown(r, "Their season's service is done.");
+							continue;
+						}
+						if (!r.Warned && r.End - today <= 7)
+						{
+							r.Warned = true;
+							Save(r);
+							Renewal(r, knight);
+						}
 					}
 					Enforce(r, p, false);
 				}
@@ -1126,6 +1361,85 @@ namespace WardensAndDragons
 			{
 				Log.Once("hostdaily", "the hosts' tick failed: " + e.Message);
 			}
+		}
+
+		// Hourly: ambushes, shadows and screens cannot wait for morning.
+		internal static void Hourly()
+		{
+			try
+			{
+				if (!Cfg.Council || !Cfg.Generals || !Store.Initialized)
+				{
+					return;
+				}
+				foreach (Rec r in All())
+				{
+					if (!Generals.Handles(r.Order) || AtSea(r))
+					{
+						continue;
+					}
+					MobileParty p = PartyOf(r);
+					if (p != null && p.IsActive)
+					{
+						Generals.Hourly(r, p);
+					}
+				}
+				Scorpions.Hourly();
+			}
+			catch (Exception e)
+			{
+				Log.Once("hosthourly", "the hosts' hourly tick failed: " + e.Message);
+			}
+		}
+
+		// Cheat: every other ruler's general thinks now.
+		internal static string ThinkNow()
+		{
+			int n = 0;
+			foreach (Rec r in All().Where((Rec x) => !x.Mine).ToList())
+			{
+				MobileParty p = PartyOf(r);
+				if (p != null && p.IsActive)
+				{
+					Store.Set("hg:" + r.Party, null);
+					if (Generals.Think(r, p, CourtBehavior.Today()))
+					{
+						n++;
+					}
+				}
+			}
+			return n + " general(s) changed their plans. See the log.";
+		}
+
+		// Cheat: your first host's ambush springs on its quarry now.
+		internal static string AmbushNow()
+		{
+			Rec r = Mine().FirstOrDefault((Rec x) => x.Order == "ambush");
+			MobileParty p = (r != null) ? PartyOf(r) : null;
+			MobileParty f = (r != null) ? MobileParty.All.FirstOrDefault((MobileParty x) => ((MBObjectBase)x).StringId == r.Target) : null;
+			if (p == null || f == null)
+			{
+				return "None of your hosts is lying in wait.";
+			}
+			p.SetPositionAfterMapChange(f.Position);
+			Generals.Hourly(r, p);
+			return "Sprung (or not). See the log.";
+		}
+
+		// Cheat: the year's upkeep is asked for now.
+		internal static string UpkeepNow()
+		{
+			Rec r = Mine().FirstOrDefault();
+			MobileParty p = (r != null) ? PartyOf(r) : null;
+			if (p == null)
+			{
+				return "You have no host in the field.";
+			}
+			r.End = CourtBehavior.Today() + 3;
+			Save(r);
+			Store.Set("hu:" + r.Party, "1");
+			Generals.AskUpkeep(r, p, Law.Find(r.Knight));
+			return "Upkeep asked for; unpaid, they desert in 3 days.";
 		}
 
 		// ------------------------------------------------------------------
@@ -1264,7 +1578,7 @@ namespace WardensAndDragons
 			r.Quality = q;
 			r.Raised = men;
 			r.Price = cost;
-			r.End = CourtBehavior.Today() + Cfg.HostDays;
+			r.End = CourtBehavior.Today() + (Cfg.Generals ? Cfg.DaysPerYear : Cfg.HostDays);
 			r.Owner = ((MBObjectBase)clan).StringId;
 			r.Base = basis;
 			Save(r);
@@ -1329,13 +1643,31 @@ namespace WardensAndDragons
 				}
 				return;
 			}
-			if (today >= r.End)
+			if (Cfg.Generals)
+			{
+				if (Generals.TheirUpkeep(r, p, today))
+				{
+					return;
+				}
+			}
+			else if (today >= r.End)
 			{
 				Disperse(r, "their service is done");
 				return;
 			}
 			if (p.MapEvent != null)
 			{
+				return;
+			}
+			if (Cfg.Generals && Cfg.AiGenerals)
+			{
+				Generals.Think(r, p, today);
+				if (r.Order == "free")
+				{
+					AiChoose(r, p);
+					return;
+				}
+				Enforce(r, p, false);
 				return;
 			}
 			// An enemy host close by is worth more than a castle.
@@ -1357,7 +1689,7 @@ namespace WardensAndDragons
 		}
 
 		// A ruler's host going home: the lord keeps the party they had.
-		private static void Disperse(Rec r, string why)
+		internal static void Disperse(Rec r, string why)
 		{
 			MobileParty p = PartyOf(r);
 			Drop(r);
@@ -1531,7 +1863,7 @@ namespace WardensAndDragons
 				Hero k = Law.Find(r.Knight);
 				MobileParty p = PartyOf(r);
 				sb.Append((k != null) ? k.Name.ToString() : "?").Append(": ").Append((p != null) ? p.MemberRoster.TotalManCount.ToString("N0") : "?").Append(" ").Append(QualityName(r.Quality))
-				  .Append(", ").Append(Describe(r)).Append(", ").Append(Math.Max(0, r.End - today)).Append(" days left.\n");
+				  .Append(", ").Append(Describe(r)).Append(", ").Append(Math.Max(0, r.End - today)).Append(Cfg.Generals ? " days to the year's upkeep.\n" : " days left.\n");
 			}
 			return sb.ToString();
 		}
@@ -1545,7 +1877,7 @@ namespace WardensAndDragons
 				return null;
 			}
 			Hero k = Law.Find(r.Knight);
-			return ((k != null) ? (k.Name + "'s host") : "A host") + " goes home in " + Math.Max(0, r.End - today) + " days.";
+			return ((k != null) ? (k.Name + "'s host") : "A host") + (Cfg.Generals ? " needs its year's upkeep in " : " goes home in ") + Math.Max(0, r.End - today) + " days.";
 		}
 	}
 }

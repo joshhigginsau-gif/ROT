@@ -787,6 +787,46 @@ namespace WardensAndDragons
 			return Host.ForceAi((args != null && args.Count > 0) ? string.Join(" ", args) : null);
 		}
 
+		[CommandLineFunctionality.CommandLineArgumentFunction("host_upkeep", "wad")]
+		public static string HostUpkeep(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			return Host.UpkeepNow();
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("dragon_strike", "wad")]
+		public static string DragonStrike(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			return Scorpions.ForceStrike();
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("host_think", "wad")]
+		public static string HostThink(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			return Host.ThinkNow();
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("ambush_now", "wad")]
+		public static string AmbushNow(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			return Host.AmbushNow();
+		}
+
 		[CommandLineFunctionality.CommandLineArgumentFunction("host_voyage", "wad")]
 		public static string HostVoyage(List<string> args)
 		{
