@@ -384,3 +384,18 @@ done whose edits had never been written to disk. It is worth continuing.
 - `Generals.Think`: the defend branch stamps `hg:<party>`; a hold is only freed when
   `StillThreatened` (enemy host or army within 60 of the castle) is false.
 - `Host.PickPlace`: "You are at war with no one." when at peace.
+
+## v2.16.3 — court anywhere, and attainder
+
+- Court: `CanHoldCourt` drops the ownership check when `court_anywhere` (default true); injected into
+  `town`, `castle`, `village`. `ReturnToSettlement` handles village and the field (`GameMenu.ExitToLast`).
+  Field hotkey: `SubModule.OnApplicationTick` -> `Menus.FieldCourtTick` opens `wad_court` with
+  `GameMenu.ActivateGameMenu` only on the map (`MapState`, `!AtMenu`), no encounter, battle, siege,
+  settlement or captivity; edge-triggered on `court_field_key` (InputKey name, default J).
+  Hall-only actions (council, tourneys, trials) already grey themselves when not in your own hall.
+- `Attainder.cs`: `at:<clan>` = day|reason|execute|heads. `Declare` casts out of your realm
+  (`lw:exiled:` set first so Law skips treason) and `DeclareWarAction.ApplyByDefault(clan, your faction)`;
+  houses of another crown are attainted without war. Ravens' massacre-survived branch calls `Declare`.
+  `HeroPrisonerTaken` queues captives of attainted houses taken by your houses (your clan, or your
+  realm's clans if you rule); `Attainder.Hourly` executes with `Law.Quiet` set (no crime recorded).
+  Children and your blood spared. Cheats `wad.attaint`, `wad.attainted`.

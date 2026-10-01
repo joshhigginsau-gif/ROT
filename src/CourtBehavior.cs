@@ -78,6 +78,9 @@ public class CourtBehavior : CampaignBehaviorBase
 		// The generals' war: ambushes and screens act by the hour, and riders
 		// who fought a host may have met its scorpions.
 		CampaignEvents.HourlyTickEvent.AddNonSerializedListener((object)this, (Action)Host.Hourly);
+		// Attainder: the order is carried out off the capture, on the hour.
+		CampaignEvents.HeroPrisonerTaken.AddNonSerializedListener((object)this, (Action<TaleWorlds.CampaignSystem.Party.PartyBase, Hero>)Attainder.OnPrisonerTaken);
+		CampaignEvents.HourlyTickEvent.AddNonSerializedListener((object)this, (Action)Attainder.Hourly);
 		// Sworn houses follow their warden from realm to realm.
 		CampaignEvents.OnClanChangedKingdomEvent.AddNonSerializedListener((object)this, (Action<Clan, Kingdom, Kingdom, ChangeKingdomAction.ChangeKingdomActionDetail, bool>)Sworn.OnClanChangedKingdom);
 		CampaignEvents.MapEventEnded.AddNonSerializedListener((object)this, (Action<TaleWorlds.CampaignSystem.MapEvents.MapEvent>)Scorpions.OnMapEventEnded);
@@ -204,6 +207,7 @@ public class CourtBehavior : CampaignBehaviorBase
 				Host.Daily();
 				Abdication.Daily();
 				Sworn.Daily();
+				Attainder.Daily();
 				Knighting.Weekly();
 				IronBank.Daily();
 				Exile.Daily();

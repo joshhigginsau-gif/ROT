@@ -1,4 +1,44 @@
-Wardens & Dragons  v2.16.1  -  SWORN HOUSES
+Wardens & Dragons  v2.16.3  -  COURT ANYWHERE, AND ATTAINDER
+
+
+v2.16.3 - HOLD COURT ANYWHERE
+
+  "Hold court" now shows in every town, castle and village, not only your
+  own. On the campaign map press J to hold court in your tent, wherever
+  your party is (not in a battle, an encounter, a menu or a cell).
+  "Leave the court" takes you back to the settlement, or to the map.
+
+  Away from your own hall the court says so: the small council and the
+  lists still need a hall of your own, and their options are greyed with
+  the reason. Everything else works anywhere.
+
+  Config: court_anywhere=true, court_field_key=J (any key name, or none).
+
+
+v2.16.3 - ATTAINDER
+
+  The King's Justice -> "Attaint a house that wronged you". The list is
+  every house with a wrong against you on the King's record - guest right,
+  treason, murder, kinslaying - and what they did.
+
+  An attainted house is cast out of your realm and at war with you (if it
+  is sworn to another crown you cannot war on it alone; the attainder still
+  holds when you take its lords). Dread +5.
+
+  SURVIVE A BARRED-DOORS FEAST and the host's house is attainted at once:
+  out of your realm and at war with you.
+
+  The King's Justice -> "The attainted houses" -> a house:
+  - "Order: every lord taken is put to death". Your houses - every house
+    of your realm, if you rule it - execute any lord of that house they
+    capture, and those they already hold. Children and your own blood are
+    spared. Dread +2, Honour -1 a head. The crown ordered it, so the
+    King's Justice does not count it as a crime.
+  - Rescind the order, or pardon the house.
+
+  When the last of them is gone the chronicle says so.
+
+  Tests: wad.attaint <house>, wad.attainted. Config: "Attainder".
 
 
 v2.16.1 - FIXES

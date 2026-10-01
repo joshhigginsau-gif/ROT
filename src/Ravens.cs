@@ -713,9 +713,15 @@ namespace WardensAndDragons
 				{
 					Law.Record(Law.GuestRight, host, Hero.MainHero, null, false);
 				}
+				// You lived: their house is attainted, and at war with you.
+				if (host != null && host.Clan != null && Cfg.AttainderOnMassacre)
+				{
+					Attainder.Declare(host.Clan, "barred the doors on you at " + ((venue != null) ? venue.Name.ToString() : "their hall"), true);
+				}
 				Popup("The Doors Were Barred",
 					"The servants slipped out, and the doors were barred, and " + ((host != null) ? host.Name.ToString() : "your host") + "'s men came in armoured.\n\n" +
-					"You came out anyway.\n\n" + sb + "\nGuest right was broken under that roof, and the King's Justice can hear it.");
+					"You came out anyway.\n\n" + sb + "\nGuest right was broken under that roof, and the King's Justice can hear it." +
+					((host != null && host.Clan != null && Attainder.Of(host.Clan) != null) ? ("\n\n" + host.Clan.Name + " is attainted and at war with you. In the King's Justice you may order every lord of it put to death when taken.") : ""));
 				return;
 			}
 			// You fell. In their hall, that is the end of you.

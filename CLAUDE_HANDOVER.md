@@ -12,7 +12,7 @@ C#. It adds a Game of Thrones political layer (House of the Dragon era) to a
 **Realm of Thrones (RoT)** campaign. It runs alongside Bellum Civile, RoT
 Dynasty & Succession and War Sails (NavalDLC).
 
-- **Current version:** v2.16.0 (sworn houses - untested in game at time of writing; v2.15.0 abdication confirmed working).
+- **Current version:** v2.16.3 (court anywhere + J hotkey, attainder - untested in game at time of writing; v2.16.0 sworn houses confirmed working).
   and confirmed they work.
 - **Repo:** https://github.com/joshhigginsau-gif/ROT, branch
   `claude/bannerlord-rot-mod-jqh7py`.
@@ -140,6 +140,10 @@ the log back.
   or family command (no leading in person - the player's choice); AI generals react to threats,
   strength and temperament; dragons can be shot down by host scorpions, Dornish hosts best at it.
   Prefixes `ht:`, `hg:`, `hu:`, `hd:`, `hsx:`.
+- **Attainder** (`Attainder.cs`, v2.16.3): condemn a house that wronged you (Law record); cast out and
+  at war; optional order to execute its lords when your houses capture them. Surviving a barred-doors
+  feast attaints the host's house automatically. Prefix `at:`.
+- **Court anywhere** (v2.16.3): any settlement, or J on the map (`Menus.FieldCourtTick`).
 - **Sworn houses** (`Sworn.cs`, v2.16.0): wardens (Bellum county+) gather cadet, knight and invited
   houses; each holds a manor (a warden's village, paid a share of its taxes); castles can be granted
   (Bellum barony placed beneath the warden). Manors show in Bellum's hierarchy tooltips. AI grows very

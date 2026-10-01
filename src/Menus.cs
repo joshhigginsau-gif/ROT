@@ -2,7 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.Encounters;
 using TaleWorlds.CampaignSystem.GameMenus;
+using TaleWorlds.CampaignSystem.Party;
+using TaleWorlds.Core;
 using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Localization;
 
@@ -36,13 +39,14 @@ internal static class Menus
 		// runs near the top of Register - so one missing or replaced vanilla
 		// menu would take the court, the house, the wardens, the wards, the
 		// realm and the Dragonmont down with it, silently.
-		string[] array = new string[2] { "town", "castle" };
+		string[] array = new string[3] { "town", "castle", "village" };
 		foreach (string text in array)
 		{
 			try
 			{
 				s.AddGameMenuOption(text, "wad_hold_court_" + text, "{=WAD_HoldCourt}Hold court", new GameMenuOption.OnConditionDelegate(CanHoldCourt), (GameMenuOption.OnConsequenceDelegate)delegate
 				{
+					Log.Write("court: held at " + ((Settlement.CurrentSettlement != null) ? Settlement.CurrentSettlement.Name.ToString() : "?"));
 					GameMenu.SwitchToMenu("wad_court");
 				}, false, 1, false, (object)null);
 			}
@@ -301,7 +305,13 @@ internal static class Menus
 			a.optionLeaveType = (GameMenuOption.LeaveType)2;
 			Settlement currentSettlement = Settlement.CurrentSettlement;
 			Clan playerClan = Clan.PlayerClan;
-			if (currentSettlement == null || playerClan == null || currentSettlement.OwnerClan != playerClan)
+			if (currentSettlement == null || playerClan == null)
+			{
+				return false;
+			}
+			// Anywhere you stand - unless the config keeps the old rule of
+			// your own halls only.
+			if (!Cfg.CourtAnywhere && currentSettlement.OwnerClan != playerClan)
 			{
 				return false;
 			}
@@ -325,13 +335,67 @@ internal static class Menus
 	private static void ReturnToSettlement()
 	{
 		Settlement currentSettlement = Settlement.CurrentSettlement;
-		if (currentSettlement != null && currentSettlement.IsCastle)
+		if (currentSettlement == null)
+		{
+			// Held in the field: close the court and go back to the map.
+			try
+			{
+				GameMenu.ExitToLast();
+			}
+			catch (Exception e)
+			{
+				Log.Write("court: leaving the field court failed: " + e.Message);
+			}
+			return;
+		}
+		if (currentSettlement.IsCastle)
 		{
 			GameMenu.SwitchToMenu("castle");
+		}
+		else if (currentSettlement.IsVillage)
+		{
+			GameMenu.SwitchToMenu("village");
 		}
 		else
 		{
 			GameMenu.SwitchToMenu("town");
+		}
+	}
+
+	// The hotkey on the campaign map: court in your tent, wherever you are.
+	private static bool _keyDown;
+
+	internal static void FieldCourtTick()
+	{
+		try
+		{
+			if (!Cfg.CourtAnywhere || Cfg.CourtFieldKey == null || Campaign.Current == null || Game.Current == null || !Store.Initialized)
+			{
+				return;
+			}
+			bool down = TaleWorlds.InputSystem.Input.IsKeyDown(Cfg.CourtFieldKey.Value);
+			bool pressed = down && !_keyDown;
+			_keyDown = down;
+			if (!pressed)
+			{
+				return;
+			}
+			TaleWorlds.CampaignSystem.GameState.MapState map = Game.Current.GameStateManager.ActiveState as TaleWorlds.CampaignSystem.GameState.MapState;
+			if (map == null || map.AtMenu)
+			{
+				return;
+			}
+			MobileParty main = MobileParty.MainParty;
+			if (PlayerEncounter.Current != null || main == null || main.MapEvent != null || main.SiegeEvent != null || main.CurrentSettlement != null || Hero.MainHero == null || Hero.MainHero.IsPrisoner)
+			{
+				return;
+			}
+			Log.Write("court: held in the field");
+			GameMenu.ActivateGameMenu("wad_court");
+		}
+		catch (Exception e)
+		{
+			Log.Once("fieldcourt", "court: the field court could not be opened: " + e.Message);
 		}
 	}
 
@@ -347,7 +411,15 @@ internal static class Menus
 			{
 				stringBuilder.Append(", sitting at ").Append(currentSettlement.Name);
 			}
+			else
+			{
+				stringBuilder.Append(", held in your tent, in the field");
+			}
 			stringBuilder.Append(".\n\n");
+			if (currentSettlement == null || currentSettlement.OwnerClan != playerClan)
+			{
+				stringBuilder.Append("You are away from your own hall: the small council and the lists need a hall of your own.\n\n");
+			}
 			stringBuilder.Append("Honour ").Append(Store.Honour).Append(" - ")
 				.Append(Standing.HonourBand())
 				.Append(".\n");

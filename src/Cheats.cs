@@ -787,6 +787,26 @@ namespace WardensAndDragons
 			return Host.ForceAi((args != null && args.Count > 0) ? string.Join(" ", args) : null);
 		}
 
+		[CommandLineFunctionality.CommandLineArgumentFunction("attaint", "wad")]
+		public static string Attaint(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			return Attainder.Force((args != null && args.Count > 0) ? string.Join(" ", args) : null);
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("attainted", "wad")]
+		public static string Attainted(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			return Attainder.Report();
+		}
+
 		[CommandLineFunctionality.CommandLineArgumentFunction("sworn", "wad")]
 		public static string SwornList(List<string> args)
 		{

@@ -20,7 +20,7 @@ public class SubModule : MBSubModuleBase
 		base.OnSubModuleLoad();
 		Log.Init();
 		Cfg.Load();
-		Log.Write("=== Wardens & Dragons v2.16.1 - sworn houses ===");
+		Log.Write("=== Wardens & Dragons v2.16.3 - court anywhere, and attainder ===");
 		Log.Write("config read from: " + Cfg.LoadedFrom);
 		Log.Write("config in effect: " + Cfg.Describe());
 		try
@@ -59,6 +59,13 @@ public class SubModule : MBSubModuleBase
 		{
 			Log.Write("patching failed: " + ex);
 		}
+	}
+
+	// The field court's hotkey is read here, every frame.
+	protected override void OnApplicationTick(float dt)
+	{
+		base.OnApplicationTick(dt);
+		Menus.FieldCourtTick();
 	}
 
 	protected override void OnGameStart(Game game, IGameStarter gameStarterObject)

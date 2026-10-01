@@ -13,6 +13,55 @@ namespace WardensAndDragons
 	// Court -> The King's Justice, and the way into the arena for a trial.
 	internal static class LawMenu
 	{
+		private static void AttaintPick()
+		{
+			List<InquiryElement> els = Attainder.Wrongdoers().Select((KeyValuePair<Clan, string> w) => new InquiryElement(w.Key, w.Key.Name + "  (" + w.Value + ")", null, true,
+				(w.Key.Kingdom != null && w.Key.Kingdom != Clan.PlayerClan.Kingdom) ? ("Sworn to " + w.Key.Kingdom.Name + ": you cannot make war on them alone, but the attainder holds whenever you take them.") : "They will be cast out and at war with you.")).ToList();
+			Inquiry.Select("Attainder", "Which house is condemned, root and branch?", els, 1, 1, "Attaint them", "Not today", delegate(List<InquiryElement> chosen)
+			{
+				Clan c = (chosen != null && chosen.Count > 0) ? (chosen[0].Identifier as Clan) : null;
+				if (c == null)
+				{
+					return;
+				}
+				string why = Attainder.Wrongdoers().Where((KeyValuePair<Clan, string> w) => w.Key == c).Select((KeyValuePair<Clan, string> w) => w.Value).FirstOrDefault() ?? "by the King's word";
+				Attainder.Declare(c, why);
+				GameMenu.SwitchToMenu("wad_law");
+			});
+		}
+
+		private static void AttaintedPick()
+		{
+			List<InquiryElement> els = Attainder.All().Where((Attainder.Rec r) => r.Clan != null).Select((Attainder.Rec r) => new InquiryElement(r, r.Clan.Name + " - " + (r.Execute ? "put to death when taken" : "no order") + ", " + r.Heads + " dead", null, true, r.Reason)).ToList();
+			Inquiry.Select("The Attainted", "Which house?", els, 1, 1, "That one", "Back", delegate(List<InquiryElement> chosen)
+			{
+				Attainder.Rec r = (chosen != null && chosen.Count > 0) ? (chosen[0].Identifier as Attainder.Rec) : null;
+				if (r == null)
+				{
+					return;
+				}
+				List<InquiryElement> opts = new List<InquiryElement>();
+				opts.Add(new InquiryElement("exec", r.Execute ? "Rescind the order" : ("Order: every lord of " + r.Clan.Name + " taken is put to death"), null, true,
+					r.Execute ? "Your houses will keep them for ransom again." : ("Your houses (and every house of your realm, if you rule it) will execute any lord of " + r.Clan.Name + " they capture - and those they already hold. Children and your own blood are spared. Dread +" + Cfg.AttainderExecuteDread + ", Honour -" + Cfg.AttainderExecuteHonour + " a head.")));
+				opts.Add(new InquiryElement("pardon", "Pardon the house", null, true, "The attainder and any order are lifted. Peace is a separate matter."));
+				Inquiry.Select(r.Clan.Name.ToString(), r.Reason, opts, 1, 1, "So ordered", "Back", delegate(List<InquiryElement> c2)
+				{
+					string o = (c2 != null && c2.Count > 0) ? (c2[0].Identifier as string) : null;
+					if (o == "exec")
+					{
+						Attainder.SetOrder(r, !r.Execute);
+						Flow.Notify(r.Execute ? ("Every lord of " + r.Clan.Name + " taken by your houses will be put to death.") : "The order is rescinded.");
+					}
+					else if (o == "pardon")
+					{
+						Attainder.Pardon(r);
+						Flow.Notify(r.Clan.Name + " is pardoned.");
+					}
+					GameMenu.SwitchToMenu("wad_law");
+				});
+			});
+		}
+
 		internal static void Register(CampaignGameStarter s)
 		{
 			s.AddGameMenu("wad_law", "{=!}{WAD_LAW}", (OnInitDelegate)delegate
@@ -73,6 +122,49 @@ namespace WardensAndDragons
 			{
 				Enter();
 			}, false, 2, false, (object)null);
+
+			s.AddGameMenuOption("wad_law", "wad_law_attaint", "{=WAD_Attaint}Attaint a house that wronged you", (GameMenuOption.OnConditionDelegate)delegate(MenuCallbackArgs a)
+			{
+				a.optionLeaveType = (GameMenuOption.LeaveType)2;
+				if (!Cfg.Attainder)
+				{
+					return false;
+				}
+				try
+				{
+					if (Attainder.Wrongdoers().Count == 0)
+					{
+						a.IsEnabled = false;
+						a.Tooltip = Styles.Line("No house has a wrong against you on the King's record.");
+					}
+				}
+				catch
+				{
+					a.IsEnabled = false;
+				}
+				return true;
+			}, (GameMenuOption.OnConsequenceDelegate)delegate
+			{
+				AttaintPick();
+			}, false, 3, false, (object)null);
+
+			s.AddGameMenuOption("wad_law", "wad_law_attainted", "{=WAD_Attainted}The attainted houses", (GameMenuOption.OnConditionDelegate)delegate(MenuCallbackArgs a)
+			{
+				a.optionLeaveType = (GameMenuOption.LeaveType)2;
+				if (!Cfg.Attainder)
+				{
+					return false;
+				}
+				if (Attainder.All().Count == 0)
+				{
+					a.IsEnabled = false;
+					a.Tooltip = Styles.Line("No house is attainted.");
+				}
+				return true;
+			}, (GameMenuOption.OnConsequenceDelegate)delegate
+			{
+				AttaintedPick();
+			}, false, 4, false, (object)null);
 
 			s.AddGameMenuOption("wad_law", "wad_law_back", "{=WAD_Back}Return to the court", (GameMenuOption.OnConditionDelegate)delegate(MenuCallbackArgs a)
 			{
