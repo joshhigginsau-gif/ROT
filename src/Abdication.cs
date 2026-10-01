@@ -468,6 +468,9 @@ namespace WardensAndDragons
 					int n = (int)Math.Round((double)houses.Count * Cfg.AbdicationUnlawfulShare / 100.0);
 					foreach (Clan c in houses.OrderBy((Clan c) => c.Leader.GetRelation(heir)).Take(n).ToList())
 					{
+						// The price of an unlawful heir, not a rebellion: the King's
+						// Justice must not count it as treason.
+						Store.Set("lw:exiled:" + ((MBObjectBase)c).StringId, "1");
 						ChangeKingdomAction.ApplyByLeaveKingdom(c, true);
 						Log.Write("abdication cost: " + c.Name + " will not kneel to an unlawful heir and leaves " + realm.Name);
 					}
@@ -488,6 +491,7 @@ namespace WardensAndDragons
 					Clan turn = (theirs != null) ? realm.Clans.Where((Clan c) => c != old && !c.IsEliminated && !c.IsUnderMercenaryService && c.Leader != null).OrderBy((Clan c) => c.Leader.GetRelation(heir)).FirstOrDefault() : null;
 					if (turn != null)
 					{
+						Store.Set("lw:exiled:" + ((MBObjectBase)turn).StringId, "1");
 						ChangeKingdomAction.ApplyByJoinToKingdomByDefection(turn, realm, theirs, default(CampaignTime), true);
 						Log.Write("abdication cost: " + turn.Name + " goes over to the bastard's " + theirs.Name);
 					}
@@ -908,6 +912,7 @@ namespace WardensAndDragons
 				}
 				foreach (Clan c in mine.Clans.Where(IsOldHouse).ToList())
 				{
+					Store.Set("lw:exiled:" + ((MBObjectBase)c).StringId, "1");
 					ChangeKingdomAction.ApplyByLeaveKingdom(c, false);
 					Log.Write("abdication: " + c.Name + " will not follow the house that left it, and leaves " + mine.Name);
 				}

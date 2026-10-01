@@ -1,4 +1,16 @@
-Wardens & Dragons  v2.16.0  -  SWORN HOUSES
+Wardens & Dragons  v2.16.1  -  SWORN HOUSES
+
+
+v2.16.1 - FIXES
+
+  - Houses that leave the realm as the price of an abdication (unlawful
+    heir, or going over to the bastard) are no longer charged with treason
+    by the King's Justice.
+  - AI generals no longer flip between defending a castle and leaving it
+    day after day: a defence lasts at least five days, and is only given up
+    once no enemy army or host is near the castle.
+  - The raid picker says "You are at war with no one." when that is why it
+    has nothing to offer.
 
 
 v2.16.0 - SWORN HOUSES

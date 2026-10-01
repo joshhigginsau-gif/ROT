@@ -708,7 +708,8 @@ namespace WardensAndDragons
 				.OrderBy((Settlement s) => s.GetPosition2D.Distance(at)).Take(25).ToList();
 			if (can.Count == 0)
 			{
-				Flow.Notify(enemy ? "No enemy town or castle has villages left to burn." : "Your realm holds no castle.");
+				bool war = Kingdom.All.Any((Kingdom k) => !k.IsEliminated && me != null && FactionManager.IsAtWarAgainstFaction(k, me));
+				Flow.Notify(enemy ? (war ? "No enemy town or castle has villages left to burn." : "You are at war with no one.") : "Your realm holds no castle.");
 				return;
 			}
 			List<InquiryElement> els = can.Select((Settlement s) => new InquiryElement(s, s.Name + ((s.OwnerClan != null) ? ("  (" + s.OwnerClan.Name + ")") : ""), null, true,

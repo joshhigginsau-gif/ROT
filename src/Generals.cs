@@ -855,6 +855,8 @@ namespace WardensAndDragons
 				{
 					Log.Write("general: " + Name(lord) + " sees " + threat.Name + " marching on " + threat.TargetSettlement.Name + " - moves to defend");
 					Order(r, p, "hold", ((MBObjectBase)threat.TargetSettlement).StringId);
+					// A defence lasts at least one thinking spell.
+					Store.SetI(ThinkPrefix + r.Party, today);
 					return true;
 				}
 			}
@@ -929,12 +931,28 @@ namespace WardensAndDragons
 				}
 			}
 			// Nothing to guard against and nobody to dodge: back to the war.
+			if (r.Order == "hold" && StillThreatened(r, mine))
+			{
+				return false;
+			}
 			if (r.Order == "hold" || r.Order == "avoid" || r.Order == "shadow" || r.Order == "screen")
 			{
 				Log.Write("general: " + Name(lord) + " sees no more need to " + r.Order + " - free to campaign");
 				Free(r, p);
 			}
 			return false;
+		}
+
+		// An enemy army or host still near the castle a hold guards.
+		private static bool StillThreatened(Host.Rec r, IFaction mine)
+		{
+			Settlement s = Settlement.Find(r.Target);
+			if (s == null)
+			{
+				return false;
+			}
+			Vec2 at = s.GetPosition2D;
+			return MobileParty.AllLordParties.Any((MobileParty x) => Enemy(x, mine) && (Host.Is(x) || (x.Army != null && x.Army.LeaderParty == x)) && x.GetPosition2D.Distance(at) < 60f);
 		}
 
 		private static string Name(Hero h)

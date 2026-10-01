@@ -376,3 +376,11 @@ done whose edits had never been written to disk. It is worth continuing.
   `OnClanChangedKingdom` follow-or-break.
 - Menus in `WardensMenu.cs` (Option gained a `ruler` flag): Bid a warden; Your sworn houses.
   Cheats `wad.sworn`, `wad.sworn_roll`, `wad.sworn_raise`.
+
+## v2.16.1 — fixes from the v2.15.0 log
+
+- Abdication costs and `Abdication.Daily` set `lw:exiled:<clan>` before forcing a house out, so
+  `Law.OnClanChangedKingdom` skips the treason record.
+- `Generals.Think`: the defend branch stamps `hg:<party>`; a hold is only freed when
+  `StillThreatened` (enemy host or army within 60 of the castle) is false.
+- `Host.PickPlace`: "You are at war with no one." when at peace.
