@@ -827,6 +827,16 @@ namespace WardensAndDragons
 			return Sworn.Roll(true) ?? "Nothing.";
 		}
 
+		[CommandLineFunctionality.CommandLineArgumentFunction("sworn_fief", "wad")]
+		public static string SwornFief(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			return Sworn.ForceFief((args != null && args.Count > 0) ? string.Join(" ", args) : null);
+		}
+
 		[CommandLineFunctionality.CommandLineArgumentFunction("sworn_raise", "wad")]
 		public static string SwornRaise(List<string> args)
 		{

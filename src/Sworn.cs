@@ -531,23 +531,50 @@ namespace WardensAndDragons
 			}
 		}
 
-		// A warden gives a sworn house one of its castles.
-		internal static bool GrantCastle(Rec r, Settlement castle)
+		// The fiefs a sworn house was given and still holds.
+		internal static List<Settlement> Fiefs(Rec r)
+		{
+			Clan house = r.HouseClan;
+			return (r.Castle ?? "").Split(new char[1] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select((string id) => Settlement.Find(id))
+				.Where((Settlement x) => x != null && house != null && x.OwnerClan == house).ToList();
+		}
+
+		// What a warden could give: any town or castle but its seat, and never
+		// more than half of what it holds.
+		internal static List<Settlement> Grantable(Clan warden)
+		{
+			if (warden == null)
+			{
+				return new List<Settlement>();
+			}
+			int given = Under(warden).Sum((Rec r) => Fiefs(r).Count);
+			int held = warden.Fiefs.Count;
+			if (held <= 1 || given >= held)
+			{
+				return new List<Settlement>();
+			}
+			return warden.Fiefs.Select((Town t) => t.Settlement).Where((Settlement x) => x != null && x != warden.HomeSettlement && (x.IsTown || x.IsCastle)).ToList();
+		}
+
+		// A warden gives a sworn house one of its towns or castles.
+		internal static bool GrantFief(Rec r, Settlement fief)
 		{
 			Clan house = r.HouseClan;
 			Clan warden = r.WardenClan;
-			if (house == null || warden == null || castle == null || castle.OwnerClan != warden || house.Leader == null)
+			if (house == null || warden == null || fief == null || fief.OwnerClan != warden || house.Leader == null || fief == warden.HomeSettlement || !(fief.IsTown || fief.IsCastle))
 			{
 				return false;
 			}
 			try
 			{
-				ChangeOwnerOfSettlementAction.ApplyByGift(castle, house.Leader);
-				r.Castle = ((MBObjectBase)castle).StringId;
+				ChangeOwnerOfSettlementAction.ApplyByGift(fief, house.Leader);
+				List<string> ids = (r.Castle ?? "").Split(new char[1] { ',' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+				ids.Add(((MBObjectBase)fief).StringId);
+				r.Castle = string.Join(",", ids.Distinct());
 				Save(r);
 				string how = "Bellum hierarchy: not placed";
 				object top = TopTitle(warden);
-				object barony = Bellum.TitlesHeldBy(house).Select((KeyValuePair<string, object> t) => t.Value).FirstOrDefault((object t) => Bellum.TierOf(t) == 0 && Bellum.CapitalOf(t) == castle);
+				object barony = Bellum.TitlesHeldBy(house).Select((KeyValuePair<string, object> t) => t.Value).FirstOrDefault((object t) => Bellum.TierOf(t) == 0 && Bellum.CapitalOf(t) == fief);
 				if (top != null && barony != null)
 				{
 					string why;
@@ -566,13 +593,15 @@ namespace WardensAndDragons
 					{
 					}
 				}
-				Knighting.Append(house, "On " + Standing.Date() + " " + warden.Name + " gave it the castle of " + castle.Name + ".");
-				Log.Write("sworn: " + warden.Name + " granted " + castle.Name + " to " + house.Name + " - " + how);
+				string what = (fief.IsTown ? "the town of " : "the castle of ") + fief.Name;
+				Knighting.Append(house, "On " + Standing.Date() + " " + warden.Name + " gave it " + what + ".");
+				Knighting.Append(warden, "On " + Standing.Date() + " it gave " + what + " to " + house.Name + ".");
+				Log.Write("sworn: " + warden.Name + " granted " + fief.Name + " to " + house.Name + " - " + how);
 				return true;
 			}
 			catch (Exception e)
 			{
-				Log.Write("sworn: the castle could not be granted: " + e.Message);
+				Log.Write("sworn: the fief could not be granted: " + e.Message);
 				return false;
 			}
 		}
@@ -603,7 +632,13 @@ namespace WardensAndDragons
 				return null;
 			}
 			Store.SetI(RollKey, today);
-			// Half the seasons nothing happens at all.
+			// A great warden may enfeoff one of its houses this season.
+			string fief = (force || MBRandom.RandomInt(100) < Cfg.SwornAiFiefChance) ? AiFief(null) : null;
+			if (fief != null)
+			{
+				Log.Write("sworn: season fief - " + fief);
+			}
+			// Half the seasons no house is gained at all.
 			if (!force && MBRandom.RandomFloat >= 0.5f)
 			{
 				Log.Write("sworn: season roll - no warden gains a house this season");
@@ -619,26 +654,40 @@ namespace WardensAndDragons
 			bool canInvite = InviteCandidates(w).Count > 0;
 			string kind = (canInvite && MBRandom.RandomFloat < 0.6f) ? "invited" : ((CadetCandidates(w).Count > 0 && MBRandom.RandomFloat < 0.5f) ? "cadet" : "knight");
 			Clan house = Gain(w, kind, null, null, null, true);
-			// Now and then a great warden gives a castle to a house that has none.
-			if (house == null && MBRandom.RandomFloat < 0.1f)
-			{
-				AiCastle();
-			}
 			return (house != null) ? (w.Name + " gained " + house.Name + " (" + kind + ").") : (w.Name + " tried and failed - see the log.");
 		}
 
-		private static void AiCastle()
+		// One warden gives one fief to one sworn house. only: a warden to force.
+		internal static string AiFief(Clan only)
 		{
-			foreach (Clan w in Wardens().Where((Clan c) => c != Clan.PlayerClan && c.Fiefs.Count((Town t) => t.IsCastle) >= 2 && c.Fiefs.Count >= 3).ToList())
+			try
 			{
-				Rec r = Under(w).FirstOrDefault((Rec x) => string.IsNullOrEmpty(x.Castle) && x.HouseClan != null && x.HouseClan.Leader != null);
-				Town castle = w.Fiefs.Where((Town t) => t.IsCastle && t.Settlement != w.HomeSettlement).FirstOrDefault();
-				if (r != null && castle != null)
+				foreach (Clan w in Wardens().Where((Clan c) => (only != null) ? (c == only) : (c != Clan.PlayerClan && c.Fiefs.Count >= 3)).OrderBy((Clan c) => MBRandom.RandomFloat).ToList())
 				{
-					GrantCastle(r, castle.Settlement);
-					return;
+					List<Settlement> can = Grantable(w);
+					if (Rank(w) < 2 || w.Fiefs.Count < 5)
+					{
+						can = can.Where((Settlement x) => x.IsCastle).ToList();
+					}
+					Settlement fief = can.OrderBy((Settlement x) => (x.Town != null) ? x.Town.Prosperity : 0f).FirstOrDefault();
+					Rec r = Under(w).Where((Rec x) => x.HouseClan != null && x.HouseClan.Leader != null && Fiefs(x).Count < 2)
+						.OrderBy((Rec x) => (x.Kind == "cadet") ? 0 : ((x.Kind == "knight") ? 1 : 2)).ThenBy((Rec x) => x.Day).FirstOrDefault();
+					if (fief == null || r == null)
+					{
+						if (only != null)
+						{
+							return w.Name + " has " + ((fief == null) ? "no fief it can spare" : "no sworn house waiting for land");
+						}
+						continue;
+					}
+					return GrantFief(r, fief) ? (w.Name + " granted " + fief.Name + " to " + r.HouseClan.Name) : (w.Name + " could not grant " + fief.Name);
 				}
 			}
+			catch (Exception e)
+			{
+				Log.Write("sworn: the AI fief grant failed: " + e.Message);
+			}
+			return (only != null) ? "No such warden." : null;
 		}
 
 		// ------------------------------------------------------------------
@@ -680,12 +729,35 @@ namespace WardensAndDragons
 						}
 						continue;
 					}
+					// Fiefs lost in war, or given on.
+					if (!string.IsNullOrEmpty(r.Castle))
+					{
+						List<string> keep = new List<string>();
+						foreach (string id in r.Castle.Split(new char[1] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+						{
+							Settlement f = Settlement.Find(id);
+							if (f != null && f.OwnerClan == house)
+							{
+								keep.Add(id);
+							}
+							else
+							{
+								Log.Write("sworn: " + house.Name + " lost " + ((f != null) ? f.Name.ToString() : id));
+							}
+						}
+						string now = string.Join(",", keep);
+						if (now != r.Castle)
+						{
+							r.Castle = now;
+							Save(r);
+						}
+					}
 					// The manor is still the warden's?
 					if (!string.IsNullOrEmpty(r.Manor))
 					{
 						Settlement v = Settlement.Find(r.Manor);
 						Clan owner = (v != null && v.Village != null && v.Village.Bound != null) ? v.Village.Bound.OwnerClan : null;
-						if (owner != warden && (owner == null || owner != house))
+						if (owner != warden && owner != house)
 						{
 							Log.Write("sworn: " + house.Name + " lost the manor of " + ((v != null) ? v.Name.ToString() : r.Manor) + " - it is no longer " + warden.Name + "'s");
 							r.Manor = "";
@@ -899,9 +971,7 @@ namespace WardensAndDragons
 								{
 									continue;
 								}
-								Settlement v = Settlement.Find(r.Manor);
-								Settlement c = Settlement.Find(r.Castle);
-								lines.Add(h.Name + " - " + ((c != null) ? ("castle of " + c.Name + ((v != null) ? ", " : "")) : "") + ((v != null) ? ("manor of " + v.Name) : ((c == null) ? "landless" : "")));
+								lines.Add(h.Name + " - " + Holdings(r));
 							}
 						}
 					}
@@ -958,9 +1028,25 @@ namespace WardensAndDragons
 		internal static string Line(Rec r)
 		{
 			Clan h = r.HouseClan;
+			return ((h != null) ? h.Name.ToString() : r.House) + " (" + r.Kind + "), " + Holdings(r);
+		}
+
+		// "town of A, castle of B, manor of C", or "landless".
+		internal static string Holdings(Rec r)
+		{
+			List<string> parts = Fiefs(r).Select((Settlement x) => (x.IsTown ? "town of " : "castle of ") + x.Name).ToList();
 			Settlement v = Settlement.Find(r.Manor);
-			Settlement c = Settlement.Find(r.Castle);
-			return ((h != null) ? h.Name.ToString() : r.House) + " (" + r.Kind + ")" + ((c != null) ? (", castle of " + c.Name) : "") + ((v != null) ? (", manor of " + v.Name) : ", no manor");
+			if (v != null)
+			{
+				parts.Add("manor of " + v.Name);
+			}
+			return (parts.Count > 0) ? string.Join(", ", parts) : "landless";
+		}
+
+		internal static string ForceFief(string name)
+		{
+			Clan w = Wardens().FirstOrDefault((Clan c) => string.IsNullOrEmpty(name) || c.Name.ToString().ToLowerInvariant().Contains(name.ToLowerInvariant()));
+			return (w == null) ? "No warden by that name." : (AiFief(w) ?? "Nothing happened - see the log.");
 		}
 
 		internal static string Summary(Kingdom k)

@@ -399,3 +399,12 @@ done whose edits had never been written to disk. It is worth continuing.
   `HeroPrisonerTaken` queues captives of attainted houses taken by your houses (your clan, or your
   realm's clans if you rule); `Attainder.Hourly` executes with `Law.Quiet` set (no crime recorded).
   Children and your blood spared. Cheats `wad.attaint`, `wad.attainted`.
+
+## v2.16.4 — wardens grant fiefs
+
+- `Sworn.Rec.Castle` is now a comma list of granted fiefs (old single ids still read). `Fiefs(r)` = still
+  owned; daily tick drops lost ones. `Grantable(warden)` = towns/castles but the seat, never past half its
+  fiefs. `GrantFief` replaces `GrantCastle` (gift -> Bellum barony re-sync -> PlaceBeneath -> service).
+  `AiFief(only)` on the season roll (`sworn_ai_fief_chance`, independent of gaining houses); towns only from
+  rank >= 2 with 5+ fiefs. Menus: `WardensMenu.PickFief(warden, influence)` for your own houses and as a
+  ruler's bid (`sworn_bid_fief_influence`). Cheat `wad.sworn_fief`.

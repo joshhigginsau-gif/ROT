@@ -1,4 +1,28 @@
-Wardens & Dragons  v2.16.3  -  COURT ANYWHERE, AND ATTAINDER
+Wardens & Dragons  v2.16.4  -  WARDENS GRANT FIEFS
+
+
+v2.16.4 - WARDENS GRANT FIEFS
+
+  A warden can now give its sworn houses towns as well as castles, and more
+  than one each - any fief but its own seat, and never more than half of
+  what it holds. Each grant is a real gift: Bellum makes it the house's
+  barony and it is placed beneath the warden's title, so it shows as a
+  branch under the warden in Bellum's Hierarchy tab.
+
+  - As a warden: Court -> Wardens and clients -> Your sworn houses ->
+    "Grant a fief to a sworn house". Each choice shows prosperity and
+    villages, and warns you when it is your last fief besides your seat.
+  - As ruler: "Bid a warden raise a house" -> "Have it grant a fief to one of
+    its sworn houses" (100 influence).
+  - AI wardens: each season a 20% chance that one warden with 3+ fiefs
+    grants one to a sworn house holding fewer than two - cadets first, the
+    poorest fief first, towns only from dukes and above with 5+ fiefs.
+
+  A fief the house loses in war drops off its record the next day. The
+  Wardens screen, house pages and Bellum tooltips list every holding.
+
+  Test: wad.sworn_fief <warden>. Config: sworn_ai_fief_chance=20,
+  sworn_bid_fief_influence=100.
 
 
 v2.16.3 - HOLD COURT ANYWHERE

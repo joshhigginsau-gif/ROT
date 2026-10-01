@@ -251,7 +251,8 @@ internal static class WardensMenu
 		List<InquiryElement> els = new List<InquiryElement>();
 		string why = Sworn.CannotGain(me, false);
 		els.Add(new InquiryElement("gain", "Raise or invite a house", null, why == null, why ?? "A cadet of your blood, one of your knights or companions, or a landless house of your realm."));
-		els.Add(new InquiryElement("castle", "Give one of your castles to a sworn house", null, under.Count > 0 && me.Fiefs.Count((Town t) => t.IsCastle) > 0, "Bellum records it as their barony, beneath your title."));
+		List<Settlement> grantable = Sworn.Grantable(me);
+		els.Add(new InquiryElement("castle", "Grant a fief to a sworn house", null, under.Count > 0 && grantable.Count > 0, (grantable.Count == 0) ? "You hold nothing you can spare besides your seat - or half your fiefs are already given." : "A town or castle of yours. Bellum records it as their barony, beneath your title."));
 		els.Add(new InquiryElement("release", "Release a sworn house", null, under.Count > 0, ""));
 		Inquiry.Select("Your Sworn Houses", (under.Count == 0) ? "No house is sworn to you yet." : string.Join("\n", under.Select(Sworn.Line)), els, 1, 1, "Go on", "Cancel", delegate(List<InquiryElement> chosen)
 		{
@@ -262,25 +263,7 @@ internal static class WardensMenu
 			}
 			else if (o == "castle")
 			{
-				List<InquiryElement> hs = under.Where((Sworn.Rec r) => r.HouseClan != null && string.IsNullOrEmpty(r.Castle)).Select((Sworn.Rec r) => new InquiryElement(r, Sworn.Line(r), null)).ToList();
-				Inquiry.Select("Give a Castle", "To which house?", hs, 1, 1, "Them", "Cancel", delegate(List<InquiryElement> c1)
-				{
-					Sworn.Rec r = (c1 != null && c1.Count > 0) ? (c1[0].Identifier as Sworn.Rec) : null;
-					if (r == null)
-					{
-						return;
-					}
-					List<InquiryElement> cs = me.Fiefs.Where((Town t) => t.IsCastle).Select((Town t) => new InquiryElement(t.Settlement, t.Name.ToString(), null)).ToList();
-					Inquiry.Select("Give a Castle", "Which castle?", cs, 1, 1, "That one", "Cancel", delegate(List<InquiryElement> c2)
-					{
-						Settlement s2 = (c2 != null && c2.Count > 0) ? (c2[0].Identifier as Settlement) : null;
-						if (s2 != null && Sworn.GrantCastle(r, s2))
-						{
-							Flow.Notify(r.HouseClan.Name + " holds " + s2.Name + " of you now.");
-						}
-						Refresh();
-					});
-				});
+				PickFief(me, 0);
 			}
 			else if (o == "release")
 			{
@@ -299,6 +282,57 @@ internal static class WardensMenu
 		});
 	}
 
+	// Choose a sworn house of this warden, then one of the warden's fiefs.
+	// influence: what it costs you (as ruler bidding another warden).
+	private static void PickFief(Clan w, int influence)
+	{
+		List<Sworn.Rec> under = Sworn.Under(w).Where((Sworn.Rec r) => r.HouseClan != null && r.HouseClan.Leader != null).ToList();
+		List<Settlement> can = Sworn.Grantable(w);
+		if (under.Count == 0 || can.Count == 0)
+		{
+			Flow.Notify((under.Count == 0) ? (w.Name + " has no sworn house to enfeoff.") : (w.Name + " has nothing it can spare besides its seat."));
+			return;
+		}
+		List<InquiryElement> hs = under.Select((Sworn.Rec r) => new InquiryElement(r, Sworn.Line(r), null)).ToList();
+		Inquiry.Select("Grant a Fief", "To which house of " + w.Name + "?", hs, 1, 1, "Them", "Cancel", delegate(List<InquiryElement> c1)
+		{
+			Sworn.Rec r = (c1 != null && c1.Count > 0) ? (c1[0].Identifier as Sworn.Rec) : null;
+			if (r == null)
+			{
+				return;
+			}
+			bool last = w.Fiefs.Count <= 2;
+			List<InquiryElement> cs = can.Select((Settlement x) => new InquiryElement(x, (x.IsTown ? "Town of " : "Castle of ") + x.Name, null, true,
+				"Prosperity " + ((x.Town != null) ? ((int)x.Town.Prosperity).ToString() : "?") + ", " + x.BoundVillages.Count + " village(s)." + (last ? " It is the last of your fiefs besides your seat." : ""))).ToList();
+			Inquiry.Select("Grant a Fief", "Which?" + ((influence > 0) ? (" It costs you " + influence + " influence to bid it.") : ""), cs, 1, 1, "Grant it", "Cancel", delegate(List<InquiryElement> c2)
+			{
+				Settlement s2 = (c2 != null && c2.Count > 0) ? (c2[0].Identifier as Settlement) : null;
+				if (s2 == null)
+				{
+					return;
+				}
+				if (influence > 0 && Clan.PlayerClan.Influence < influence)
+				{
+					Flow.Notify("You lack the influence to bid it.");
+					return;
+				}
+				if (Sworn.GrantFief(r, s2))
+				{
+					if (influence > 0)
+					{
+						TaleWorlds.CampaignSystem.Actions.ChangeClanInfluenceAction.Apply(Clan.PlayerClan, -influence);
+					}
+					Flow.Notify(r.HouseClan.Name + " holds " + s2.Name + " of " + w.Name + " now.");
+				}
+				else
+				{
+					Flow.Notify("It could not be granted - the log says why.");
+				}
+				Refresh();
+			});
+		});
+	}
+
 	// cost: what the player pays when bidding another warden; for your own
 	// following, the raise and invite costs apply.
 	private static void PickKind(Clan w, int cost)
@@ -313,11 +347,22 @@ internal static class WardensMenu
 		els.Add(new InquiryElement("cadet", "A cadet branch of " + w.Name + " (" + raise.ToString("N0") + ")", null, cadets.Count > 0 && Hero.MainHero.Gold >= raise, (cadets.Count > 0) ? (cadets.Count + " of its blood could found it.") : "Nobody of its blood is free."));
 		els.Add(new InquiryElement("knight", "Raise a knight to a landed house (" + raise.ToString("N0") + ")", null, Hero.MainHero.Gold >= raise, (knights.Count > 0) ? (knights.Count + " companion(s) or knight(s) to choose from.") : (mine ? "None of your companions or knights is free - a new knight will be found." : "A knight of its following.")));
 		els.Add(new InquiryElement("invited", "Invite a landless house (" + invite.ToString("N0") + ")", null, invitees.Count > 0 && Hero.MainHero.Gold >= invite, (invitees.Count > 0) ? (invitees.Count + " landless house(s) of the realm.") : "No landless house to invite."));
+		if (!mine)
+		{
+			bool canFief = Sworn.Under(w).Count > 0 && Sworn.Grantable(w).Count > 0;
+			els.Add(new InquiryElement("fief", "Have it grant a fief to one of its sworn houses (" + Cfg.SwornBidFiefInfluence + " influence)", null, canFief && Clan.PlayerClan.Influence >= Cfg.SwornBidFiefInfluence,
+				canFief ? "A town or castle of " + w.Name + "'s, given to a house sworn to it." : (w.Name + " has no sworn house, or nothing it can spare.")));
+		}
 		Inquiry.Select("A New House", "What kind of house swears to " + w.Name + "? It takes a manor of " + w.Name + "'s.", els, 1, 1, "That", "Cancel", delegate(List<InquiryElement> chosen)
 		{
 			string kind = (chosen != null && chosen.Count > 0) ? (chosen[0].Identifier as string) : null;
 			if (kind == null)
 			{
+				return;
+			}
+			if (kind == "fief")
+			{
+				PickFief(w, Cfg.SwornBidFiefInfluence);
 				return;
 			}
 			int pay = (kind == "invited") ? invite : raise;
