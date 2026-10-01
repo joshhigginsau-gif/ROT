@@ -72,7 +72,9 @@ public class CourtBehavior : CampaignBehaviorBase
 		CampaignEvents.GameMenuOpened.AddNonSerializedListener((object)this, (Action<MenuCallbackArgs>)delegate
 		{
 			Parley.Settle();
+			DragonDuel.Settle();
 		});
+		CampaignEvents.HourlyTickEvent.AddNonSerializedListener((object)this, (Action)DragonDuel.Settle);
 		CampaignEvents.HourlyTickEvent.AddNonSerializedListener((object)this, (Action)Parley.Settle);
 		CampaignEvents.OnSiegeEventStartedEvent.AddNonSerializedListener((object)this, (Action<TaleWorlds.CampaignSystem.Siege.SiegeEvent>)Parley.OnSiegeStarted);
 		// The generals' war: ambushes and screens act by the hour, and riders
@@ -210,6 +212,7 @@ public class CourtBehavior : CampaignBehaviorBase
 				Abdication.Daily();
 				Sworn.Daily();
 				Attainder.Daily();
+				DragonDuel.Daily(num);
 				Knighting.Weekly();
 				IronBank.Daily();
 				Exile.Daily();

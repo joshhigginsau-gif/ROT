@@ -81,7 +81,7 @@ namespace WardensAndDragons
 			return scene;
 		}
 
-		internal static bool Open(Hero foe, out string why)
+		internal static bool Open(Hero foe, out string why, bool mounted = false)
 		{
 			why = null;
 			if (!Available)
@@ -93,8 +93,8 @@ namespace WardensAndDragons
 			{
 				_reset.Invoke(_instance, null);
 				string scene = Scene();
-				Log.Write("rot duel: " + foe.Name + " on " + scene);
-				_open.Invoke(null, new object[5] { scene, foe.CharacterObject, false, true, false });
+				Log.Write("rot duel: " + foe.Name + " on " + scene + (mounted ? " (mounted)" : ""));
+				_open.Invoke(null, new object[5] { scene, foe.CharacterObject, mounted, true, false });
 				return true;
 			}
 			catch (Exception e)

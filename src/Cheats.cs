@@ -797,6 +797,36 @@ namespace WardensAndDragons
 			return Muster.ReadyNow();
 		}
 
+		[CommandLineFunctionality.CommandLineArgumentFunction("dragon_duel", "wad")]
+		public static string DragonDuelNow(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			return DragonDuel.Force((args != null && args.Count > 0) ? string.Join(" ", args) : null);
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("dragon_challenge", "wad")]
+		public static string DragonChallenge(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			return DragonDuel.TheyCallYou(true);
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("dragon_duel_ai", "wad")]
+		public static string DragonDuelAi(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			return DragonDuel.World(true);
+		}
+
 		[CommandLineFunctionality.CommandLineArgumentFunction("attaint", "wad")]
 		public static string Attaint(List<string> args)
 		{

@@ -212,6 +212,35 @@ internal static class Menus
 		{
 			SetRealmText();
 		}, (GameMenu.MenuOverlayType)0, (GameMenu.MenuFlags)0, (object)null);
+		s.AddGameMenuOption("wad_realm", "wad_realm_dragonduel", "{=!}Call out a dragon rider", (GameMenuOption.OnConditionDelegate)delegate(MenuCallbackArgs a)
+		{
+			a.optionLeaveType = (GameMenuOption.LeaveType)12;
+			try
+			{
+				if (!Cfg.DragonDuels)
+				{
+					return false;
+				}
+				string why = DragonDuel.WhyNot();
+				if (why != null)
+				{
+					a.IsEnabled = false;
+					a.Tooltip = Styles.Line(why);
+				}
+				else
+				{
+					a.Tooltip = Styles.Line("Single combat on dragonback. The loser almost always dies - " + Cfg.DragonDuelDeathPercent + "% - and so does their dragon.");
+				}
+			}
+			catch
+			{
+				return false;
+			}
+			return true;
+		}, (GameMenuOption.OnConsequenceDelegate)delegate
+		{
+			DragonDuel.Pick();
+		}, false, 6, false, (object)null);
 		s.AddGameMenuOption("wad_realm", "wad_realm_back", "{=WAD_Back}Return to the court", (GameMenuOption.OnConditionDelegate)delegate(MenuCallbackArgs a)
 		{
 			//IL_0003: Unknown result type (might be due to invalid IL or missing references)

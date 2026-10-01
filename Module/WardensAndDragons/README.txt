@@ -1,4 +1,37 @@
-Wardens & Dragons  v2.16.6  -  SAVE LOAD FIX
+Wardens & Dragons  v2.17.0  -  DRAGON DUELS
+
+
+v2.17.0 - DRAGON DUELS
+
+  Call out another dragon rider, or be called out, to single combat in the
+  sky. It is RoT's own duel, fought mounted: both of you on your dragons
+  (an AI rider takes off on the flying form of theirs).
+
+  The loser almost never lives: 95% the rider dies, and - rolled
+  separately - 95% their dragon dies too. A loser who lives is badly
+  wounded; a dragon that lives goes back to the Dragonmont riderless.
+  The winner gains +5 Dread and +2 Honour.
+
+  - You: Court -> Realm affairs -> "Call out a dragon rider". Any living
+    rider, of any realm, even your own. Each shows their dragon, their
+    relation with you and your rough odds. One challenge every 84 days.
+    A rider who hates you (relation -50 or worse) almost always accepts;
+    others weigh the odds. One who refuses is called craven (their house
+    loses 50 renown) and you gain 2 Honour for the offer.
+  - Them: a rider who hates you may call you out - very rarely (2% each
+    28 days per such rider). "Take wing" opens the duel at once; refusing
+    costs 5 Honour and 10 relation.
+  - The world: once a season, a 3% chance that two riders who hate each
+    other duel off-screen, decided on skill and the dragons' age. You hear
+    of it if either is of your realm or house.
+  If RoT's duel cannot open, the fight is decided on Riding, One-Handed,
+  Polearm and the dragons' age.
+
+  Config: dragon_duels_enabled, dragon_duel_death_percent=95,
+  dragon_duel_dragon_death_percent=95, dragon_duel_hatred=-50,
+  dragon_duel_ai_challenge_chance=2, dragon_duel_ai_vs_ai_chance=3,
+  dragon_duel_refuse_honour=5, dragon_duel_cooldown_days=84.
+  Cheats: wad.dragon_duel <rider>, wad.dragon_challenge, wad.dragon_duel_ai.
 
 
 v2.16.6 - SAVE LOAD FIX

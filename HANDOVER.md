@@ -433,3 +433,17 @@ done whose edits had never been written to disk. It is worth continuing.
 - `BanditHome.cs`: Harmony prefix on `CacheBanditCounts` (patched in `OnSubModuleLoad`) sets
   `BanditPartyComponent._relatedSettlement` to the nearest town/village for homeless, hideout-less bands.
   `Desert` falls back to `BanditHome.Nearest(p)` and makes no bands without a home.
+
+## v2.17.0 — dragon duels
+
+- `DragonDuel.cs`. RoT's `ROTDuelsMissionController` spawns both sides mounted when `spawnBothSidesWithHorse`; an AI
+  rider on a `MonsterUsage == "dragon"` mount is swapped to the `<id>2` `dragonfly` item and spawned airborne (the
+  player keeps their own mount). `RotDuel.Open(foe, out why, mounted)` passes that flag (Parley still false).
+- `dd:duel` = foe|you/them while the mission runs; `DragonDuel.Settle` (GameMenuOpened + hourly) reads
+  `RotDuel.TakeResult`. Fallback when RoT can't open: decided on `Odds` (Riding + One-Handed + Polearm/2 + dragon age).
+- `Aftermath(winner, loser)`: dragon dies at `dragon_duel_dragon_death_percent` via `Dragons.Kill`; if it lives and the
+  rider dies it is set riderless first so `Dragons.OnRiderDeath` doesn't roll again; rider dies at
+  `dragon_duel_death_percent` (`KillCharacterAction.ApplyByBattle`, `Law.Quiet`), else HP to 10%.
+- AI: `Daily` -> every 28 days `TheyCallYou` (riders at relation <= `dragon_duel_hatred`, each
+  `dragon_duel_ai_challenge_chance`%), every 21 days `World` (one mutually hating pair, `dragon_duel_ai_vs_ai_chance`%).
+- Menu: `wad_realm` -> "Call out a dragon rider". Cheats `wad.dragon_duel`, `wad.dragon_challenge`, `wad.dragon_duel_ai`.

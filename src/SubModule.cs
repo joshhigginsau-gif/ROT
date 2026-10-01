@@ -20,7 +20,7 @@ public class SubModule : MBSubModuleBase
 		base.OnSubModuleLoad();
 		Log.Init();
 		Cfg.Load();
-		Log.Write("=== Wardens & Dragons v2.16.6 - homeless bandit bands no longer break saves ===");
+		Log.Write("=== Wardens & Dragons v2.17.0 - dragon duels ===");
 		Log.Write("config read from: " + Cfg.LoadedFrom);
 		Log.Write("config in effect: " + Cfg.Describe());
 		try
