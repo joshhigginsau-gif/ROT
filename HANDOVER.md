@@ -424,3 +424,12 @@ done whose edits had never been written to disk. It is worth continuing.
   garrisons); an hour later culls common troops (raft state / no ships -> `naval_rout_losses_percent`, else
   `naval_retreat_losses_percent`; a third to the winner leader's prison roster). Lost `BlockadeBattle` relief
   (winner = defender = besiegers) culls the besieged garrison by `naval_relief_garrison_percent`. Cheat `wad.host_ready`.
+
+## v2.16.6 — save load fix
+
+- Crash on load: `BanditSpawnCampaignBehavior.CacheBanditCounts` keys a dictionary on each bandit party's
+  `HomeSettlement`; a null home throws. `Generals.Desert` passed `SettlementHelper.FindNearestSettlementToMobileParty`
+  (null at sea) to `BanditPartyComponent.CreateLooterParty`. The party survived the swallowed exception and was saved.
+- `BanditHome.cs`: Harmony prefix on `CacheBanditCounts` (patched in `OnSubModuleLoad`) sets
+  `BanditPartyComponent._relatedSettlement` to the nearest town/village for homeless, hideout-less bands.
+  `Desert` falls back to `BanditHome.Nearest(p)` and makes no bands without a home.

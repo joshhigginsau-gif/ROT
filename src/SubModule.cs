@@ -20,12 +20,13 @@ public class SubModule : MBSubModuleBase
 		base.OnSubModuleLoad();
 		Log.Init();
 		Cfg.Load();
-		Log.Write("=== Wardens & Dragons v2.16.5 - hosts muster for a year, fight to the last, naval routs ===");
+		Log.Write("=== Wardens & Dragons v2.16.6 - homeless bandit bands no longer break saves ===");
 		Log.Write("config read from: " + Cfg.LoadedFrom);
 		Log.Write("config in effect: " + Cfg.Describe());
 		try
 		{
 			Harmony val = new Harmony("community.wardens.and.dragons");
+			BanditHome.Patch(val);
 			if (Cfg.RelaxEligibility)
 			{
 				int num = 0;

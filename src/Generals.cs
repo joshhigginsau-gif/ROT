@@ -746,8 +746,12 @@ namespace WardensAndDragons
 				bands = Math.Max(1, Math.Min(8, excess / 1000));
 				Clan bandits = Clan.All.FirstOrDefault((Clan c) => ((MBObjectBase)c).StringId == "looters") ?? Clan.All.FirstOrDefault((Clan c) => c.IsBanditFaction);
 				Settlement near = SettlementHelper.FindNearestSettlementToMobileParty(p, MobileParty.NavigationType.Default, (Settlement s) => s.IsVillage || s.IsTown);
+				if (near == null)
+				{
+					near = BanditHome.Nearest(p);
+				}
 				List<MobileParty> made = new List<MobileParty>();
-				if (bandits != null && bandits.DefaultPartyTemplate != null && excess > 0)
+				if (bandits != null && bandits.DefaultPartyTemplate != null && near != null && excess > 0)
 				{
 					for (int i = 0; i < bands; i++)
 					{

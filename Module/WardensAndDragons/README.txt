@@ -1,4 +1,17 @@
-Wardens & Dragons  v2.16.5  -  HOSTS TAKE A YEAR
+Wardens & Dragons  v2.16.6  -  SAVE LOAD FIX
+
+
+v2.16.6 - SAVE LOAD FIX
+
+  A save could crash on the loading screen (ArgumentNullException "key" in
+  BanditSpawnCampaignBehavior.CacheBanditCounts), even with this mod off.
+  The cause: a bandit band with no home settlement. Unpaid hosts that
+  turned deserter at sea could make one, because no settlement was found
+  from the water. Now:
+  - on load, any band without a home is given the nearest town or
+    village before the game counts them (logged as "bandit home
+    repaired"), so broken saves load again;
+  - deserter bands always get a home on land, or are not made at all.
 
 
 v2.16.5 - HOSTS TAKE A YEAR, FIGHT TO THE LAST, AND DROWN AT SEA

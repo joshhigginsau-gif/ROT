@@ -12,7 +12,7 @@ C#. It adds a Game of Thrones political layer (House of the Dragon era) to a
 **Realm of Thrones (RoT)** campaign. It runs alongside Bellum Civile, RoT
 Dynasty & Succession and War Sails (NavalDLC).
 
-- **Current version:** v2.16.5 (hosts take a year to muster and cost double; host battles have unlimited reinforcement waves; naval routs. v2.16.3 court anywhere, attainder and v2.16.4 fief grants are untested in game at time of writing).
+- **Current version:** v2.16.6 (repairs homeless bandit bands that crashed loads; v2.16.5 musters/waves/naval routs, v2.16.3 court anywhere + attainder and v2.16.4 fief grants are untested in game at time of writing).
   and confirmed they work.
 - **Repo:** https://github.com/joshhigginsau-gif/ROT, branch
   `claude/bannerlord-rot-mod-jqh7py`.
