@@ -40,13 +40,13 @@ namespace WardensAndDragons
 				}
 				else
 				{
-					a.Tooltip = Styles.Line("Gold for men: levies at " + Cfg.HostPriceLevy + " a man, men-at-arms at " + Cfg.HostPriceMen + ", veterans at " + Cfg.HostPriceVeteran + ". They serve " + Cfg.HostDays + " days under one of your sworn knights.");
+					a.Tooltip = Styles.Line("Gold for men: levies at " + Host.Price(Host.Levy) + " a man, men-at-arms at " + Host.Price(Host.Men) + ", veterans at " + Host.Price(Host.Veteran) + "." + ((Cfg.HostMusterDays > 0) ? (" The summons take " + Cfg.HostMusterDays + " days to answer.") : ""));
 				}
 			}, Host.Muster);
 
 			Option(s, "wad_cn_hosts", "{=WAD_CnHosts}Your hosts", 2, delegate(MenuCallbackArgs a)
 			{
-				if (Host.Mine().Count == 0)
+				if (Host.Mine().Count == 0 && Muster.Mine().Count == 0)
 				{
 					a.IsEnabled = false;
 					a.Tooltip = Styles.Line("You have no host in the field.");

@@ -84,6 +84,8 @@ public class CourtBehavior : CampaignBehaviorBase
 		// Sworn houses follow their warden from realm to realm.
 		CampaignEvents.OnClanChangedKingdomEvent.AddNonSerializedListener((object)this, (Action<Clan, Kingdom, Kingdom, ChangeKingdomAction.ChangeKingdomActionDetail, bool>)Sworn.OnClanChangedKingdom);
 		CampaignEvents.MapEventEnded.AddNonSerializedListener((object)this, (Action<TaleWorlds.CampaignSystem.MapEvents.MapEvent>)Scorpions.OnMapEventEnded);
+		CampaignEvents.MapEventEnded.AddNonSerializedListener((object)this, (Action<TaleWorlds.CampaignSystem.MapEvents.MapEvent>)NavalRout.OnMapEventEnded);
+		CampaignEvents.HourlyTickEvent.AddNonSerializedListener((object)this, (Action)NavalRout.Hourly);
 	}
 
 	public override void SyncData(IDataStore ds)

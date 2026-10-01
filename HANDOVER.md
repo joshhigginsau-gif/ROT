@@ -408,3 +408,19 @@ done whose edits had never been written to disk. It is worth continuing.
   `AiFief(only)` on the season roll (`sworn_ai_fief_chance`, independent of gaining houses); towns only from
   rank >= 2 with 5+ fiefs. Menus: `WardensMenu.PickFief(warden, influence)` for your own houses and as a
   ruler's bid (`sworn_bid_fief_influence`). Cheat `wad.sworn_fief`.
+
+## v2.16.5 — a year to muster, dearer hosts, host battles, naval routs
+
+- `Muster.cs`: `hm:<id>` = owner|commander|quality|men|cost|ready|hunt|funded|threatened (`hmx:next`).
+  Yours: `Host` ChooseGold -> `Muster.BeginMine` (pays now) when `host_muster_days` > 0; AI `AiRaise` decides,
+  charges, then `Muster.BeginTheirs`; `Muster.Daily` calls `Host.Raise(..., paid:true)` / `Host.AiRaiseNow(..., charge:false)`.
+  30-day grace, then substitute commander / half refund / lapse. `ai_host_max_per_realm` counts pending.
+  Note `Host` has its own `Muster()` method, so Host.cs refers to the class as `WardensAndDragons.Muster`.
+- `Host.Price` multiplies by `host_cost_multiplier`.
+- `Host.WavesPost`: postfix on SandBox `SandBoxMissionSpawnHandler.CreateSandBoxBattleWaveSpawnSettings` sets
+  `MaximumReinforcementWaveCount = 0` when `MapEvent.PlayerMapEvent` involves a host (the wave cap is what
+  `DefaultBattleMissionAgentSpawnLogic.Init` truncates reserves to).
+- `NavalRout.cs`: on `MapEventEnded` for `IsNavalMapEvent` with a winner, queues defeated parties (not main, not
+  garrisons); an hour later culls common troops (raft state / no ships -> `naval_rout_losses_percent`, else
+  `naval_retreat_losses_percent`; a third to the winner leader's prison roster). Lost `BlockadeBattle` relief
+  (winner = defender = besiegers) culls the besieged garrison by `naval_relief_garrison_percent`. Cheat `wad.host_ready`.

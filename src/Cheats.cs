@@ -787,6 +787,16 @@ namespace WardensAndDragons
 			return Host.ForceAi((args != null && args.Count > 0) ? string.Join(" ", args) : null);
 		}
 
+		[CommandLineFunctionality.CommandLineArgumentFunction("host_ready", "wad")]
+		public static string HostReady(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			return Muster.ReadyNow();
+		}
+
 		[CommandLineFunctionality.CommandLineArgumentFunction("attaint", "wad")]
 		public static string Attaint(List<string> args)
 		{

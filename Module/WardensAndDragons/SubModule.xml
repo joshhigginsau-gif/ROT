@@ -2,7 +2,7 @@
 <Module>
   <Name value="Wardens &amp; Dragons" />
   <Id value="WardensAndDragons" />
-  <Version value="v2.16.4" />
+  <Version value="v2.16.5" />
   <SingleplayerModule value="true" />
   <MultiplayerModule value="false" />
   <DependedModules>

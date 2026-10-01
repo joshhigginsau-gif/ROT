@@ -1,4 +1,40 @@
-Wardens & Dragons  v2.16.4  -  WARDENS GRANT FIEFS
+Wardens & Dragons  v2.16.5  -  HOSTS TAKE A YEAR
+
+
+v2.16.5 - HOSTS TAKE A YEAR, FIGHT TO THE LAST, AND DROWN AT SEA
+
+  A year's muster. Raising a host now sends out the summons: you pay when
+  you confirm, and the men stand ready about a year later (84 days). The
+  council summary shows "Mustering: N under X, ready in D days", and the
+  hosts menu lets you call a muster off for half the gold back. If the
+  commander is captured or dead when the day comes, the muster waits up to
+  30 days, then another free knight or kinsman takes command (or half the
+  gold comes back). Other realms and the Iron Bank muster the same way, and
+  you can see their musters coming in "Other realms' hosts" - with a raven
+  if a realm at war with you sends out the summons.
+
+  Dearer. Every host price is doubled (host_cost_multiplier=2): 80 / 160 /
+  400 a man for levies / men-at-arms / veterans. Upkeep follows the price.
+
+  Host battles use every man. The game only lets each side send 3-5
+  reinforcement waves of half its opening strength, and the rest of the
+  army never takes the field - so a 3,000-man host could be beaten with a
+  few hundred men dead. When a host is in your battle, waves are now
+  unlimited: both sides feed in their whole strength until one is spent.
+  (Options -> Reinforcement waves -> Unlimited does this for every battle.)
+
+  Naval routs. War Sails only lets a ship's crew fight; a beaten fleet used
+  to float home on rafts with every man who never boarded. Now a party that
+  loses a sea battle and all its ships loses 60% of its soldiers (a third
+  of them taken prisoner by the victor); one that escapes with some ships
+  loses 20%. Beating a fleet that sails to break your blockade also costs
+  the besieged garrison 10%, deserting over the walls.
+
+  Config: host_cost_multiplier=2, host_muster_days=84 (0 = instant),
+  host_battle_unlimited_waves=true, naval_rout_enabled=true,
+  naval_rout_losses_percent=60, naval_retreat_losses_percent=20,
+  naval_relief_garrison_percent=10.
+  Cheat: wad.host_ready makes every muster stand ready on the next day.
 
 
 v2.16.4 - WARDENS GRANT FIEFS

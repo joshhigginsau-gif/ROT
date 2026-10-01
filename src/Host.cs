@@ -203,16 +203,17 @@ namespace WardensAndDragons
 			}
 		}
 
-		private static int Price(string q)
+		internal static int Price(string q)
 		{
+			int m = Math.Max(1, Cfg.HostCostMultiplier);
 			switch (q)
 			{
 			case Levy:
-				return Cfg.HostPriceLevy;
+				return Cfg.HostPriceLevy * m;
 			case Veteran:
-				return Cfg.HostPriceVeteran;
+				return Cfg.HostPriceVeteran * m;
 			default:
-				return Cfg.HostPriceMen;
+				return Cfg.HostPriceMen * m;
 			}
 		}
 
@@ -253,6 +254,25 @@ namespace WardensAndDragons
 			Apply(h, m.MobilePartyFoodConsumptionModel, "DoesPartyConsumeFood", "FoodPost");
 			Apply(h, m.PartySizeLimitModel, "GetPartyMemberSizeLimit", "SizePost");
 			Apply(h, m.PartyDesertionModel, "GetTroopsToDesert", "DesertPost");
+			// Host battles: every man of both hosts comes on, wave after wave.
+			try
+			{
+				Type spawn = AccessTools.TypeByName("SandBox.Missions.MissionLogics.SandBoxMissionSpawnHandler");
+				MethodInfo waves = (spawn != null) ? AccessTools.Method(spawn, "CreateSandBoxBattleWaveSpawnSettings", (Type[])null, (Type[])null) : null;
+				if (waves != null)
+				{
+					h.Patch(waves, null, new HarmonyMethod(typeof(Host).GetMethod("WavesPost", BindingFlags.Static | BindingFlags.NonPublic)));
+					Log.Write("hosts: patched SandBoxMissionSpawnHandler.CreateSandBoxBattleWaveSpawnSettings");
+				}
+				else
+				{
+					Log.Write("hosts: the battle wave settings were not found - host battles keep the wave limit");
+				}
+			}
+			catch (Exception e)
+			{
+				Log.Write("hosts: patching the battle waves failed: " + e.Message);
+			}
 		}
 
 		private static void Apply(Harmony h, object model, string method, string post)
@@ -276,6 +296,34 @@ namespace WardensAndDragons
 			catch (Exception e)
 			{
 				Log.Write("hosts: patching " + method + " failed: " + e.Message);
+			}
+		}
+
+		private static void WavesPost(ref TaleWorlds.MountAndBlade.MissionSpawnSettings __result)
+		{
+			try
+			{
+				if (!Cfg.HostBattleUnlimitedWaves || _ids.Count == 0)
+				{
+					return;
+				}
+				TaleWorlds.CampaignSystem.MapEvents.MapEvent me = TaleWorlds.CampaignSystem.MapEvents.MapEvent.PlayerMapEvent;
+				if (me == null)
+				{
+					return;
+				}
+				bool host = me.InvolvedParties.Any((PartyBase x) => x != null && x.IsMobile && Is(x.MobileParty));
+				if (!host)
+				{
+					return;
+				}
+				int before = __result.MaximumReinforcementWaveCount;
+				__result.MaximumReinforcementWaveCount = 0;
+				Log.Write("host battle: unlimited reinforcement waves (was " + before + "; attackers " + me.AttackerSide.TroopCount + ", defenders " + me.DefenderSide.TroopCount + ")");
+			}
+			catch (Exception e)
+			{
+				Log.Once("hostwaves", "host battle: the wave limit could not be lifted: " + e.Message);
 			}
 		}
 
@@ -329,9 +377,9 @@ namespace WardensAndDragons
 		// white cloak (they come through Guard.Ready), not already at the head
 		// of a host, and either with you, idle in a hall, or leading their own
 		// men (who become the core of the host).
-		private static List<Hero> Family()
+		internal static List<Hero> Family()
 		{
-			HashSet<string> busy = new HashSet<string>(All().Select((Rec r) => r.Knight));
+			HashSet<string> busy = new HashSet<string>(All().Select((Rec r) => r.Knight).Concat(WardensAndDragons.Muster.Commanders()));
 			return Clan.PlayerClan.Heroes.Where((Hero h) => h != null && h.IsAlive && !h.IsChild && !h.IsPrisoner && !h.IsWounded && h != Hero.MainHero && !Guard.IsSworn(h) && !busy.Contains(((MBObjectBase)h).StringId)
 				&& (h.PartyBelongedTo == MobileParty.MainParty
 					|| (h.PartyBelongedTo == null && h.CurrentSettlement != null)
@@ -412,7 +460,14 @@ namespace WardensAndDragons
 					Inquiry.Confirm("Muster a Host", men.ToString("N0") + " " + QualityName(q) + " under " + knight.Name + ", for " + cost.ToString("N0") + " gold, and " + (cost / 100 * Cfg.HostUpkeepPercent).ToString("N0") + " a year in upkeep.",
 						"Raise them", "Not today", delegate
 						{
-							Raise(knight, q, men, cost);
+							if (Cfg.HostMusterDays > 0)
+							{
+								WardensAndDragons.Muster.BeginMine(knight, q, men, cost);
+							}
+							else
+							{
+								Raise(knight, q, men, cost);
+							}
 						}, null);
 				}, null);
 		}
@@ -454,20 +509,21 @@ namespace WardensAndDragons
 			return CharacterObject.All.Where((CharacterObject x) => x != null && !x.IsHero && x.Occupation == Occupation.Soldier && x.Tier >= lo && x.Tier <= hi && x.Culture != null && x.Culture.IsMainCulture).ToList();
 		}
 
-		private static void Raise(Hero knight, string q, int men, int cost)
+		// paid: the gold was taken when the muster began.
+		internal static bool Raise(Hero knight, string q, int men, int cost, bool paid = false)
 		{
 			try
 			{
-				if (Hero.MainHero.Gold < cost)
+				if (!paid && Hero.MainHero.Gold < cost)
 				{
 					Flow.Notify("You cannot pay for them.");
-					return;
+					return false;
 				}
 				List<CharacterObject> troops = Troops(q);
 				if (troops.Count == 0)
 				{
 					Flow.Notify("There are no such soldiers in your lands to raise.");
-					return;
+					return false;
 				}
 				// One of your blood already at the head of their own men keeps
 				// them: the host is added around them.
@@ -485,9 +541,12 @@ namespace WardensAndDragons
 				if (party == null)
 				{
 					Flow.Notify("The host could not be raised.");
-					return;
+					return false;
 				}
-				Hero.MainHero.ChangeHeroGold(-cost);
+				if (!paid)
+				{
+					Hero.MainHero.ChangeHeroGold(-cost);
+				}
 				int lo;
 				int hi;
 				Band(q, out lo, out hi);
@@ -524,10 +583,12 @@ namespace WardensAndDragons
 				Ravens.Popup("The Host Is Mustered",
 					men.ToString("N0") + " " + QualityName(q) + " stand under " + knight.Name + "'s command. " + (Cfg.Generals ? ("Their food and upkeep falls due in a year.") : ("They are paid through the next " + Cfg.HostDays + " days.")) +
 					"\n\nGive them their orders from the small council: Court -> The small council -> Your hosts.");
+				return true;
 			}
 			catch (Exception e)
 			{
 				Log.Write("raising the host failed: " + e);
+				return false;
 			}
 		}
 
@@ -1317,6 +1378,7 @@ namespace WardensAndDragons
 					TheirDaily(r, today);
 				}
 				AiMuster(today);
+				WardensAndDragons.Muster.Daily(today);
 				Scorpions.AiWeekly(today);
 				foreach (Rec r in Mine())
 				{
@@ -1493,7 +1555,7 @@ namespace WardensAndDragons
 						continue;
 					}
 					string owner = ((MBObjectBase)k.RulingClan).StringId;
-					if (All().Count((Rec r) => r.Owner == owner) >= Cfg.AiHostMaxPerRealm)
+					if (All().Count((Rec r) => r.Owner == owner) + WardensAndDragons.Muster.PendingFor(owner) >= Cfg.AiHostMaxPerRealm)
 					{
 						continue;
 					}
@@ -1521,16 +1583,16 @@ namespace WardensAndDragons
 		internal static bool AiRaise(Kingdom k, Hero ruler, bool threatened, int funded = 0, MobileParty hunt = null)
 		{
 			int budget = (funded > 0) ? funded : (int)((long)ruler.Gold * Cfg.AiHostSpendPercent / 100);
-			if (funded <= 0 && budget / Cfg.HostPriceMen < Cfg.AiHostMinMen)
+			if (funded <= 0 && budget / Price(Men) < Cfg.AiHostMinMen)
 			{
 				// Short of gold: the Bank may lend it.
-				int loan = IronBank.AiBorrow(k, ruler, Cfg.AiHostMinMen * Cfg.HostPriceMen * 2 - budget);
+				int loan = IronBank.AiBorrow(k, ruler, Cfg.AiHostMinMen * Price(Men) * 2 - budget);
 				if (loan > 0)
 				{
 					budget += loan;
 				}
 			}
-			string q = (budget >= Cfg.AiHostMinMen * Cfg.HostPriceVeteran * 3) ? Veteran : Men;
+			string q = (budget >= Cfg.AiHostMinMen * Price(Veteran) * 3) ? Veteran : Men;
 			int men = Math.Min(Cfg.HostMaxMen, budget / Price(q));
 			if (men < Cfg.AiHostMinMen)
 			{
@@ -1542,6 +1604,34 @@ namespace WardensAndDragons
 				return false;
 			}
 			Clan clan = k.RulingClan;
+			if (Troops(q, clan).Count == 0)
+			{
+				return false;
+			}
+			int price = men * Price(q);
+			if (Cfg.HostMusterDays > 0)
+			{
+				// The summons go out; the host stands a year from now.
+				if (funded <= 0)
+				{
+					ruler.ChangeHeroGold(-Math.Min(price, ruler.Gold));
+				}
+				WardensAndDragons.Muster.BeginTheirs(clan, q, men, price, funded > 0, threatened, hunt);
+				return true;
+			}
+			return AiRaiseNow(k, q, men, price, funded > 0, threatened, hunt, true);
+		}
+
+		// The host stands up: a commander is found, the men are given.
+		// charge: take the gold now (false when it was paid at the summons).
+		internal static bool AiRaiseNow(Kingdom k, string q, int men, int cost, bool funded, bool threatened, MobileParty hunt, bool charge)
+		{
+			Clan clan = (k != null) ? k.RulingClan : null;
+			Hero ruler = (k != null) ? k.Leader : null;
+			if (clan == null || ruler == null)
+			{
+				return false;
+			}
 			List<CharacterObject> troops = Troops(q, clan);
 			if (troops.Count == 0)
 			{
@@ -1567,8 +1657,7 @@ namespace WardensAndDragons
 					return false;
 				}
 			}
-			int cost = men * Price(q);
-			if (funded <= 0)
+			if (charge && !funded)
 			{
 				ruler.ChangeHeroGold(-Math.Min(cost, ruler.Gold));
 			}
@@ -1592,7 +1681,7 @@ namespace WardensAndDragons
 				Enforce(r, party, true);
 			}
 			Log.Write("host raised by " + k.Name + ": " + men + " " + q + " under " + commander.Name + " (" + r.Party + "), " + Describe(r) + (threatened ? " - answering an enemy host" : ""));
-			string news = k.Name + ((funded > 0) ? " has been given a host by the Iron Bank: " : " has bought a host: ") + men.ToString("N0") + " " + QualityName(q) + " under " + commander.Name + ", " + Describe(r) + ".";
+			string news = k.Name + (funded ? " has been given a host by the Iron Bank: " : " has bought a host: ") + men.ToString("N0") + " " + QualityName(q) + " under " + commander.Name + ", " + Describe(r) + ".";
 			if (AtWarWithMe(k))
 			{
 				Ravens.Popup("A Host Gathers", news + "\n\nYour own hosts can be sent to bring them to battle: Court -> The small council -> Your hosts.");
@@ -1748,7 +1837,7 @@ namespace WardensAndDragons
 		// Everyone else's hosts, for the Hand's report.
 		internal static string Theirs()
 		{
-			StringBuilder sb = new StringBuilder();
+			StringBuilder sb = new StringBuilder(WardensAndDragons.Muster.TheirsText());
 			foreach (Rec r in All().Where((Rec x) => !x.Mine))
 			{
 				MobileParty p = PartyOf(r);
@@ -1833,31 +1922,48 @@ namespace WardensAndDragons
 		internal static void Pick()
 		{
 			List<Rec> all = Mine();
-			if (all.Count == 0)
+			List<WardensAndDragons.Muster.Rec> pending = WardensAndDragons.Muster.Mine();
+			if (all.Count == 0 && pending.Count == 0)
 			{
 				Flow.Notify("You have no host in the field.");
 				return;
 			}
+			int today = CourtBehavior.Today();
 			List<InquiryElement> els = all.Select((Rec r) =>
 			{
 				Hero k = Law.Find(r.Knight);
 				MobileParty p = PartyOf(r);
 				return new InquiryElement(r, ((k != null) ? k.Name.ToString() : "?") + " - " + ((p != null) ? p.MemberRoster.TotalManCount.ToString("N0") : "?") + " men, " + Describe(r), null, true, "");
 			}).ToList();
+			els.AddRange(pending.Select((WardensAndDragons.Muster.Rec m) =>
+			{
+				Hero k = Law.Find(m.Commander);
+				return new InquiryElement(m, "Mustering: " + m.Men.ToString("N0") + " " + QualityName(m.Quality) + " under " + ((k != null) ? k.Name.ToString() : "?") + ", ready in " + Math.Max(0, m.Ready - today) + " days", null, true,
+					"Choose it to call the muster off. Half the gold comes back.");
+			}));
 			Inquiry.Select("Your Hosts", "Which?", els, 1, 1, "That one", "Not now",
 				delegate(List<InquiryElement> chosen)
 				{
-					Rec r = (chosen != null && chosen.Count > 0) ? (chosen[0].Identifier as Rec) : null;
+					object o = (chosen != null && chosen.Count > 0) ? chosen[0].Identifier : null;
+					Rec r = o as Rec;
+					WardensAndDragons.Muster.Rec m = o as WardensAndDragons.Muster.Rec;
 					if (r != null)
 					{
 						Orders(r);
+					}
+					else if (m != null)
+					{
+						Inquiry.Confirm("Call Off the Muster", "Send the gathering men home? Half the gold - " + (m.Cost / 2).ToString("N0") + " - comes back.", "Call it off", "Let them gather", delegate
+						{
+							WardensAndDragons.Muster.Cancel(m);
+						}, null);
 					}
 				});
 		}
 
 		internal static string Summary()
 		{
-			StringBuilder sb = new StringBuilder();
+			StringBuilder sb = new StringBuilder(WardensAndDragons.Muster.MineText());
 			int today = CourtBehavior.Today();
 			foreach (Rec r in Mine())
 			{
