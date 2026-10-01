@@ -258,7 +258,7 @@ namespace WardensAndDragons
 			}
 		}
 
-		private static Hero Make(CultureObject culture, int age, string prefix)
+		internal static Hero Make(CultureObject culture, int age, string prefix)
 		{
 			CharacterObject template = Bastard.Template(culture);
 			if (template == null)

@@ -565,7 +565,7 @@ namespace WardensAndDragons
 
 		// The old arms with a cadet's difference: the device takes a new
 		// colour. Never the reversed field and charge - that means bastardy.
-		private static Banner Cadet(Clan old)
+		internal static Banner Cadet(Clan old)
 		{
 			try
 			{

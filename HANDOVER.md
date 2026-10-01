@@ -358,3 +358,21 @@ done whose edits had never been written to disk. It is worth continuing.
 - Keys `ab:done:<clan>`, `ab:was:<clan>`, `ab:last`. Hosts' owner set to the old clan, order free;
   `IronBank.HandToCrown`; `Guard.Abandon`; `sc:heir` cleared. `Abdication.Daily` removes an old
   house from the player's realm. Config "Abdication"; cheats `wad.abdicate_odds`, `wad.abdicate self|child`.
+
+## v2.16.0 — sworn houses
+
+- `Sworn.cs`: records `sw:<house>` = warden|kind|manor village|castle|day|lostDay; `swg:<warden>` last gain;
+  `swx:roll` season roll; `swx:income` manor payday. Warden = Bellum tier >= 1 (county) or a style.
+  `Gain(warden, kind, who, invitee, name, ai)` founds (cadet arms via `Abdication.Cadet`, knights via
+  `Exile.Make` + `Knighting.Company`) or invites, joins the realm, assigns the richest free village.
+  A founder's own party gets `ActualClan` set by hand (never follows its owner).
+- Castles: `ChangeOwnerOfSettlementAction.ApplyByGift` (Bellum re-syncs the barony in its own
+  OnSettlementOwnerChanged) → `Bellum.PlaceBeneath(barony, warden's top title)` → `SetService(.., CustomaryTenure)`.
+- Bellum hierarchy tab is titles-only; manors shown via a postfix on private static
+  `HierarchyTitleNodeVM.BuildTooltip` (adds TooltipProperty rows by reflection, no extra references).
+- AI: one roll per `DaysPerSeason`, 50% nothing, one random ready warden (cap by rank 2/3/4, cooldown
+  168 days, free village, 30k gold); world cap = village count (or `sworn_world_cap`). 10% chance of an
+  AI castle grant when nobody gains. Daily: manor checks/reassignment, seasonal pay, call to arms,
+  `OnClanChangedKingdom` follow-or-break.
+- Menus in `WardensMenu.cs` (Option gained a `ruler` flag): Bid a warden; Your sworn houses.
+  Cheats `wad.sworn`, `wad.sworn_roll`, `wad.sworn_raise`.

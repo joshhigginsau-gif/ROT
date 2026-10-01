@@ -1,4 +1,50 @@
-Wardens & Dragons  v2.15.0  -  SET DOWN THE CROWN
+Wardens & Dragons  v2.16.0  -  SWORN HOUSES
+
+
+v2.16.0 - SWORN HOUSES
+
+  Wardens now gather houses of their own, as real wardens do. A warden is
+  any house holding a Bellum county or greater title, or styled warden.
+
+  A house comes to a warden three ways:
+  - A cadet branch: a younger member of the warden's blood founds a house
+    with the warden's arms, differenced.
+  - A raised knight: a companion or knight is given a name and a house.
+  - An invited house: a landless house of the realm swears to the warden.
+
+  Each sworn house holds a MANOR - one of the warden's villages. Bannerlord
+  cannot give a village its own owner, so the manor lord is named and paid:
+  half the village's taxes each season, from the warden's purse. The village
+  stays in law under the warden's castle. A warden may also give a sworn
+  house a castle outright.
+
+  BELLUM CIVILE: a granted castle is a real barony - Bellum re-syncs it
+  itself, and it is placed beneath the warden's title, so it shows as a
+  branch under the warden in the Kingdoms -> Hierarchy tab. Manors cannot be
+  nodes there (Bellum has no village titles), so hover the warden's title in
+  that tab to see its sworn houses and manors; hover a castle's barony to
+  see its villages' lords.
+
+  Sworn houses answer their warden's call to arms (free parties nearby join
+  its army), and follow it 75% of the time if it changes realm - otherwise
+  their oath breaks. A house that loses its manor and gets no new one for a
+  year drifts away.
+
+  THE AI GROWS SLOWLY: one roll per season for the whole world, half of
+  them nothing happens, at most one warden gains one house. Each warden
+  waits two years between houses, holds at most 2 (county), 3 (duchy) or
+  4 (kingdom) sworn houses, needs a free village and 30,000 gold. The world
+  never holds more sworn houses than it has villages.
+
+  YOU: Court -> Wardens and clients.
+  - As ruler: "Bid a warden raise a house" (50,000) - choose the kind and
+    the founder, and name it.
+  - As a warden yourself (even under another king): "Your sworn houses" -
+    raise a cadet or a knight (50,000), invite a landless house (15,000),
+    give one of your castles, or release a house.
+
+  Tests: wad.sworn (every warden and its houses), wad.sworn_roll (one AI
+  season roll now), wad.sworn_raise <warden name>. Config: "Sworn houses".
 
 
 v2.15.0 - ABDICATION

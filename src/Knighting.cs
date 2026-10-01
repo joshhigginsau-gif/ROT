@@ -299,7 +299,7 @@ namespace WardensAndDragons
 		}
 
 		// His company: a lance of men to start.
-		private static void Company(Hero h, Clan house, CharacterObject oldTroop)
+		internal static void Company(Hero h, Clan house, CharacterObject oldTroop)
 		{
 			try
 			{
