@@ -341,3 +341,20 @@ done whose edits had never been written to disk. It is worth continuing.
   dragon strikes (`hd:<rider>` = rider|dragon|target|from|landHour|escort|mine; escort troops taken out
   and returned), AI riders weekly (`sx:airoll`), `MapEventEnded` → queued falls settled hourly.
 - Config section "Generals"; cheats `wad.host_upkeep`, `wad.ambush_now`, `wad.dragon_strike`, `wad.host_think`.
+
+## v2.15.0 — abdication (docs/ABDICATION.md)
+
+- Verified in the decompiled game before writing the self path: `Hero.Clan`'s setter touches no
+  party; `ClanVariablesCampaignBehavior` re-picks a random leader if the hero LED the clan it left;
+  `MobileParty.ActualClan` is set only at party creation and must be set by hand (its setter moves
+  the war-party registration); `ChangeClanLeaderAction` gives the old leader's gold to the heir and
+  makes the heir leader of whatever party they ride in.
+- `Bastard.SwitchPlayer(him, house, why)` = Become's switch (PlayerDefaultFaction, ChangePlayerCharacterAction,
+  old party handback, redraw), used by Become and the child path. `Bastard.SetPlayerFaction(clan)`.
+- `Abdication.cs`: `Checks`/`Odds`, `Begin` (menu), `Cheat`. Self path order: heir own party →
+  new house `_leader` field → PlayerDefaultFaction → `ApplyWithSelectedNewLeader(old, heir)` →
+  `MainHero.Clan` → `MainParty.ActualClan` → strip to heir. Child path: child out of parties →
+  child/spouse to new house → `SwitchPlayer` → leader change on the now-AI old house.
+- Keys `ab:done:<clan>`, `ab:was:<clan>`, `ab:last`. Hosts' owner set to the old clan, order free;
+  `IronBank.HandToCrown`; `Guard.Abandon`; `sc:heir` cleared. `Abdication.Daily` removes an old
+  house from the player's realm. Config "Abdication"; cheats `wad.abdicate_odds`, `wad.abdicate self|child`.

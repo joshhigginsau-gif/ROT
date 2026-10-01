@@ -357,6 +357,34 @@ namespace WardensAndDragons
 		// ------------------------------------------------------------------
 		// rulers borrow too
 
+		// Abdication: the crown owes it, not the house that left. The player's
+		// loan becomes the realm's (or the heir's, with no realm).
+		internal static void HandToCrown(Kingdom realm, Hero heir)
+		{
+			try
+			{
+				if (!InDebt)
+				{
+					return;
+				}
+				int owed = Owed;
+				Store.Set(LoanKey, null);
+				if (realm != null)
+				{
+					Store.Set(AiPrefix + ((MBObjectBase)realm).StringId, owed + "|" + (CourtBehavior.Today() + Cfg.BankAiDays));
+					Log.Write("abdication: the Iron Bank loan (" + owed + ") is now owed by " + realm.Name + ", due in " + Cfg.BankAiDays + " days");
+				}
+				else
+				{
+					Log.Write("abdication: the Iron Bank loan (" + owed + ") goes with the house to " + ((heir != null) ? heir.Name.ToString() : "the heir") + "; the Bank no longer looks to you for it");
+				}
+			}
+			catch (Exception e)
+			{
+				Log.Write("abdication: the loan could not be handed to the crown: " + e.Message);
+			}
+		}
+
 		// A ruler short of gold for a host; returns what the Bank lent.
 		internal static int AiBorrow(Kingdom k, Hero ruler, int want)
 		{
