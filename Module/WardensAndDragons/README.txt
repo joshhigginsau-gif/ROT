@@ -1,4 +1,40 @@
-Wardens & Dragons  v2.14.0  -  THE GENERALS' WAR
+Wardens & Dragons  v2.15.0  -  SET DOWN THE CROWN
+
+
+v2.15.0 - ABDICATION
+
+  Court -> House and heirs -> Set down the crown.
+
+  Your named heir takes everything: the crown (or just the house, if you
+  are not a ruler), your gold, fiefs, troops, prisoners, companions,
+  white cloaks, hosts, Iron Bank debt and dragon. Someone leaves with one
+  horse, one blade, plain clothes and 1,000 coin to found a new,
+  independent house - you choose who:
+
+  - "I will go myself": you play on as yourself, at the head of the new
+    house.
+  - "Let one of my children go": a grown younger child (not the heir)
+    founds a cadet house, and you play on as them. Their spouse goes too.
+    Your old self stays in the old house under the new ruler.
+
+  The herald suggests a name; you may change it. The new house flies your
+  arms with a cadet's difference (a new device colour - never the reversed
+  colours, which mean bastardy). Both houses' encyclopedia pages record
+  it. The old house is set to 100 with you (+30 with its other members)
+  but never joins, follows or protects you - if it ever ends up in your
+  realm, it leaves.
+
+  Smooth or not - shown on the confirm screen, each line a tick or a cross:
+  - Refused: no heir of age and of your blood; this house has abdicated
+    once already; you are a prisoner or mid-battle/siege.
+  - Costs (rulers only): an heir the law does not name - 15% of the
+    realm's houses leave; the enemy inside your borders - every house
+    thinks 10 less of the heir; the Bastard's Banner raised - one more
+    house goes over to him; an exile waiting - his company sails two years
+    sooner.
+
+  Tests: wad.abdicate_odds (the checks), wad.abdicate self,
+  wad.abdicate child. Config: the new "Abdication" section.
 
 
 v2.14.0 - THE GENERALS' WAR

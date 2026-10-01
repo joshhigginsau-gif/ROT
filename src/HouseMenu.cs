@@ -205,6 +205,38 @@ namespace WardensAndDragons
 				Heritage.Style(Refresh);
 			}, false, 5, false, (object)null);
 
+			s.AddGameMenuOption("wad_house", "wad_house_abdicate", "{=WAD_Abdicate}Set down the crown", (GameMenuOption.OnConditionDelegate)delegate(MenuCallbackArgs a)
+			{
+				a.optionLeaveType = (GameMenuOption.LeaveType)2;
+				try
+				{
+					if (!Cfg.Abdication)
+					{
+						return false;
+					}
+					string why = Abdication.Why();
+					if (why != null)
+					{
+						a.IsEnabled = false;
+						a.Tooltip = Styles.Line(why);
+					}
+					else
+					{
+						a.Tooltip = Styles.Line("Your heir takes everything. You, or a grown younger child, found a new house with nothing.");
+					}
+				}
+				catch (Exception e)
+				{
+					a.IsEnabled = false;
+					a.Tooltip = Styles.Line("This cannot be read just now.");
+					Log.Once("abdicatecond", "the abdication option failed to draw: " + e.Message);
+				}
+				return true;
+			}, (GameMenuOption.OnConsequenceDelegate)delegate
+			{
+				Abdication.Begin();
+			}, false, 8, false, (object)null);
+
 			s.AddGameMenuOption("wad_house", "wad_house_back", "{=WAD_Back}Return to the court", (GameMenuOption.OnConditionDelegate)delegate(MenuCallbackArgs a)
 			{
 				a.optionLeaveType = (GameMenuOption.LeaveType)16;

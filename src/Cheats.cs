@@ -787,6 +787,31 @@ namespace WardensAndDragons
 			return Host.ForceAi((args != null && args.Count > 0) ? string.Join(" ", args) : null);
 		}
 
+		[CommandLineFunctionality.CommandLineArgumentFunction("abdicate_odds", "wad")]
+		public static string AbdicateOdds(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			return Abdication.Odds();
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("abdicate", "wad")]
+		public static string Abdicate(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			string mode = (args != null && args.Count > 0) ? args[0].ToLowerInvariant() : "";
+			if (mode != "self" && mode != "child")
+			{
+				return "Usage: wad.abdicate self | wad.abdicate child";
+			}
+			return Abdication.Cheat(mode);
+		}
+
 		[CommandLineFunctionality.CommandLineArgumentFunction("host_upkeep", "wad")]
 		public static string HostUpkeep(List<string> args)
 		{

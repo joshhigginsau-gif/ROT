@@ -199,6 +199,7 @@ public class CourtBehavior : CampaignBehaviorBase
 				Treachery.Daily();
 				Council.Daily();
 				Host.Daily();
+				Abdication.Daily();
 				Knighting.Weekly();
 				IronBank.Daily();
 				Exile.Daily();
