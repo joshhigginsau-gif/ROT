@@ -438,7 +438,7 @@ namespace WardensAndDragons
 					" with a horse, a blade and " + coin.ToString("N0") + " in coin, and founded " + house.Name + ".";
 				Knighting.Append(house, story);
 				Knighting.Append(old, "On " + date + " " + (self ? (me.Name + " set down the crown") : (me.Name + " stepped aside")) + ", and " + heir.Name + " took it. " + now.Name + " left to found " + house.Name + ".");
-				Store.AddDeed(date + "  " + (self ? "You set down the crown" : (now.Name + " went out from " + old.Name)) + ". " + heir.Name + " took it, and " + house.Name + " was founded.");
+				Store.AddDeed(date + "  " + (self ? "You set down the crown" : (now.Name + " went out from " + old.Name)) + ". " + heir.Name + " took it, and " + house.Name + " was founded.", "house");
 				Log.Write("abdication: done - you are " + now.Name + " of " + house.Name + " (" + ((MBObjectBase)house).StringId + "), kingdom " + ((house.Kingdom != null) ? house.Kingdom.Name.ToString() : "none") + "; " + old.Name + " under " + heir.Name);
 				Ravens.Popup("The Crown Set Down", heir.Name + " is crowned" + ((realm != null) ? (" in " + realm.Name) : "") + ", and ravens go out to every house of the realm.\n\n" +
 					now.Name + " rides out with one horse, one blade and " + coin.ToString("N0") + " in coin, as the first of " + house.Name + ". " + old.Name + " will always think well of you. It will never follow you.");

@@ -12,7 +12,7 @@ C#. It adds a Game of Thrones political layer (House of the Dragon era) to a
 **Realm of Thrones (RoT)** campaign. It runs alongside Bellum Civile, RoT
 Dynasty & Succession and War Sails (NavalDLC).
 
-- **Current version:** v2.17.0 (dragon duels; v2.16.6 repairs homeless bandit bands that crashed loads. v2.16.3-v2.16.5 features and dragon duels are untested in game at time of writing).
+- **Current version:** v2.18.0 (battle speeches, the chronicle and the scribe; v2.17.0 dragon duels; v2.16.6 load fix. v2.16.3 onward is untested in game at time of writing).
   and confirmed they work.
 - **Repo:** https://github.com/joshhigginsau-gif/ROT, branch
   `claude/bannerlord-rot-mod-jqh7py`.

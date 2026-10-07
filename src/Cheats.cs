@@ -797,6 +797,16 @@ namespace WardensAndDragons
 			return Muster.ReadyNow();
 		}
 
+		[CommandLineFunctionality.CommandLineArgumentFunction("chronicle", "wad")]
+		public static string ChronicleDump(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			return Chronicle.Counts((Chronicle.Entry e) => true) + "\n" + Chronicle.Text((Chronicle.Entry e) => true, 15);
+		}
+
 		[CommandLineFunctionality.CommandLineArgumentFunction("dragon_duel", "wad")]
 		public static string DragonDuelNow(List<string> args)
 		{

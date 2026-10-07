@@ -556,7 +556,7 @@ namespace WardensAndDragons
 				if (ours != null && theirs != null && Suitable(ours) && Suitable(theirs))
 				{
 					MarriageAction.Apply(ours, theirs, true);
-					Store.AddDeed(Standing.Date() + "  " + ours.Name + " married " + theirs.Name + " at " + venue.Name + ".");
+					Store.AddDeed(Standing.Date() + "  " + ours.Name + " married " + theirs.Name + " at " + venue.Name + ".", "marriage");
 					text += "\n\n" + ours.Name + " and " + theirs.Name + " are married.";
 				}
 			}

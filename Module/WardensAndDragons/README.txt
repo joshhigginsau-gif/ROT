@@ -1,4 +1,38 @@
-Wardens & Dragons  v2.17.0  -  DRAGON DUELS
+Wardens & Dragons  v2.18.0  -  SPEECHES AND THE CHRONICLE
+
+
+v2.18.0 - BATTLE SPEECHES AND THE CHRONICLE
+
+  Speeches. In any battle you command with 100 or more men on the field,
+  once deployment is over the battle slows and you are asked what you will
+  tell your men: honour, fear, gold and plunder, house and realm - and, when
+  they fit, fire and blood (you ride a dragon), vengeance (a hated foe or an
+  attainted house), standing against the odds (outnumbered), or the walls
+  (a siege). Each shows your chance, from Leadership, Charm and how well it
+  suits you (honour lands best when you are honourable, fear when dreaded).
+  The speech is put together fresh each time from the names of the day -
+  your house, your realm, the enemy, the place - and never quite repeats.
+  It plays out line by line over your head; the men cheer (real cheering
+  and shouts) and their morale rises (+15, +25 for a great speech), or it
+  falls flat (-5). Then the enemy commander answers, and their men cheer
+  too if it was any good. A great speech before a victory is remembered:
+  +15 renown, and a point of Honour or Dread to match.
+
+  The chronicle. Court -> The chronicle. Everything the court records is
+  kept for good: battles (size, losses and the speech you gave), places
+  taken, houses you founded or raised, children born to you, baseborn
+  children brought to your gate, marriages, duels and every other deed.
+  - Read it at court, or open your own page in the Encyclopedia: your
+    house's history is written under your biography, with the tally of
+    battles won and lost, places taken, houses founded, children and
+    bastards. Kin's pages show the entries that name them.
+  - Hire a scribe (5,000, then 1,500 a season) and the entries are written
+    handsomely. He will also, for a price, amend an entry (2,000), strike
+    one out (3,000), or invent a deed that never happened (5,000). Lies
+    come out: 15% (30% for an invention) of them, months later, restore
+    the truth, mark the page as tampered with, and cost 5 Honour.
+
+  Config section "Speeches and the chronicle". Cheat: wad.chronicle.
 
 
 v2.17.0 - DRAGON DUELS

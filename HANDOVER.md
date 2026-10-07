@@ -447,3 +447,19 @@ done whose edits had never been written to disk. It is worth continuing.
 - AI: `Daily` -> every 28 days `TheyCallYou` (riders at relation <= `dragon_duel_hatred`, each
   `dragon_duel_ai_challenge_chance`%), every 21 days `World` (one mutually hating pair, `dragon_duel_ai_vs_ai_chance`%).
 - Menu: `wad_realm` -> "Call out a dragon rider". Cheats `wad.dragon_duel`, `wad.dragon_challenge`, `wad.dragon_duel_ai`.
+
+## v2.18.0 — battle speeches and the chronicle
+
+- `BattleSpeech.cs` (MissionLogic) added on `CampaignEvents.OnMissionStartedEvent` when `MapEvent.PlayerMapEvent` is a
+  field/siege battle led by `PartyBase.MainParty` with >= `speech_min_troops`. Once `Mission.Mode == Battle`, it slows
+  time (`Mission.AddTimeSpeedRequest`, id 724601), offers themes via `Inquiry.Select`, releases time, and plays lines with
+  `MBInformationManager.AddQuickInformation` (speaker portrait) at real-time intervals. Then `Rouse`: `ChangeMorale`
+  on the team, `act_cheer_*`/`act_cheering_high_*` on channel 1, `MakeVoice(Victory)`. The enemy leader answers.
+  Text pools are in `Speeches.cs` (opener + heart + colour + closer, with tokens; `sp:used` keeps the last 200 hashes).
+- `Chronicle.cs`: `hx:<n>` = day|kind|hero|flags|text (`hxn` counter; flags w/l/f/a/s/x). `Store.AddDeed(line, kind)`
+  mirrors every ledger line; specific sites pass bastard/house/conquest/marriage/duel. Hooks: OnGivenBirth (child),
+  OwnerChanged BySiege (conquest), MapEventEnded (battle + the speech via `BattleSpeech.TakeForChronicle`), Sworn
+  player raise (house). Scribe `sc:hired`, wage every 21 days; amend keeps the original in `hxo:<n>`; exposure is
+  scheduled in `hxe:<n>` and handled on the daily tick. Encyclopedia: postfix on
+  `EncyclopediaHeroPageVM.UpdateInformationText` appends to `InformationText` for player-clan heroes.
+- Menu `wad_chronicle` under the court. Cheat `wad.chronicle`.

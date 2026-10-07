@@ -580,7 +580,7 @@ namespace WardensAndDragons
 				Save(k);
 				Write(k);
 
-				Store.AddDeed(Standing.Date() + "  " + child.Name + " was brought to your gate.");
+				Store.AddDeed(Standing.Date() + "  " + child.Name + " was brought to your gate.", "bastard");
 				Log.Write("a child surfaces: " + child.Name + ", " + (int)child.Age + ", of " + where.Name);
 
 				Popup("A Child at the Gate",

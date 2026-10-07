@@ -20,13 +20,14 @@ public class SubModule : MBSubModuleBase
 		base.OnSubModuleLoad();
 		Log.Init();
 		Cfg.Load();
-		Log.Write("=== Wardens & Dragons v2.17.0 - dragon duels ===");
+		Log.Write("=== Wardens & Dragons v2.18.0 - battle speeches and the chronicle ===");
 		Log.Write("config read from: " + Cfg.LoadedFrom);
 		Log.Write("config in effect: " + Cfg.Describe());
 		try
 		{
 			Harmony val = new Harmony("community.wardens.and.dragons");
 			BanditHome.Patch(val);
+			Chronicle.Patch(val);
 			if (Cfg.RelaxEligibility)
 			{
 				int num = 0;
