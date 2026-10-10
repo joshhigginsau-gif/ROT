@@ -252,6 +252,7 @@ public class CourtBehavior : CampaignBehaviorBase
 				Safe("Attainder.Daily", () => Attainder.Daily());
 				Safe("DragonDuel.Daily", () => DragonDuel.Daily(num));
 				Safe("Nemesis.Daily", () => Nemesis.Daily(num));
+				Safe("Chronicler.Weekly", () => Chronicler.Weekly(num));
 				Safe("Scandal.Daily", () => Scandal.Daily(num));
 				Safe("Ambition.Daily", () => Ambition.Daily(num));
 				Safe("Knighting.Weekly", () => Knighting.Weekly());

@@ -1,4 +1,23 @@
-Wardens & Dragons  v2.18.1  -  A LIVING WORLD
+Wardens & Dragons  v2.18.2  -  A LIVING WORLD
+
+
+v2.18.2 - HISTORIES AS THE CHRONICLERS WROTE THEM
+
+  House and realm pages now open with a short summary under their
+  description - who they are, who leads them, what they hold - and what
+  they will be remembered for: "It is remembered as the house that united
+  all of the lands of the Dornish under its rule, slew Aegon, a crowned
+  ruler, and stormed three cities." These deeds of note are kept for good,
+  even after the lands are lost:
+    - held every castle and city of a people's lands at once / united
+      them all under its crown (realms: brought them under one crown)
+    - founded a realm; wore a crown; slew a crowned ruler
+    - won three, then ten, great battles; stormed three cities
+    - held ten fiefs and more; flew three dragons at once
+  Below the summary, lords, houses and realms each have their own folding
+  History section, now written as prose a year at a time, the way the old
+  histories read: "In the spring of the year 154, Aegon led the victory at
+  Rook's Rest... That same year he took Duskendale by siege..."
 
 
 v2.18.1 - HISTORY IN ITS OWN SECTION

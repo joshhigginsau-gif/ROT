@@ -12,7 +12,7 @@ C#. It adds a Game of Thrones political layer (House of the Dragon era) to a
 **Realm of Thrones (RoT)** campaign. It runs alongside Bellum Civile, RoT
 Dynasty & Succession and War Sails (NavalDLC).
 
-- **Current version:** v2.18.1 (lord pages: collapsible History section via UIExtenderEx before AlliesDivider; house/realm pages still text-appended until prefab anchors are known).
+- **Current version:** v2.18.2 (collapsible History on hero, clan and kingdom pages, written as prose by year; summaries with deeds of note at the head of house and realm pages).
   and confirmed they work.
 - **Repo:** https://github.com/joshhigginsau-gif/ROT, branch
   `claude/bannerlord-rot-mod-jqh7py`.

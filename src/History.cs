@@ -175,6 +175,7 @@ namespace WardensAndDragons
 				}
 				if (wl != null)
 				{
+					Chronicler.OnBattleWon(wl.Clan, won.MapFaction as Kingdom);
 					House(wl.Clan, N(wl) + " won the battle of " + what + (ll != null ? (" against " + N(ll)) : "") + ".", 3);
 					Realm(won.MapFaction, "Victory at " + what + ": " + N(wl) + " broke " + (ll != null ? N(ll) : "the enemy") + " (" + ours.ToString("N0") + " against " + theirs.ToString("N0") + ").", 3);
 				}
@@ -254,6 +255,10 @@ namespace WardensAndDragons
 				}
 				if (great && victim.Clan != null && victim.Clan.Kingdom != null && victim.Clan.Kingdom.Leader == victim)
 				{
+					if (killer != null && detail != KillCharacterAction.KillCharacterActionDetail.DiedOfOldAge)
+					{
+						Chronicler.OnRulerSlain(victim, killer);
+					}
 					Realm(victim.Clan.Kingdom, "The ruler " + N(victim) + " " + char.ToLowerInvariant(how[0]) + how.Substring(1), 3);
 				}
 			}
@@ -274,6 +279,7 @@ namespace WardensAndDragons
 			Hero(oldOwner, "Lost " + place + " to " + N(newOwner) + ".", 3);
 			if (newOwner != null)
 			{
+				Chronicler.OnCityTaken(newOwner.Clan, s);
 				House(newOwner.Clan, N(newOwner) + " took " + place + ".", 3);
 				Realm(newOwner.MapFaction, place.Substring(0, 1).ToUpper() + place.Substring(1) + " was won.", 2);
 			}
@@ -347,6 +353,7 @@ namespace WardensAndDragons
 			{
 				return;
 			}
+			Chronicler.OnCrowned(k, c);
 			Hero(c.Leader, "Took the crown of " + k.Name + ".", 3);
 			House(c, N(c.Leader) + " took the crown of " + k.Name + ".", 3);
 			Realm(k, N(c.Leader) + " of " + c.Name + " came to the throne.", 3);
@@ -411,6 +418,7 @@ namespace WardensAndDragons
 			{
 				return;
 			}
+			Chronicler.OnRealmFounded(k);
 			Realm(k, "The realm was founded" + (k.Leader != null ? (" by " + N(k.Leader)) : "") + ".", 3);
 			Hero(k.Leader, "Founded the realm of " + k.Name + ".", 3);
 		}
@@ -495,6 +503,10 @@ namespace WardensAndDragons
 		{
 			try
 			{
+				if (SectionShown)
+				{
+					return;
+				}
 				Clan c = Traverse.Create(__instance).Field("_clan").GetValue<Clan>();
 				Append(__instance, KeyOf(c), "HISTORY OF THE HOUSE");
 			}
@@ -508,6 +520,10 @@ namespace WardensAndDragons
 		{
 			try
 			{
+				if (SectionShown)
+				{
+					return;
+				}
 				Kingdom k = Traverse.Create(__instance).Field("_faction").GetValue<Kingdom>();
 				Append(__instance, KeyOf(k), "HISTORY OF THE REALM");
 			}

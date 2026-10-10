@@ -506,3 +506,7 @@ done whose edits had never been written to disk. It is worth continuing.
 ## v2.18.1 — encyclopedia section
 
 - `src/UI/HistoryUI.cs`: `HeroHistoryMixin` (EncyclopediaHeroPageVM: HasWadHistory, WadHistoryTitle, WadHistory list) + `HeroHistoryPrefab` Prepend at `descendant::EncyclopediaDivider[@Id='AlliesDivider']` (Bellum Replaces the same node; Prepend survives either order). Package Bannerlord.UIExtenderEx 2.13.3 (compile only); `SubModule.EnableUI` is NoInlining so a missing UIExtenderEx can't break load; `History.SectionShown` turns off the text fallback for heroes. Clan/faction: text fallback until their divider Ids are known.
+
+## v2.18.2 — summaries and prose
+
+- `Chronicler.cs`: deeds of note `ac:<clan>` / `ak:<kingdom>` (code|day|text); counters `acn:`/`akn:`; Weekly land check groups towns+castles by Settlement.Culture. `HouseSummary`/`RealmSummary`, `Prose(key, hero)` = one paragraph per year. UI: `HistoryMixinBase<T>`; clan/faction prefabs Prepend at `LeaderDivider` (summary + collapsible divider); hero at `AlliesDivider`.
