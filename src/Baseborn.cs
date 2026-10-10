@@ -601,6 +601,82 @@ namespace WardensAndDragons
 		// ------------------------------------------------------------------
 		// giving them your name
 
+		// Into your household: they live and ride with your house and can lead
+		// its men, but keep the name they were born with and have no claim.
+		internal static bool InHouse(Hero h)
+		{
+			return h != null && h.Clan == Clan.PlayerClan;
+		}
+
+		internal static bool CanTakeIn(Kid k, out string why)
+		{
+			why = null;
+			Hero child = HeroOf(k);
+			if (child == null || !child.IsAlive)
+			{
+				why = "there is nobody to take in";
+				return false;
+			}
+			if (InHouse(child))
+			{
+				why = "already of your household";
+				return false;
+			}
+			if (child.IsPrisoner)
+			{
+				why = "a prisoner";
+				return false;
+			}
+			if (child.Clan != null && child.Clan != Clan.PlayerClan && child.Clan.Leader == child)
+			{
+				why = "they head a house of their own";
+				return false;
+			}
+			if (Clan.PlayerClan.Leader != Hero.MainHero)
+			{
+				why = "only the head of your house can take them in";
+				return false;
+			}
+			return true;
+		}
+
+		internal static void TakeIn(Kid k)
+		{
+			Hero child = HeroOf(k);
+			string why;
+			if (!CanTakeIn(k, out why))
+			{
+				Flow.Notify("Not now: " + why + ".");
+				return;
+			}
+			try
+			{
+				child.Clan = Clan.PlayerClan;
+				if (child.Occupation != Occupation.Lord)
+				{
+					child.SetNewOccupation(Occupation.Lord);
+				}
+				if (child.HeroState != Hero.CharacterStates.Active)
+				{
+					child.ChangeState(Hero.CharacterStates.Active);
+				}
+			}
+			catch (Exception e)
+			{
+				Log.Write("taking a child into the household failed: " + e);
+			}
+			if (child.Clan == Clan.PlayerClan)
+			{
+				Store.AddDeed(Standing.Date() + "  " + child.Name + " was taken into your household.");
+				Log.Write("baseborn: " + child.Name + " taken into the household");
+				Popup("Your Household", child.Name + " now lives under your roof and rides with your house. They keep the name they were born with, and no claim comes with the bread.\n\nYou will find them in your clan screen: give them a party, a post, or a place at your side.");
+			}
+			else
+			{
+				Flow.Notify("They could not be brought into the house - the log says why.");
+			}
+		}
+
 		internal static bool CanLegitimise(Kid k, out string why)
 		{
 			why = null;
@@ -709,6 +785,10 @@ namespace WardensAndDragons
 				try
 				{
 					child.Clan = mine;
+					if (child.HeroState != Hero.CharacterStates.Active)
+					{
+						child.ChangeState(Hero.CharacterStates.Active);
+					}
 				}
 				catch (Exception ce)
 				{
@@ -923,6 +1003,12 @@ namespace WardensAndDragons
 					Hero other = OtherOf(k) ?? Hero.DeadOrDisabledHeroes.FirstOrDefault((Hero h) => ((MBObjectBase)h).StringId == k.Other);
 					Family(child, parent, other);
 					Visible(child);
+					if (k.Legit && child != null && child.IsAlive && child.Clan == null && Clan.PlayerClan != null)
+					{
+						// Acknowledged, but the house never took: put them back in it.
+						child.Clan = Clan.PlayerClan;
+						Log.Write("baseborn: " + child.Name + " was acknowledged but houseless - restored to your house");
+					}
 					Visible(other);
 					if (child.EncyclopediaText == null || string.IsNullOrEmpty(child.EncyclopediaText.ToString()))
 					{

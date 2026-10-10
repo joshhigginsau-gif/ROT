@@ -1,4 +1,16 @@
-Wardens & Dragons  v2.17.2  -  FIXES
+Wardens & Dragons  v2.17.3  -  YOUR HOUSEHOLD
+
+
+v2.17.3 - BASEBORN CHILDREN IN YOUR HOUSEHOLD
+
+  A child who came to your gate had no house at all, and the only way in
+  was to acknowledge them - which only a ruling house can do. Now:
+  Court -> House and heirs -> "Take a baseborn child into your household".
+  Any head of a house can do it, for nothing. They join your clan, can be
+  given a party, a post or a place at your side, keep the name they were
+  born with, and have no claim. Acknowledging them is still the way to give
+  them your name and a claim. An acknowledged child who somehow ended up
+  houseless is put back in your house on load.
 
 
 v2.17.2 - A FULL SWEEP OF FIXES

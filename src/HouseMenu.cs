@@ -1,3 +1,4 @@
+using System.Linq;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -130,6 +131,57 @@ namespace WardensAndDragons
 				PickChild();
 			}, false, 2, false, (object)null);
 
+			s.AddGameMenuOption("wad_house", "wad_house_takein", "{=!}Take a baseborn child into your household", (GameMenuOption.OnConditionDelegate)delegate(MenuCallbackArgs a)
+			{
+				a.optionLeaveType = (GameMenuOption.LeaveType)2;
+				if (!Cfg.Baseborn)
+				{
+					return false;
+				}
+				try
+				{
+					int can = Baseborn.Known().Count((Kid k) => Baseborn.CanTakeIn(k, out string w));
+					if (can == 0)
+					{
+						a.IsEnabled = false;
+						a.Tooltip = Styles.Line("No child of yours waits outside your household.");
+					}
+					else
+					{
+						a.Tooltip = Styles.Line(can + " could join your house: they ride with you, lead your men and can be given a party - but keep their name and have no claim. Costs nothing.");
+					}
+				}
+				catch (Exception e)
+				{
+					a.IsEnabled = false;
+					a.Tooltip = Styles.Line("This cannot be read just now.");
+					Log.Once("takeincond", "the household option failed to draw: " + e.Message);
+				}
+				return true;
+			}, (GameMenuOption.OnConsequenceDelegate)delegate
+			{
+				try
+				{
+					List<InquiryElement> els = Baseborn.Known().Select((Kid k) =>
+					{
+						Hero h = Baseborn.HeroOf(k);
+						bool can = Baseborn.CanTakeIn(k, out string why);
+						return new InquiryElement(k, h.Name + "  (" + (int)h.Age + ")", null, can, can ? "They join your clan, keeping their name." : (char.ToUpper(why[0]) + why.Substring(1) + "."));
+					}).ToList();
+					Inquiry.Select("Your Household", "Who comes to live under your roof?", els, 1, 1, "Take them in", "Not today", (List<InquiryElement> c) =>
+					{
+						Kid k = (c != null && c.Count > 0) ? (c[0].Identifier as Kid) : null;
+						if (k != null)
+						{
+							Baseborn.TakeIn(k);
+						}
+					});
+				}
+				catch (Exception e)
+				{
+					Log.Write("household pick failed: " + e);
+				}
+			}, false, 2, false, (object)null);
 			s.AddGameMenuOption("wad_house", "wad_house_bequeath", "{=WAD_Bequeath}Put the blade in someone's hand", (GameMenuOption.OnConditionDelegate)delegate(MenuCallbackArgs a)
 			{
 				a.optionLeaveType = (GameMenuOption.LeaveType)2;

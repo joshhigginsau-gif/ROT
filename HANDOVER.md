@@ -485,3 +485,7 @@ done whose edits had never been written to disk. It is worth continuing.
   `Raise` refuses busy/army parties. `Host.Orphan` strips raised men when the commander is lost.
 - `SetOrder(..., before)` for Feint state. `Host.HostsAndMustersOf` caps Iron Bank funding. `Ravens.Vengeful` expiry.
 - `Dragons.Kill` unmounts; Sworn follows on join only and marks `lw:exiled`; `DragonMenu.FromCourt`.
+
+## v2.17.3 — household
+
+- `Baseborn.CanTakeIn/TakeIn`: `child.Clan = PlayerClan` (Active, Lord) without legitimising; HouseMenu `wad_house_takein`. `Repair` restores acknowledged kids with no clan.
