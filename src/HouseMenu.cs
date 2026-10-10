@@ -182,6 +182,44 @@ namespace WardensAndDragons
 					Log.Write("household pick failed: " + e);
 				}
 			}, false, 2, false, (object)null);
+			s.AddGameMenuOption("wad_house", "wad_house_ambition", "{=!}Your family's ambitions", (GameMenuOption.OnConditionDelegate)delegate(MenuCallbackArgs a)
+			{
+				a.optionLeaveType = (GameMenuOption.LeaveType)2;
+				if (!Cfg.Ambitions)
+				{
+					return false;
+				}
+				a.Tooltip = Styles.Line("What each of your kin wants for themselves, and whether you let them pursue it.");
+				return true;
+			}, (GameMenuOption.OnConsequenceDelegate)delegate
+			{
+				try
+				{
+					List<Hero> kin = Clan.PlayerClan.Heroes.Where((Hero h) => h != null && h.IsAlive && h != Hero.MainHero && h.Age >= 14 && !Guard.IsSworn(h)).ToList();
+					if (kin.Count == 0)
+					{
+						Flow.Notify("Nobody of your house wants anything of you just now.");
+						return;
+					}
+					List<InquiryElement> els = kin.Select((Hero h) => new InquiryElement(h, h.Name + " - wants " + Ambition.KindName(Ambition.Of(h)) + (Ambition.Forbidden(h) ? "   [FORBIDDEN]" : ""), null, true,
+						Ambition.Forbidden(h) ? "Choose them to let them follow it again." : "Choose them to forbid it (they will resent it a little).")).ToList();
+					Inquiry.Select("Your Family's Ambitions", "Your kin follow their own wishes unless you forbid them. Choose any to change your word.", els, 1, els.Count, "Change my word", "Leave them be", (List<InquiryElement> c) =>
+					{
+						foreach (InquiryElement e in c ?? new List<InquiryElement>())
+						{
+							Hero h = e.Identifier as Hero;
+							if (h != null)
+							{
+								Ambition.SetForbidden(h, !Ambition.Forbidden(h));
+							}
+						}
+					});
+				}
+				catch (Exception e)
+				{
+					Log.Write("family ambitions failed: " + e);
+				}
+			}, false, 3, false, (object)null);
 			s.AddGameMenuOption("wad_house", "wad_house_bequeath", "{=WAD_Bequeath}Put the blade in someone's hand", (GameMenuOption.OnConditionDelegate)delegate(MenuCallbackArgs a)
 			{
 				a.optionLeaveType = (GameMenuOption.LeaveType)2;

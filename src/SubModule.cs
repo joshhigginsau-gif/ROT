@@ -20,13 +20,15 @@ public class SubModule : MBSubModuleBase
 		base.OnSubModuleLoad();
 		Log.Init();
 		Cfg.Load();
-		Log.Write("=== Wardens & Dragons v2.17.3 - baseborn children can join your household ===");
+		Log.Write("=== Wardens & Dragons v2.18.0 - histories, nemeses, scandal and ambitions ===");
 		Log.Write("config read from: " + Cfg.LoadedFrom);
 		Log.Write("config in effect: " + Cfg.Describe());
 		try
 		{
 			Harmony val = new Harmony("community.wardens.and.dragons");
 			BanditHome.Patch(val);
+			History.Patch(val);
+			Nemesis.Patch(val);
 			if (Cfg.RelaxEligibility)
 			{
 				int num = 0;

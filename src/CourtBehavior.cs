@@ -88,6 +88,39 @@ public class CourtBehavior : CampaignBehaviorBase
 		CampaignEvents.MapEventEnded.AddNonSerializedListener((object)this, (Action<TaleWorlds.CampaignSystem.MapEvents.MapEvent>)Scorpions.OnMapEventEnded);
 		CampaignEvents.MapEventEnded.AddNonSerializedListener((object)this, (Action<TaleWorlds.CampaignSystem.MapEvents.MapEvent>)NavalRout.OnMapEventEnded);
 		CampaignEvents.HourlyTickEvent.AddNonSerializedListener((object)this, (Action)NavalRout.Hourly);
+		// Histories, and those who will not stay dead.
+		CampaignEvents.MapEventEnded.AddNonSerializedListener((object)this, (Action<TaleWorlds.CampaignSystem.MapEvents.MapEvent>)History.OnBattle);
+		CampaignEvents.HeroKilledEvent.AddNonSerializedListener((object)this, (Action<Hero, Hero, KillCharacterAction.KillCharacterActionDetail, bool>)delegate(Hero v, Hero k, KillCharacterAction.KillCharacterActionDetail d, bool n)
+		{
+			History.OnKilled(v, k, d);
+		});
+		CampaignEvents.HeroPrisonerTaken.AddNonSerializedListener((object)this, (Action<TaleWorlds.CampaignSystem.Party.PartyBase, Hero>)History.OnCaptured);
+		CampaignEvents.OnGivenBirthEvent.AddNonSerializedListener((object)this, (Action<Hero, List<Hero>, int>)delegate(Hero m, List<Hero> kids, int s)
+		{
+			History.OnBirth(m, kids);
+		});
+		CampaignEvents.BeforeHeroesMarried.AddNonSerializedListener((object)this, (Action<Hero, Hero, bool>)delegate(Hero a, Hero b, bool n)
+		{
+			History.OnMarried(a, b);
+		});
+		CampaignEvents.OnClanLeaderChangedEvent.AddNonSerializedListener((object)this, (Action<Hero, Hero>)History.OnLeaderChanged);
+		CampaignEvents.RulingClanChanged.AddNonSerializedListener((object)this, (Action<Kingdom, Clan>)History.OnRulingClanChanged);
+		CampaignEvents.OnClanChangedKingdomEvent.AddNonSerializedListener((object)this, (Action<Clan, Kingdom, Kingdom, ChangeKingdomAction.ChangeKingdomActionDetail, bool>)delegate(Clan c, Kingdom f, Kingdom t, ChangeKingdomAction.ChangeKingdomActionDetail d, bool n)
+		{
+			History.OnClanChangedKingdom(c, f, t, d);
+		});
+		CampaignEvents.OnClanDestroyedEvent.AddNonSerializedListener((object)this, (Action<Clan>)History.OnClanDestroyed);
+		CampaignEvents.WarDeclared.AddNonSerializedListener((object)this, (Action<IFaction, IFaction, DeclareWarAction.DeclareWarDetail>)delegate(IFaction a, IFaction b, DeclareWarAction.DeclareWarDetail d)
+		{
+			History.OnWar(a, b);
+		});
+		CampaignEvents.MakePeace.AddNonSerializedListener((object)this, (Action<IFaction, IFaction, MakePeaceAction.MakePeaceDetail>)delegate(IFaction a, IFaction b, MakePeaceAction.MakePeaceDetail d)
+		{
+			History.OnPeace(a, b);
+		});
+		CampaignEvents.KingdomCreatedEvent.AddNonSerializedListener((object)this, (Action<Kingdom>)History.OnKingdomCreated);
+		CampaignEvents.KingdomDestroyedEvent.AddNonSerializedListener((object)this, (Action<Kingdom>)History.OnKingdomDestroyed);
+		CampaignEvents.HourlyTickEvent.AddNonSerializedListener((object)this, (Action)Nemesis.Hourly);
 	}
 
 	public override void SyncData(IDataStore ds)
@@ -218,6 +251,9 @@ public class CourtBehavior : CampaignBehaviorBase
 				Safe("Sworn.Daily", () => Sworn.Daily());
 				Safe("Attainder.Daily", () => Attainder.Daily());
 				Safe("DragonDuel.Daily", () => DragonDuel.Daily(num));
+				Safe("Nemesis.Daily", () => Nemesis.Daily(num));
+				Safe("Scandal.Daily", () => Scandal.Daily(num));
+				Safe("Ambition.Daily", () => Ambition.Daily(num));
 				Safe("Knighting.Weekly", () => Knighting.Weekly());
 				Safe("IronBank.Daily", () => IronBank.Daily());
 				Safe("Exile.Daily", () => Exile.Daily());
@@ -332,6 +368,7 @@ public class CourtBehavior : CampaignBehaviorBase
 	private void OnOwnerChanged(Settlement settlement, bool openToClaim, Hero newOwner, Hero oldOwner, Hero capturer, ChangeOwnerOfSettlementAction.ChangeOwnerOfSettlementDetail detail)
 	{
 		Harrenhal.OnOwnerChanged(settlement, newOwner, oldOwner, detail.ToString());
+		CourtBehavior.Safe("History.OnOwnerChanged", () => History.OnOwnerChanged(settlement, newOwner, oldOwner, detail));
 	}
 
 	// Settle a death we wrote down earlier, once the game has decided who we

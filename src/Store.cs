@@ -28,6 +28,19 @@ internal static class Store
 
 	internal static void AddDeed(string line)
 	{
+		try
+		{
+			string t = line;
+			int i = t.IndexOf("  ", System.StringComparison.Ordinal);
+			if (i > 0 && i < 40)
+			{
+				t = t.Substring(i + 2);
+			}
+			History.House(TaleWorlds.CampaignSystem.Clan.PlayerClan, t, 2);
+		}
+		catch
+		{
+		}
 		_ledger.Insert(0, line);
 		while (_ledger.Count > Cfg.LedgerLength)
 		{

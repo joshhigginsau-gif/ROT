@@ -489,3 +489,16 @@ done whose edits had never been written to disk. It is worth continuing.
 ## v2.17.3 — household
 
 - `Baseborn.CanTakeIn/TakeIn`: `child.Clan = PlayerClan` (Active, Lord) without legitimising; HouseMenu `wad_house_takein`. `Repair` restores acknowledged kids with no clan.
+
+## v2.18.0 — histories, nemeses, scandal, ambitions
+
+- `History.cs`: `hh:/hc:/hk:<id>` = entries `day|weight|text` joined by \u001e, cap 30 (lowest weight evicted). Fed by
+  MapEventEnded (>= `history_battle_min` or a lord death-marked), HeroKilled, OwnerChanged BySiege, HeroPrisonerTaken,
+  OnGivenBirth, BeforeHeroesMarried, OnClanLeaderChanged, RulingClanChanged, ClanChangedKingdom, ClanDestroyed,
+  WarDeclared, MakePeace, KingdomCreated/Destroyed; `Store.AddDeed` also writes the player's house. Shown by postfix on
+  EncyclopediaHero/Clan/FactionPageVM (InformationText). TODO: UIExtenderEx collapsible divider (needs prefab XMLs).
+- `Nemesis.cs`: prefix on private `KillCharacterAction.ApplyInternal` (skips the mark-only call); on success
+  `MakeWounded(None)`, `nmf:` queue -> hourly `DisableHeroAction` -> `nma:` return day -> `Return` (Active, teleport home,
+  epithet via `SetName`, skills +, relation -100). `nm:<hero>` = enemy|rank|epithet|baseName. Hunt/taunt daily.
+- `Scandal.cs` (affair/elopement, `HeroCreator.DeliverOffSpring` bastard), `Ambition.cs` (fortune/match/house/seat/vow/
+  squire; `amb:no:<hero>` forbids for player kin).

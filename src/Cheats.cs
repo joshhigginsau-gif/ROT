@@ -797,6 +797,87 @@ namespace WardensAndDragons
 			return Muster.ReadyNow();
 		}
 
+		[CommandLineFunctionality.CommandLineArgumentFunction("history", "wad")]
+		public static string HistoryOf(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			string name = (args != null && args.Count > 0) ? string.Join(" ", args) : null;
+			Hero h = string.IsNullOrEmpty(name) ? Hero.MainHero : Hero.AllAliveHeroes.Concat(Hero.DeadOrDisabledHeroes).FirstOrDefault((Hero x) => x.Name.ToString().IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0);
+			if (h == null)
+			{
+				return "Nobody by that name.";
+			}
+			string t = History.Text(History.KeyOf(h));
+			return h.Name + ":\n" + (string.IsNullOrEmpty(t) ? "(nothing written)" : t) + "\n\nHouse:\n" + History.Text(History.KeyOf(h.Clan));
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("nemesis_make", "wad")]
+		public static string NemesisMake(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			Nemesis.ForceNext = true;
+			return "The next lord to be killed or executed will come back.";
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("nemeses", "wad")]
+		public static string NemesesList(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			return Nemesis.Report();
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("nemesis_return", "wad")]
+		public static string NemesisReturn(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			foreach (string k in Store.Keys("nma:").ToList())
+			{
+				string[] v = (Store.Get(k) ?? "").Split('|');
+				v[0] = CourtBehavior.Today().ToString();
+				Store.Set(k, string.Join("|", v));
+			}
+			return "Everyone away returns on the next day's tick.";
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("scandal", "wad")]
+		public static string ScandalNow(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			return (args != null && args.Count > 0 && args[0] == "elope") ? Scandal.Elope(true) : Scandal.Affair(true);
+		}
+
+		[CommandLineFunctionality.CommandLineArgumentFunction("ambition", "wad")]
+		public static string AmbitionNow(List<string> args)
+		{
+			if (Campaign.Current == null || !Store.Initialized)
+			{
+				return "Load a campaign first.";
+			}
+			string name = (args != null && args.Count > 0) ? string.Join(" ", args) : null;
+			Hero h = Hero.AllAliveHeroes.FirstOrDefault((Hero x) => name != null && x.Name.ToString().IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0);
+			if (h == null)
+			{
+				return "Usage: wad.ambition <name>";
+			}
+			string a = Ambition.Of(h);
+			return h.Name + " wants " + Ambition.KindName(a) + ": " + (Ambition.Act(h, a) ? "acted on it." : "could not act now.");
+		}
+
 		[CommandLineFunctionality.CommandLineArgumentFunction("dragon_duel", "wad")]
 		public static string DragonDuelNow(List<string> args)
 		{

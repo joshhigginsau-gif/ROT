@@ -1,4 +1,44 @@
-Wardens & Dragons  v2.17.3  -  YOUR HOUSEHOLD
+Wardens & Dragons  v2.18.0  -  A LIVING WORLD
+
+
+v2.18.0 - HISTORIES, NEMESES, LOVE AND SCANDAL, AMBITIONS
+
+  Histories. Every lord, house and realm now remembers what mattered, and
+  only that: battles of 10,000 men or more (or where a lord fell), towns
+  and castles taken, deaths in battle, executions and murders, great
+  captures, marriages, births, new heads of house and new rulers,
+  defections, wars and peaces, realms founded and fallen - and every deed
+  of your own court. Open any lord, house or kingdom in the Encyclopedia:
+  the history is at the end of their description. (A proper collapsible
+  "History" header is coming once I have the game's encyclopedia layouts.)
+
+  Nemeses. Rarely - about 10% the first time, 5% the second, 2% the third -
+  a lord struck down in battle, executed or murdered does not stay dead.
+  The body is never found. Twenty to forty days later they come back, with
+  a new name for what was done to them (the Unhanged, One-Eye, the
+  Twice-Dead, Deathless...), harder than before, at -100 with whoever did
+  it, and sworn to kill them. A nemesis leading men will ride at their
+  enemy when they are close and strong enough, and sends you ravens if it
+  is you they hate. Anyone can be anyone's nemesis: yours, your kin's,
+  your companions', or two strangers' (at half the rate).
+
+  Love and scandal. Now and then, somewhere: an affair found out (the
+  spouse and both houses remember, and sometimes there is a child with a
+  bastard's name), or an elopement against a father's will. Three times as
+  likely near your house and realm; you are told when it touches you.
+
+  Ambitions. The younger sons, daughters and kin of every house want
+  something - to seek their fortune with a company of their own, to marry
+  for love, to found a cadet house, to sit in the head of the house's
+  chair (and in other houses, sometimes to poison for it, or go over to
+  the enemy), to take the black or holy vows, or to squire for a great
+  lord. They act on it, slowly, and it is written into their history. Your
+  own kin tell you first, and never turn on you; Court -> House and heirs
+  -> "Your family's ambitions" lets you forbid any of them.
+
+  Config section "Histories". Cheats: wad.history <name>, wad.nemesis_make
+  (the next lord killed comes back), wad.nemesis_return, wad.nemeses,
+  wad.scandal [elope], wad.ambition <name>.
 
 
 v2.17.3 - BASEBORN CHILDREN IN YOUR HOUSEHOLD
