@@ -470,7 +470,7 @@ namespace WardensAndDragons
 						{
 						}
 					}
-					Store.AddDeed(Standing.Date() + "  " + who + " sold " + s.Name + " to you for " + price.ToString("N0") + " gold.", "conquest");
+					Store.AddDeed(Standing.Date() + "  " + who + " sold " + s.Name + " to you for " + price.ToString("N0") + " gold.");
 					Log.Write("parley at " + s.Name + ": bought for " + price);
 					Surrender(s, "keep", who + " took the gold and the garrison marched out. Whatever they tell their liege, everyone will know.");
 				}, null);
@@ -775,7 +775,7 @@ namespace WardensAndDragons
 						Reneged(s, lord, captive, who, lordDies, renege);
 						return;
 					}
-					Store.AddDeed(Standing.Date() + "  Won " + s.Name + " in single combat against " + who + ".", "conquest");
+					Store.AddDeed(Standing.Date() + "  Won " + s.Name + " in single combat against " + who + ".");
 					InformationManager.ShowInquiry(new InquiryData("Single Combat", text, true, false, "Take the castle", null, delegate
 					{
 						Surrender(s, "duel", null, captive);
@@ -948,7 +948,7 @@ namespace WardensAndDragons
 						Hero head = (h.Clan != null && h.Clan.Leader != null) ? h.Clan.Leader : h;
 						Law.Record(Law.Oathbreaking, Hero.MainHero, head, h, false);
 					}
-					Store.AddDeed(Standing.Date() + "  Took " + s.Name + " under a banner of parley, and seized its lords as they came out.", "conquest");
+					Store.AddDeed(Standing.Date() + "  Took " + s.Name + " under a banner of parley, and seized its lords as they came out.");
 					sb.Append("The gates opened, and your men took the lords of ").Append(s.Name).Append(" as they walked out under your word: ")
 					  .Append(string.Join(", ", taken.Select((Hero h) => h.Name.ToString()).ToArray())).Append(".\n\nEvery house will hear how your word is kept.");
 				}
@@ -958,7 +958,7 @@ namespace WardensAndDragons
 					{
 						Standing.Change(2, 0, "Kept faith at " + s.Name);
 					}
-					Store.AddDeed(Standing.Date() + "  " + s.Name + " yielded to you" + ((how == "duel") ? " after single combat." : " under a banner of parley."), "conquest");
+					Store.AddDeed(Standing.Date() + "  " + s.Name + " yielded to you" + ((how == "duel") ? " after single combat." : " under a banner of parley."));
 					sb.Append(s.Name).Append(" is yours. ");
 					if (lords.Count > taken.Count)
 					{

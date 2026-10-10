@@ -28,12 +28,6 @@ internal static class Store
 
 	internal static void AddDeed(string line)
 	{
-		AddDeed(line, "deed");
-	}
-
-	internal static void AddDeed(string line, string kind)
-	{
-		Chronicle.Add(kind, line);
 		_ledger.Insert(0, line);
 		while (_ledger.Count > Cfg.LedgerLength)
 		{

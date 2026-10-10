@@ -470,3 +470,7 @@ done whose edits had never been written to disk. It is worth continuing.
   missed. Generals: `_askedThisSession` re-asks lost upkeep questions; `TheirUpkeep` gives AI one season (`r.Warned`,
   20% cull) before `Desert`. Host `Enforce` siege: `SetDoNotMakeNewDecisions(true)` while besieging; skip a settlement
   besieged by another faction (AI -> free, player -> patrol near). Council `Watch()` logs seats that empty.
+
+## v2.17.1 — v2.18.x rolled back
+
+- Speeches, chronicle and scribe (BattleSpeech/Chronicle/Speeches.cs) removed to be redone; the v2.18.1 fixes kept on the v2.17.0 code. Old `hx:`/`sc:` keys in saves are ignored.

@@ -317,7 +317,7 @@ namespace WardensAndDragons
 			}
 			string line = winner.Name + " brought down " + loser.Name + " in the sky. " + (riderDies ? (loser.Name + " is dead") : (loser.Name + " lived")) + "; " + (dragonDies ? (dragon + " is dead too.") : (dragon + " lived."));
 			Log.Write("dragon duel: " + line);
-			Store.AddDeed(Standing.Date() + "  " + line, (winner == Hero.MainHero || loser == Hero.MainHero) ? "duel" : "deed");
+			Store.AddDeed(Standing.Date() + "  " + line);
 			bool mine = winner == Hero.MainHero || loser == Hero.MainHero;
 			if (winner == Hero.MainHero)
 			{

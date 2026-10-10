@@ -518,10 +518,6 @@ namespace WardensAndDragons
 				Knighting.Append(warden, "On " + date + " " + house.Name + " swore to it" + ((manor != null) ? (", holding the manor of " + manor.Name) : "") + ".");
 				Log.Write("sworn: " + warden.Name + " " + ((kind == "invited") ? "invited" : "raised") + " " + house.Name + " (" + kind + ", " + ((MBObjectBase)house).StringId + ") with manor " + ((manor != null) ? manor.Name.ToString() : "none") +
 					(ai ? " [AI]" : ""));
-				if (warden == Clan.PlayerClan)
-				{
-					Chronicle.Add("house", house.Name + " was " + what + ((manor != null) ? (", and given the manor of " + manor.Name) : "") + ".", house.Leader);
-				}
 				if (warden == Clan.PlayerClan || (realm != null && realm == Clan.PlayerClan.Kingdom && Clan.PlayerClan.Kingdom.RulingClan == Clan.PlayerClan))
 				{
 					Ravens.Popup("A House Sworn", house.Name + " is " + what + ((manor != null) ? (", and holds the manor of " + manor.Name + " of " + warden.Name + ".") : "."));

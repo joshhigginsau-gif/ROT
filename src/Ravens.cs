@@ -614,7 +614,7 @@ namespace WardensAndDragons
 				}
 				if (ours.Spouse == theirs)
 				{
-					Store.AddDeed(Standing.Date() + "  " + ours.Name + " married " + theirs.Name + " at " + place + ".", "marriage");
+					Store.AddDeed(Standing.Date() + "  " + ours.Name + " married " + theirs.Name + " at " + place + ".");
 					Log.Write("wedding: " + ours.Name + " married " + theirs.Name + " at " + place);
 					why = ours.Name + " and " + theirs.Name + " are married.";
 					return true;

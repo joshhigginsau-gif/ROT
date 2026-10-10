@@ -34,7 +34,6 @@ public class CourtBehavior : CampaignBehaviorBase
 		CampaignEvents.OnGivenBirthEvent.AddNonSerializedListener((object)this, (Action<Hero, List<Hero>, int>)delegate(Hero mother, List<Hero> kids, int stillborn)
 		{
 			Dragons.OnBirth(kids);
-			Chronicle.OnBirth(mother, kids);
 		});
 		CampaignEvents.HeroComesOfAgeEvent.AddNonSerializedListener((object)this, (Action<Hero>)Dragons.OnComesOfAge);
 		// The lists. The game runs the tournament; we read what happened in it.
@@ -89,9 +88,6 @@ public class CourtBehavior : CampaignBehaviorBase
 		CampaignEvents.MapEventEnded.AddNonSerializedListener((object)this, (Action<TaleWorlds.CampaignSystem.MapEvents.MapEvent>)Scorpions.OnMapEventEnded);
 		CampaignEvents.MapEventEnded.AddNonSerializedListener((object)this, (Action<TaleWorlds.CampaignSystem.MapEvents.MapEvent>)NavalRout.OnMapEventEnded);
 		CampaignEvents.HourlyTickEvent.AddNonSerializedListener((object)this, (Action)NavalRout.Hourly);
-		// Speeches before battle, and the chronicle after it.
-		CampaignEvents.OnMissionStartedEvent.AddNonSerializedListener((object)this, (Action<IMission>)BattleSpeech.OnMissionStarted);
-		CampaignEvents.MapEventEnded.AddNonSerializedListener((object)this, (Action<TaleWorlds.CampaignSystem.MapEvents.MapEvent>)Chronicle.OnMapEventEnded);
 	}
 
 	public override void SyncData(IDataStore ds)
@@ -217,7 +213,6 @@ public class CourtBehavior : CampaignBehaviorBase
 				Sworn.Daily();
 				Attainder.Daily();
 				DragonDuel.Daily(num);
-				Chronicle.Daily(num);
 				Knighting.Weekly();
 				IronBank.Daily();
 				Exile.Daily();
@@ -332,7 +327,6 @@ public class CourtBehavior : CampaignBehaviorBase
 	private void OnOwnerChanged(Settlement settlement, bool openToClaim, Hero newOwner, Hero oldOwner, Hero capturer, ChangeOwnerOfSettlementAction.ChangeOwnerOfSettlementDetail detail)
 	{
 		Harrenhal.OnOwnerChanged(settlement, newOwner, oldOwner, detail.ToString());
-		Chronicle.OnOwnerChanged(settlement, newOwner, oldOwner, detail);
 	}
 
 	// Settle a death we wrote down earlier, once the game has decided who we

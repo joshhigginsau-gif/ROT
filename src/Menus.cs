@@ -111,12 +111,6 @@ internal static class Menus
 			() => "The children of other houses, held at your court.");
 		AddBranch(s, "wad_court", "wad_opt_realm", "{=WAD_Realm}Realm affairs", "wad_realm", 4,
 			() => "Your standing, your chronicle, Harrenhal and the dragons.");
-		if (Cfg.Chronicle)
-		{
-			AddBranch(s, "wad_court", "wad_opt_chronicle", "{=!}The chronicle", "wad_chronicle", 4,
-				() => "The history of your house: battles, conquests, houses founded, children. A scribe writes it well - and as you like.");
-			ChronicleMenu(s);
-		}
 		if (Cfg.Kingsguard)
 		{
 			AddBranch(s, "wad_court", "wad_opt_kg", "{=WAD_Kingsguard}The white cloaks", "wad_kg", 8,
@@ -257,59 +251,6 @@ internal static class Menus
 			GameMenu.SwitchToMenu("wad_court");
 		}, true, 9, false, (object)null);
 		Log.Write("court menus registered");
-	}
-
-	private static void ChronicleMenu(CampaignGameStarter s)
-	{
-		s.AddGameMenu("wad_chronicle", "{=!}{WAD_CHRON}", (OnInitDelegate)delegate
-		{
-			try
-			{
-				MBTextManager.SetTextVariable("WAD_CHRON", "The Chronicle of " + Clan.PlayerClan.Name + "\n\n" + Chronicle.Counts((Chronicle.Entry e) => true) + "\n\n" +
-					(Chronicle.HasScribe ? ("Your scribe keeps it, for " + Cfg.ScribeWage.ToString("N0") + " a season.") : "You keep no scribe: only the bare facts are written."), false);
-			}
-			catch
-			{
-				MBTextManager.SetTextVariable("WAD_CHRON", "The chronicle.", false);
-			}
-		}, (GameMenu.MenuOverlayType)0, (GameMenu.MenuFlags)0, (object)null);
-		ChronicleOption(s, "wad_chron_read", "Read the chronicle", 1, () => null, Chronicle.Read);
-		ChronicleOption(s, "wad_chron_scribe", "Hire or dismiss a scribe", 2, () => null, Chronicle.Hire);
-		ChronicleOption(s, "wad_chron_amend", "Have the scribe amend an entry", 3, () => Chronicle.HasScribe ? null : "You have no scribe.", Chronicle.Amend);
-		ChronicleOption(s, "wad_chron_strike", "Have the scribe strike an entry", 4, () => Chronicle.HasScribe ? null : "You have no scribe.", Chronicle.Strike);
-		ChronicleOption(s, "wad_chron_invent", "Have the scribe invent a deed", 5, () => Chronicle.HasScribe ? null : "You have no scribe.", Chronicle.Invent);
-		s.AddGameMenuOption("wad_chronicle", "wad_chron_back", "{=WAD_Back}Return to the court", (GameMenuOption.OnConditionDelegate)delegate(MenuCallbackArgs a)
-		{
-			a.optionLeaveType = (GameMenuOption.LeaveType)16;
-			return true;
-		}, (GameMenuOption.OnConsequenceDelegate)delegate
-		{
-			GameMenu.SwitchToMenu("wad_court");
-		}, true, 9, false, (object)null);
-	}
-
-	private static void ChronicleOption(CampaignGameStarter s, string id, string text, int order, Func<string> why, Action act)
-	{
-		s.AddGameMenuOption("wad_chronicle", id, "{=!}" + text, (GameMenuOption.OnConditionDelegate)delegate(MenuCallbackArgs a)
-		{
-			a.optionLeaveType = (GameMenuOption.LeaveType)2;
-			try
-			{
-				string w = why();
-				if (w != null)
-				{
-					a.IsEnabled = false;
-					a.Tooltip = Styles.Line(w);
-				}
-			}
-			catch
-			{
-			}
-			return true;
-		}, (GameMenuOption.OnConsequenceDelegate)delegate
-		{
-			act();
-		}, false, order, false, (object)null);
 	}
 
 	private static void AddBranch(CampaignGameStarter s, string menu, string id, string text, string target, int order = 0, Func<string> tip = null)

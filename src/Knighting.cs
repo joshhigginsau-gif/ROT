@@ -229,7 +229,7 @@ namespace WardensAndDragons
 				string before = (h.EncyclopediaText != null) ? h.EncyclopediaText.ToString() : "";
 				h.EncyclopediaText = new TextObject("{=!}" + ((c.Kind == "soldier" || string.IsNullOrEmpty(before)) ? "" : (before + "\n\n")) + story, (Dictionary<string, object>)null);
 				Store.Set(Prefix + ((MBObjectBase)house).StringId, ((MBObjectBase)h).StringId + "|" + CourtBehavior.Today() + "|" + origin + "|" + words);
-				Store.AddDeed(Standing.Date() + "  Knighted " + h.Name + ", who founded " + house.Name + ".", "house");
+				Store.AddDeed(Standing.Date() + "  Knighted " + h.Name + ", who founded " + house.Name + ".");
 				Log.Write("knighted " + h.Name + " (" + origin + "), " + house.Name + " (" + ((MBObjectBase)house).StringId + ")");
 				Ravens.Popup("Arise, " + h.Name, h.Name + " kneels a " + ((c.Kind == "soldier") ? "soldier" : ((c.Kind == "companion") ? "companion" : "wanderer")) +
 					" and rises a knight, and the heralds write a new name in their rolls: " + house.Name + ".\n\nIt holds no land and no keep. It rides for your realm as a free company, paid as sellswords are - and like sellswords, it may go when it pleases.");
