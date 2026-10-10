@@ -18,6 +18,7 @@
   <ItemGroup>
     <PackageReference Include="Bannerlord.ReferenceAssemblies.Core" Version="$(GameVersion)" PrivateAssets="all" IncludeAssets="compile" />
     <PackageReference Include="Bannerlord.ReferenceAssemblies.SandBox" Version="$(GameVersion)" PrivateAssets="all" IncludeAssets="compile" />
+    <PackageReference Include="Bannerlord.UIExtenderEx" Version="2.13.3" PrivateAssets="all" IncludeAssets="compile" />
     <PackageReference Include="Lib.Harmony" Version="2.2.2" PrivateAssets="all" IncludeAssets="compile" />
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
   </ItemGroup>

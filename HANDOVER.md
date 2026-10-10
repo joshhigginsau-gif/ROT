@@ -502,3 +502,7 @@ done whose edits had never been written to disk. It is worth continuing.
   epithet via `SetName`, skills +, relation -100). `nm:<hero>` = enemy|rank|epithet|baseName. Hunt/taunt daily.
 - `Scandal.cs` (affair/elopement, `HeroCreator.DeliverOffSpring` bastard), `Ambition.cs` (fortune/match/house/seat/vow/
   squire; `amb:no:<hero>` forbids for player kin).
+
+## v2.18.1 — encyclopedia section
+
+- `src/UI/HistoryUI.cs`: `HeroHistoryMixin` (EncyclopediaHeroPageVM: HasWadHistory, WadHistoryTitle, WadHistory list) + `HeroHistoryPrefab` Prepend at `descendant::EncyclopediaDivider[@Id='AlliesDivider']` (Bellum Replaces the same node; Prepend survives either order). Package Bannerlord.UIExtenderEx 2.13.3 (compile only); `SubModule.EnableUI` is NoInlining so a missing UIExtenderEx can't break load; `History.SectionShown` turns off the text fallback for heroes. Clan/faction: text fallback until their divider Ids are known.

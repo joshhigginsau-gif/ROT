@@ -20,11 +20,21 @@ public class SubModule : MBSubModuleBase
 		base.OnSubModuleLoad();
 		Log.Init();
 		Cfg.Load();
-		Log.Write("=== Wardens & Dragons v2.18.0 - histories, nemeses, scandal and ambitions ===");
+		Log.Write("=== Wardens & Dragons v2.18.1 - history in its own encyclopedia section ===");
 		Log.Write("config read from: " + Cfg.LoadedFrom);
 		Log.Write("config in effect: " + Cfg.Describe());
 		try
 		{
+			try
+			{
+				EnableUI();
+				History.SectionShown = true;
+				Log.Write("encyclopedia: history section registered");
+			}
+			catch (Exception uex)
+			{
+				Log.Write("encyclopedia: the history section could not be registered (" + uex.Message + ") - history goes in the page text");
+			}
 			Harmony val = new Harmony("community.wardens.and.dragons");
 			BanditHome.Patch(val);
 			History.Patch(val);
@@ -65,6 +75,15 @@ public class SubModule : MBSubModuleBase
 	}
 
 	// The field court's hotkey is read here, every frame.
+	// Kept apart, so a missing UIExtenderEx only fails here and not the whole load.
+	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+	private static void EnableUI()
+	{
+		Bannerlord.UIExtenderEx.UIExtender ui = Bannerlord.UIExtenderEx.UIExtender.Create("WardensAndDragons");
+		ui.Register(typeof(SubModule).Assembly);
+		ui.Enable();
+	}
+
 	protected override void OnApplicationTick(float dt)
 	{
 		base.OnApplicationTick(dt);

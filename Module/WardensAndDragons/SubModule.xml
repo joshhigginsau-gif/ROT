@@ -2,11 +2,12 @@
 <Module>
   <Name value="Wardens &amp; Dragons" />
   <Id value="WardensAndDragons" />
-  <Version value="v2.18.0" />
+  <Version value="v2.18.1" />
   <SingleplayerModule value="true" />
   <MultiplayerModule value="false" />
   <DependedModules>
     <DependedModule Id="Bannerlord.Harmony" Optional="false" />
+    <DependedModule Id="Bannerlord.UIExtenderEx" Optional="true" />
     <DependedModule Id="Native" />
     <DependedModule Id="SandBoxCore" />
     <DependedModule Id="Sandbox" />

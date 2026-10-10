@@ -469,10 +469,18 @@ namespace WardensAndDragons
 			prop.SetValue(current + "\n\n" + title + "\n" + body);
 		}
 
+		// Set once the lord's page has its own History section; until then the
+		// history is appended to the page's text instead.
+		internal static bool SectionShown;
+
 		private static void HeroPost(object __instance)
 		{
 			try
 			{
+				if (SectionShown)
+				{
+					return;
+				}
 				Hero h = Traverse.Create(__instance).Field("_hero").GetValue<Hero>();
 				string extra = Nemesis.Describe(h);
 				Append(__instance, KeyOf(h), "HISTORY" + (string.IsNullOrEmpty(extra) ? "" : ("\n" + extra)));

@@ -1,4 +1,13 @@
-Wardens & Dragons  v2.18.0  -  A LIVING WORLD
+Wardens & Dragons  v2.18.1  -  A LIVING WORLD
+
+
+v2.18.1 - HISTORY IN ITS OWN SECTION
+
+  A lord's history now has its own "History" header in the Encyclopedia,
+  just above Allies, that folds open and shut like the game's own sections:
+  a date column and what happened, newest first, with a nemesis's oath at
+  the top. (Uses UIExtenderEx, which you already have.) House and realm
+  pages still carry their history at the end of the description for now.
 
 
 v2.18.0 - HISTORIES, NEMESES, LOVE AND SCANDAL, AMBITIONS
