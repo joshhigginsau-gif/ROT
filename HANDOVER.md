@@ -510,3 +510,7 @@ done whose edits had never been written to disk. It is worth continuing.
 ## v2.18.2 — summaries and prose
 
 - `Chronicler.cs`: deeds of note `ac:<clan>` / `ak:<kingdom>` (code|day|text); counters `acn:`/`akn:`; Weekly land check groups towns+castles by Settlement.Culture. `HouseSummary`/`RealmSummary`, `Prose(key, hero)` = one paragraph per year. UI: `HistoryMixinBase<T>`; clan/faction prefabs Prepend at `LeaderDivider` (summary + collapsible divider); hero at `AlliesDivider`.
+
+## v2.18.3
+
+- `Chronicler.Merge/JoinLands/Land/LandNameOf`: unite deeds merged; region-vs-people naming. `Host.AiChoose` skips forts besieged by another faction; crowding log via `Log.Once` per day.

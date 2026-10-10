@@ -14,6 +14,18 @@ namespace WardensAndDragons
 	// remembered for, long after the lands themselves are lost.
 	internal static class Chronicler
 	{
+		// A stand-in for a culture, by name only, for renaming stored lands.
+		private sealed class CultureObjectName
+		{
+			internal readonly string Name;
+			internal CultureObjectName(string n) { Name = n; }
+		}
+
+		private static string LandName(CultureObjectName c)
+		{
+			return LandNameOf(c.Name);
+		}
+
 		// ------------------------------------------------------------------
 		// deeds of note: "ac:<clan>" and "ak:<kingdom>" = code|day|text joined by \u001e
 
@@ -171,14 +183,91 @@ namespace WardensAndDragons
 			}
 		}
 
+		// "the North", "the Crownlands", or "the lands of the Lyseni".
 		internal static string LandName(CultureObject c)
 		{
-			string n = (c != null && c.Name != null) ? c.Name.ToString() : "a people";
+			return LandNameOf((c != null && c.Name != null) ? c.Name.ToString() : "a people");
+		}
+
+		private static string LandNameOf(string n)
+		{
+			n = n.Trim();
+			if (n.StartsWith("The ", StringComparison.OrdinalIgnoreCase))
+			{
+				return "t" + n.Substring(1);
+			}
+			string[] regions = new string[12] { "North", "Vale", "Reach", "Westerlands", "Riverlands", "Stormlands", "Crownlands", "Iron Islands", "Dorne", "Neck", "Wall", "Beyond the Wall" };
+			if (regions.Any((string r) => n.Equals(r, StringComparison.OrdinalIgnoreCase)) || n.EndsWith("lands", StringComparison.OrdinalIgnoreCase) || n.EndsWith("Islands", StringComparison.OrdinalIgnoreCase))
+			{
+				return (n.Equals("Dorne", StringComparison.OrdinalIgnoreCase) ? "" : "the ") + n;
+			}
 			return "the lands of the " + n;
 		}
 
 		// ------------------------------------------------------------------
 		// summaries at the head of the page
+
+		// Many lands united read as one deed, not nine.
+		private static List<string> Merge(List<string[]> deeds, string single, string pluralPrefix)
+		{
+			List<string> lands = deeds.Where((string[] p) => p[0].StartsWith(single)).Select((string[] p) => Land(p[2])).Where((string l) => l != null).ToList();
+			List<string> rest = deeds.Where((string[] p) => !p[0].StartsWith(single)).Select((string[] p) => p[2]).ToList();
+			if (lands.Count > 0)
+			{
+				rest.Insert(0, pluralPrefix + JoinLands(lands));
+			}
+			return rest;
+		}
+
+		// "the lands of the Lyseni, the Myrish and the Volantene, and the Crownlands"
+		private static string JoinLands(List<string> lands)
+		{
+			const string p = "the lands of the ";
+			List<string> peoples = lands.Where((string l) => l.StartsWith(p)).Select((string l) => "the " + l.Substring(p.Length)).Distinct().ToList();
+			List<string> regions = lands.Where((string l) => !l.StartsWith(p)).Distinct().ToList();
+			List<string> parts = new List<string>(regions);
+			if (peoples.Count > 0)
+			{
+				peoples[0] = "the lands of " + peoples[0];
+				parts.Add(JoinDeeds(peoples));
+			}
+			return (parts.Count == 1) ? parts[0] : (string.Join(", ", parts.Take(parts.Count - 1)) + ", and " + parts.Last());
+		}
+
+		// The land named inside a stored deed ("... of the lands of the Lyseni at once").
+		private static string Land(string text)
+		{
+			foreach (string marker in new string[3] { " of ", "all of ", "unite " })
+			{
+				int i = text.IndexOf(marker, StringComparison.Ordinal);
+				if (i >= 0)
+				{
+					string t = text.Substring(i + marker.Length);
+					foreach (string end in new string[3] { " at once", " under its rule", " under one crown" })
+					{
+						int j = t.IndexOf(end, StringComparison.Ordinal);
+						if (j > 0)
+						{
+							t = t.Substring(0, j);
+						}
+					}
+					t = t.Replace("the lands of the lands of", "the lands of");
+					return Rename(t.Trim());
+				}
+			}
+			return null;
+		}
+
+		private static string Rename(string land)
+		{
+			const string p = "the lands of the ";
+			if (land.StartsWith(p))
+			{
+				string n = land.Substring(p.Length);
+				return LandName(new CultureObjectName(n));
+			}
+			return land;
+		}
 
 		private static string JoinDeeds(List<string> d)
 		{
@@ -220,7 +309,14 @@ namespace WardensAndDragons
 				}
 			}
 			sb.Append(".");
-			List<string> deeds = Deeds("ac:" + ((MBObjectBase)c).StringId).Select((string[] p) => p[2]).ToList();
+			List<string[]> all = Deeds("ac:" + ((MBObjectBase)c).StringId);
+			List<string> deeds = Merge(all.Where((string[] p) => !p[0].StartsWith("unite:")).ToList(), "uniteK:", "united ");
+			HashSet<string> united = new HashSet<string>(all.Where((string[] p) => p[0].StartsWith("uniteK:")).Select((string[] p) => p[0].Substring(7)));
+			List<string> held = all.Where((string[] p) => p[0].StartsWith("unite:") && !united.Contains(p[0].Substring(6))).Select((string[] p) => Land(p[2])).Where((string l) => l != null).ToList();
+			if (held.Count > 0)
+			{
+				deeds.Add("held every castle and city of " + JoinLands(held) + " at once");
+			}
 			if (deeds.Count > 0)
 			{
 				sb.Append(" It is remembered as the house that ").Append(JoinDeeds(deeds)).Append(".");
@@ -250,7 +346,7 @@ namespace WardensAndDragons
 					.Append(Count(k.Fiefs.Count, "fief", "fiefs"));
 			}
 			sb.Append(".");
-			List<string> deeds = Deeds("ak:" + ((MBObjectBase)k).StringId).Select((string[] p) => p[2]).ToList();
+			List<string> deeds = Merge(Deeds("ak:" + ((MBObjectBase)k).StringId), "unite:", "brought under one crown ");
 			if (deeds.Count > 0)
 			{
 				sb.Append(" It is remembered as the realm that ").Append(JoinDeeds(deeds)).Append(".");

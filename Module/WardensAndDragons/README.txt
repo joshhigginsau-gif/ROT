@@ -1,4 +1,16 @@
-Wardens & Dragons  v2.18.2  -  A LIVING WORLD
+Wardens & Dragons  v2.18.3  -  A LIVING WORLD
+
+
+v2.18.3 - TIDIER DEEDS
+
+  - Lands united are now one deed, not one per people: "It is remembered as
+    the house that united the Crownlands, and the lands of the Lyseni, the
+    Myrish and the Volantene..." Regions read as regions ("the North", "the
+    Crownlands", "Dorne"); peoples as "the lands of the ...". A land you
+    hold yourself and rule is not also listed as merely "held".
+  - Hosts no longer keep choosing a castle another realm is already
+    besieging, and the "already besieged" line is logged once a day, not
+    every hour.
 
 
 v2.18.2 - HISTORIES AS THE CHRONICLERS WROTE THEM

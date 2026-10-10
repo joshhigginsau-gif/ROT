@@ -1264,7 +1264,7 @@ namespace WardensAndDragons
 					{
 						// Another realm's host already sits before it: the camp is theirs,
 						// and trying to share it only drives one of them off.
-						Log.Write("host: " + p.Name + " finds " + s.Name + " already besieged by " + s.SiegeEvent.BesiegerCamp.LeaderParty.Name + " - " + (r.Mine ? "waiting nearby" : "choosing another target"));
+						Log.Once("crowd:" + r.Party + ":" + ((MBObjectBase)s).StringId + ":" + CourtBehavior.Today(), "host: " + p.Name + " finds " + s.Name + " already besieged by " + s.SiegeEvent.BesiegerCamp.LeaderParty.Name + " - " + (r.Mine ? "waiting nearby" : "choosing another target"));
 						if (!r.Mine)
 						{
 							r.Order = "free";
@@ -1859,7 +1859,8 @@ namespace WardensAndDragons
 			}
 			else
 			{
-				Settlement s = Settlement.All.Where((Settlement x) => x.IsFortification && x.MapFaction != null && FactionManager.IsAtWarAgainstFaction(x.MapFaction, mine))
+				Settlement s = Settlement.All.Where((Settlement x) => x.IsFortification && x.MapFaction != null && FactionManager.IsAtWarAgainstFaction(x.MapFaction, mine)
+					&& (x.SiegeEvent == null || x.SiegeEvent.BesiegerCamp == null || x.SiegeEvent.BesiegerCamp.LeaderParty == null || x.SiegeEvent.BesiegerCamp.LeaderParty.MapFaction == p.MapFaction))
 					.OrderBy((Settlement x) => x.GetPosition2D.Distance(at)).FirstOrDefault();
 				r.Order = (s != null) ? "siege" : "free";
 				r.Target = (s != null) ? ((MBObjectBase)s).StringId : "";
