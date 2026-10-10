@@ -154,33 +154,25 @@ public class CourtBehavior : CampaignBehaviorBase
 				}
 				Log.Write("first session: Honour " + Store.Honour + ", Dread " + Store.Dread);
 			}
-			Tourney.Reset();
-			Law.Reset();
-			Guard.Reset();
-			Ravens.Reset();
-			Host.Load();
-			Exile.Load();
-			Host.Patch();
-			Sworn.Patch();
-			Parley.PatchCrowd();
+			Safe("Menus.Register", () => Menus.Register(starter));
+			Safe("Dialogue.Add", () => Dialogue.Add(starter));
+			Safe("CouncilDialogue.Add", () => CouncilDialogue.Add(starter));
+			Safe("Tourney.Reset", () => Tourney.Reset());
+			Safe("Law.Reset", () => Law.Reset());
+			Safe("Guard.Reset", () => Guard.Reset());
+			Safe("Ravens.Reset", () => Ravens.Reset());
+			Safe("Host.Load", () => Host.Load());
+			Safe("Exile.Load", () => Exile.Load());
+			Safe("Host.Patch", () => Host.Patch());
+			Safe("Sworn.Patch", () => Sworn.Patch());
+			Safe("Parley.PatchCrowd", () => Parley.PatchCrowd());
+			Safe("Dragons.EnsureSeeded", () => Dragons.EnsureSeeded());
+			Safe("Baseborn.Repair", () => Baseborn.Repair());
+			Safe("Guard.Repair", () => Guard.Repair());
+			Safe("Knighting.Repair", () => Knighting.Repair());
+			Safe("Handback.Run", () => Handback.Run());
 			Log.Write("rot duel available: " + RotDuel.Available);
-			Menus.Register(starter);
-			Dialogue.Add(starter);
-			CouncilDialogue.Add(starter);
 			Log.Write("warden dialogue registered");
-			Dragons.EnsureSeeded();
-			// Children who came to the gate before their family lines and
-			// pages were written get them now.
-			Baseborn.Repair();
-			// Sworn knights from before the ceremony existed get the white
-			// armour now.
-			Guard.Repair();
-			// Knights' houses from before they had pages get them now.
-			Knighting.Repair();
-		// One-time, for anyone upgrading: hand any privy-council seat still
-		// holding one of our old duties back to a Bellum default, now that
-		// ours no longer exist.
-		Handback.Run();
 			if (SubModule.OldModPresent)
 			{
 				Flow.Notify("Wardens of the Realm is still installed. Remove it - Wardens & Dragons now does its job, and running both doubles every conversation option.");
@@ -192,6 +184,19 @@ public class CourtBehavior : CampaignBehaviorBase
 		}
 	}
 
+	// One system failing must not stop the others.
+	internal static void Safe(string name, Action a)
+	{
+		try
+		{
+			a();
+		}
+		catch (Exception e)
+		{
+			Log.Once("safe:" + name, name + " failed: " + e);
+		}
+	}
+
 	private void OnDailyTick()
 	{
 		try
@@ -199,25 +204,25 @@ public class CourtBehavior : CampaignBehaviorBase
 			if (Store.Initialized)
 			{
 				int num = Today();
-				Harrenhal.Daily(num);
-				Oaths.Yearly(num);
-				Baseborn.Daily();
-				Tourney.Daily();
-				Law.Daily();
-				Guard.Daily();
-				Ravens.Daily();
-				Treachery.Daily();
-				Council.Daily();
-				Host.Daily();
-				Abdication.Daily();
-				Sworn.Daily();
-				Attainder.Daily();
-				DragonDuel.Daily(num);
-				Knighting.Weekly();
-				IronBank.Daily();
-				Exile.Daily();
-				SettleTheDead();
-				Titles.Invalidate();
+				Safe("Harrenhal.Daily", () => Harrenhal.Daily(num));
+				Safe("Oaths.Yearly", () => Oaths.Yearly(num));
+				Safe("Baseborn.Daily", () => Baseborn.Daily());
+				Safe("Tourney.Daily", () => Tourney.Daily());
+				Safe("Law.Daily", () => Law.Daily());
+				Safe("Guard.Daily", () => Guard.Daily());
+				Safe("Ravens.Daily", () => Ravens.Daily());
+				Safe("Treachery.Daily", () => Treachery.Daily());
+				Safe("Council.Daily", () => Council.Daily());
+				Safe("Host.Daily", () => Host.Daily());
+				Safe("Abdication.Daily", () => Abdication.Daily());
+				Safe("Sworn.Daily", () => Sworn.Daily());
+				Safe("Attainder.Daily", () => Attainder.Daily());
+				Safe("DragonDuel.Daily", () => DragonDuel.Daily(num));
+				Safe("Knighting.Weekly", () => Knighting.Weekly());
+				Safe("IronBank.Daily", () => IronBank.Daily());
+				Safe("Exile.Daily", () => Exile.Daily());
+				Safe("SettleTheDead", () => SettleTheDead());
+				Safe("Titles.Invalidate", () => Titles.Invalidate());
 				if (num - Store.LastDriftDay >= Cfg.DaysPerSeason)
 				{
 					Store.LastDriftDay = num;
@@ -227,7 +232,7 @@ public class CourtBehavior : CampaignBehaviorBase
 		}
 		catch (Exception ex)
 		{
-			Log.Once("tickerr", "daily tick failed: " + ex.Message);
+			Log.Write("daily tick failed: " + ex);
 		}
 	}
 

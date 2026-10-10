@@ -74,6 +74,11 @@ internal static class Log
 		}
 	}
 
+	internal static void ClearOnce()
+	{
+		_seen.Clear();
+	}
+
 	internal static void Once(string key, string msg)
 	{
 		if (!_seen.Contains(key))

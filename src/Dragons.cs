@@ -174,9 +174,15 @@ internal static class Dragons
 			{
 				return;
 			}
+			Hero rider = string.IsNullOrEmpty(d.Rider) ? null : Find(d.Rider);
 			d.Status = "dead";
 			d.Rider = "";
 			Save(d);
+			if (rider != null && rider.IsAlive && Rides(rider))
+			{
+				// A dead dragon is not ridden.
+				SetMount(rider, null);
+			}
 			Store.SetI("dr:deaths", Store.GetI("dr:deaths") + 1);
 			Store.AddDeed(Standing.Date() + "  " + d.Name + " is dead" + (string.IsNullOrEmpty(how) ? "" : (", " + how)) + ".");
 			Log.Write("dragon dead: " + d.Name + " (" + how + "); the world dims to x" + Twilight().ToString("0.00"));

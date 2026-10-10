@@ -545,7 +545,7 @@ namespace WardensAndDragons
 			}
 			foreach (Hero h in fled)
 			{
-				Store.Set(Ravens.VengeancePrefix + ((MBObjectBase)h).StringId, "1");
+				Store.Set(Ravens.VengeancePrefix + ((MBObjectBase)h).StringId, CourtBehavior.Today().ToString());
 				tale.Append(h.Name).Append(" got out of the hall alive, and has sworn to repay you in kind.\n");
 			}
 
@@ -566,7 +566,7 @@ namespace WardensAndDragons
 				foreach (Hero k in kin)
 				{
 					ChangeRelationAction.ApplyPlayerRelation(k, -60, false, false);
-					Store.Set(Ravens.VengeancePrefix + ((MBObjectBase)k).StringId, "1");
+					Store.Set(Ravens.VengeancePrefix + ((MBObjectBase)k).StringId, CourtBehavior.Today().ToString());
 				}
 			}
 			catch (Exception e)

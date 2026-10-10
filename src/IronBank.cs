@@ -347,11 +347,16 @@ namespace WardensAndDragons
 				Ravens.Popup("A Letter from Braavos", "The Bank finds, to its regret, that you have no enemies worth investing in. It is patient. Its interest is not: the debt now stands at " + Owed.ToString("N0") + ".");
 				return;
 			}
-			Kingdom k2 = foes[0];
+			Kingdom k2 = foes.FirstOrDefault((Kingdom k) => Host.HostsAndMustersOf(k) < Math.Max(1, Cfg.AiHostMaxPerRealm) + 1) ?? foes[0];
+			if (Host.HostsAndMustersOf(k2) >= Math.Max(1, Cfg.AiHostMaxPerRealm) + 1)
+			{
+				Log.Write("iron bank: every foe already fields its hosts - the Bank waits");
+				return;
+			}
 			bool raised = Host.AiRaise(k2, k2.Leader, true, budget, MobileParty.MainParty);
 			Log.Write("iron bank: funding " + k2.Name + " against you with " + budget + (raised ? "" : " (no host could be raised)"));
 			Ravens.Popup("The Iron Bank Will Have Its Due", "A letter from Braavos, very polite: the Bank has lent " + budget.ToString("N0") + " to " + k2.Leader.Name + " of " + k2.Name + ", on the understanding that it will be spent on you.\n\n" +
-				(raised ? "Their host is already marching." : "They have not yet found a lord to lead it. They will.") + "\n\nIt will go on doing this until you pay. You owe " + Owed.ToString("N0") + ".");
+				(raised ? ((Cfg.HostMusterDays > 0) ? ("The summons have gone out; their host will stand in about " + Cfg.HostMusterDays + " days.") : "Their host is already marching.") : "They have not yet found a lord to lead it. They will.") + "\n\nIt will go on doing this until you pay. You owe " + Owed.ToString("N0") + ".");
 		}
 
 		// ------------------------------------------------------------------
@@ -459,8 +464,14 @@ namespace WardensAndDragons
 					" in the hands of someone who will.\n\nIt offers you " + sum.ToString("N0") + " gold at " + rate + "%, over eight payments, for the war.", "Take the gold", "Decline",
 					delegate
 					{
-						Take(sum, rate, 8);
-						Standing += 5;
+						if (!InDebt)
+						{
+							Take(sum, rate, 8);
+							if (InDebt)
+							{
+								Standing += 5;
+							}
+						}
 					}, null);
 				return;
 			}

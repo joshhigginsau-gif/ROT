@@ -408,6 +408,8 @@ namespace WardensAndDragons
 					{
 						if (house.Kingdom != null)
 						{
+							// Following its warden is not treason.
+							Store.Set("lw:exiled:" + ((MBObjectBase)house).StringId, "1");
 							ChangeKingdomAction.ApplyByLeaveKingdom(house, false);
 						}
 						ChangeKingdomAction.ApplyByJoinToKingdom(house, realm, default(CampaignTime), false);
@@ -527,7 +529,7 @@ namespace WardensAndDragons
 			catch (Exception e)
 			{
 				Log.Write("sworn: " + warden.Name + " could not take a house: " + e);
-				return house;
+				return null;
 			}
 		}
 
@@ -875,8 +877,10 @@ namespace WardensAndDragons
 		{
 			try
 			{
-				if (!Cfg.Sworn || !Store.Initialized || clan == null)
+				if (!Cfg.Sworn || !Store.Initialized || clan == null || newKingdom == null)
 				{
+					// A move between realms is a leave and then a join: decide once,
+					// on the join.
 					return;
 				}
 				foreach (Rec r in Under(clan))

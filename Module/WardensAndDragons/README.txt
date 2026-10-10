@@ -1,4 +1,55 @@
-Wardens & Dragons  v2.17.1  -  FIXES
+Wardens & Dragons  v2.17.2  -  FIXES
+
+
+v2.17.2 - A FULL SWEEP OF FIXES
+
+  Stability
+  - Each daily system and each step of loading now runs on its own: one
+    failing no longer silently stops everything after it (the log says
+    which, with the full error).
+  - Nothing is added to or taken from a party while it is in a battle -
+    desertions, stand-downs, dragon strikes, escorts, exile ships and naval
+    culls wait until the fight is over.
+  - Loading a different save no longer carries over the last one's pending
+    upkeep questions, naval routs or fallen dragons.
+  - A court option whose check fails is now shown greyed ("see log")
+    instead of vanishing, and a failing click no longer crashes the game.
+  - Bellum not being ready on the first call no longer turns wardens and
+    titles off for the whole campaign - it tries again the next day.
+  Stuck things
+  - Dragon duels, parley duels and hall fights that never report back
+    (aborted, or saved mid-fight) are decided on skill after two days. RoT's
+    duel result can no longer be taken by the wrong feature.
+  - A trial with nobody left to face you is won by forfeit.
+  - A summons with no judge on the throne waits instead of jamming.
+  - A muster that cannot be raised lapses after 30 days with half back,
+    and never pours men into a party that is fighting or in an army.
+  - The exile's "Claimant in Chains" question is asked again if it was lost.
+  - A council army's leader is set free when the army ends; a host whose
+    commander is gone sends its raised men home instead of lingering.
+  - The Feint order works (it used to turn straight into "free").
+  Money and honour
+  - Calling the banners only costs influence if the army forms; a tourney
+    that fails to start refunds you; a cancelled one refunds what you paid.
+  - Releasing a white cloak who is already dead costs no Honour.
+  - The Iron Bank's standing only rises if a loan was really taken; its
+    funded hosts respect the per-realm limit and say when they'll stand.
+  - A failed sworn house costs nothing and leaves no orphan house.
+  Dynasty
+  - A dragon killed in a duel or battle is unmounted from a living rider.
+  - Sworn houses decide once whether to follow their warden (it used to
+    roll twice) and are not charged with treason for following.
+  - Massacre survivors' vengeance fades after three years, or if they come
+    to like you.
+  - Prisoners and kin who are away cannot climb the Dragonmont; leaving it
+    returns to the court when you came from there.
+  Screens
+  - Host prices shown are the real (multiplied) ones; terms match your
+    settings, and the muster delay is stated.
+  - A missed false wedding says what happened. Tooltips fixed for fief
+    grants on other wardens, backing out of a dragon duel (costs Honour),
+    and standing the realm's lords down.
+  - Popups can no longer jam the queue.
 
 
 v2.17.1 - WEDDINGS, UPKEEP, SIEGES (speeches and the chronicle rolled back)

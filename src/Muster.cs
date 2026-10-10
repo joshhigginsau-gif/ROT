@@ -233,6 +233,14 @@ namespace WardensAndDragons
 				Drop(r);
 				Log.Write("host muster complete: " + r.Men + " " + r.Quality + " under " + knight.Name);
 			}
+			else if (today - r.Ready >= Grace)
+			{
+				Drop(r);
+				int back = r.Cost / 2;
+				Hero.MainHero.ChangeHeroGold(back);
+				Log.Write("host muster lapsed: it could not be raised in " + Grace + " days; " + back + " back");
+				Ravens.Popup("The Muster Breaks Up", "The host could not be brought together in time, and the men have gone home. Half the gold - " + back.ToString("N0") + " - came back.");
+			}
 		}
 
 		private static void Theirs(Rec r, int today)
@@ -296,6 +304,10 @@ namespace WardensAndDragons
 
 		internal static void Cancel(Rec r)
 		{
+			if (Store.Get(Prefix + r.Id) == null)
+			{
+				return;
+			}
 			Drop(r);
 			int back = r.Cost / 2;
 			Hero.MainHero.ChangeHeroGold(back);

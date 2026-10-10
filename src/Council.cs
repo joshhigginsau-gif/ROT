@@ -345,6 +345,11 @@ namespace WardensAndDragons
 			if (army == null || army.LeaderParty != c.PartyBelongedTo)
 			{
 				Store.Set(ArmyKey, null);
+				// The army is gone: its leader thinks for themselves again.
+				if (c != null && c.PartyBelongedTo != null && c.PartyBelongedTo != MobileParty.MainParty)
+				{
+					c.PartyBelongedTo.Ai.SetDoNotMakeNewDecisions(false);
+				}
 				return null;
 			}
 			return army;
@@ -396,8 +401,8 @@ namespace WardensAndDragons
 					}
 					try
 					{
-						ChangeClanInfluenceAction.Apply(Clan.PlayerClan, -cost);
 						k.CreateArmy(lead.LeaderHero, s, Army.ArmyTypes.Besieger, new MBList<MobileParty>(called));
+						ChangeClanInfluenceAction.Apply(Clan.PlayerClan, -cost);
 						Store.Set(ArmyKey, ((MBObjectBase)lead.LeaderHero).StringId + "|" + ((MBObjectBase)s).StringId);
 						Log.Write("council army: " + lead.LeaderHero.Name + " with " + called.Count + " parties against " + s.Name);
 						Ravens.Popup("The Banners", lead.LeaderHero.Name + " calls the lords to the banners. When they are gathered, they march on " + s.Name + ".");
@@ -405,6 +410,7 @@ namespace WardensAndDragons
 					catch (Exception e)
 					{
 						Log.Write("calling the banners failed: " + e);
+						Flow.Notify("The banners could not be called. No influence was spent.");
 					}
 				});
 		}

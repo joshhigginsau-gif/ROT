@@ -81,7 +81,7 @@ namespace WardensAndDragons
 			return scene;
 		}
 
-		internal static bool Open(Hero foe, out string why, bool mounted = false)
+		internal static bool Open(Hero foe, out string why, bool mounted = false, string owner = "parley")
 		{
 			why = null;
 			if (!Available)
@@ -92,6 +92,7 @@ namespace WardensAndDragons
 			try
 			{
 				_reset.Invoke(_instance, null);
+				Store.Set("rd:owner", owner);
 				string scene = Scene();
 				Log.Write("rot duel: " + foe.Name + " on " + scene + (mounted ? " (mounted)" : ""));
 				_open.Invoke(null, new object[5] { scene, foe.CharacterObject, mounted, true, false });
@@ -106,10 +107,10 @@ namespace WardensAndDragons
 		}
 
 		// After the mission: true if RoT recorded a result (and clears it).
-		internal static bool TakeResult(out bool won)
+		internal static bool TakeResult(out bool won, string owner = "parley")
 		{
 			won = false;
-			if (!Available)
+			if (!Available || (Store.Get("rd:owner") ?? "parley") != owner)
 			{
 				return false;
 			}
@@ -122,6 +123,7 @@ namespace WardensAndDragons
 				}
 				won = v == 1;
 				_reset.Invoke(_instance, null);
+				Store.Set("rd:owner", null);
 				return true;
 			}
 			catch (Exception e)

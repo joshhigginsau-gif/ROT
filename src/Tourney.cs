@@ -327,6 +327,7 @@ namespace WardensAndDragons
 					}
 					Hero.MainHero.ChangeHeroGold(-cost);
 				}
+				Store.SetI("tn:paid", free ? 0 : cost);
 
 				// A fresh tourney, not whatever the town already had. An old
 				// one would be resolved on its own schedule, possibly
@@ -393,6 +394,13 @@ namespace WardensAndDragons
 			catch (Exception e)
 			{
 				Log.Write("the tourney could not begin: " + e);
+				int paid = Store.GetI("tn:paid", 0);
+				if (paid > 0 && string.IsNullOrEmpty(Store.Get(TownKey)))
+				{
+					Hero.MainHero.ChangeHeroGold(paid);
+					Store.SetI("tn:paid", 0);
+					Flow.Notify("The tourney could not be called. The gold comes back to you.");
+				}
 				return false;
 			}
 		}
@@ -587,7 +595,7 @@ namespace WardensAndDragons
 				{
 					return;
 				}
-				int refund = Purse(Tier);
+				int refund = Math.Min(Purse(Tier), Store.GetI("tn:paid", Purse(Tier)));
 				Hero.MainHero.ChangeHeroGold(refund);
 				Store.AddDeed(Standing.Date() + "  The tourney at " + town.Name + " was called off.");
 				Flow.Notify("The tourney at " + town.Name + " was called off. The purse, " + refund.ToString("N0") + ", comes back to you; the feast does not.");
@@ -1246,6 +1254,8 @@ namespace WardensAndDragons
 			Store.Set(TierKey, null);
 			Store.Set(DayKey, null);
 			Store.Set(GuestsKey, null);
+			Store.Set(RodeKey, null);
+			Store.SetI("tn:paid", 0);
 		}
 
 		private static void History(string line)

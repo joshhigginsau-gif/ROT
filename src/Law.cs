@@ -1170,7 +1170,10 @@ namespace WardensAndDragons
 			List<CharacterObject> theirs = Chars(p[4]);
 			if (theirs.Count == 0)
 			{
-				why = "nobody is left to face you";
+				// Nobody left to face you: the trial is forfeit, in your favour.
+				Store.Set(ResultKey, "1|");
+				Log.Write("law: trial forfeit - nobody is left to face you");
+				why = "nobody is left to face you - the trial is yours by forfeit";
 				return false;
 			}
 			float health = (p[1] == "seven") ? Cfg.TrialHealth * 0.8f : Cfg.TrialHealth;
@@ -1417,6 +1420,11 @@ namespace WardensAndDragons
 			}
 			bool ruler = Succession.Rules();
 			Hero judge = ruler ? null : realm.Leader;
+			if (!ruler && judge == null)
+			{
+				// No one sits in judgment just now; the summons waits.
+				return;
+			}
 			int sev = Severity(c.Kind);
 			_asking = true;
 			c.State = "open";

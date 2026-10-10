@@ -29,6 +29,11 @@ namespace WardensAndDragons
 
 		private static readonly List<Pending> _queue = new List<Pending>();
 
+		internal static void Reset()
+		{
+			_queue.Clear();
+		}
+
 		internal static void OnMapEventEnded(MapEvent me)
 		{
 			try
@@ -126,7 +131,7 @@ namespace WardensAndDragons
 			{
 				Settlement s = Settlement.Find(r.Relief);
 				MobileParty g = (s != null && s.Town != null) ? s.Town.GarrisonParty : null;
-				if (g != null && s.IsUnderSiege)
+				if (g != null && s.IsUnderSiege && g.MapEvent == null)
 				{
 					int taken;
 					int gone = Cull(g.MemberRoster, Cfg.NavalReliefGarrison, null, out taken);

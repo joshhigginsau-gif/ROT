@@ -64,6 +64,10 @@ namespace WardensAndDragons
 					a.IsEnabled = false;
 					a.Tooltip = Styles.Line("The realm's lords are not in the field at the council's word.");
 				}
+				else
+				{
+					a.Tooltip = Styles.Line("Send the lords the council called back to their own business.");
+				}
 			}, Council.StandDownBanners);
 
 			s.AddGameMenuOption("wad_council", "wad_cn_back", "{=WAD_Back}Return to the court", (GameMenuOption.OnConditionDelegate)delegate(MenuCallbackArgs a)
@@ -87,12 +91,20 @@ namespace WardensAndDragons
 				}
 				catch
 				{
-					return false;
+					a.IsEnabled = false;
+					a.Tooltip = Styles.Line("Unavailable right now (see wardens_dragons.log).");
 				}
 				return true;
 			}, (GameMenuOption.OnConsequenceDelegate)delegate
 			{
-				act();
+				try
+				{
+					act();
+				}
+				catch (Exception ex)
+				{
+					Log.Write("menu action failed: " + ex);
+				}
 			}, false, order, false, (object)null);
 		}
 

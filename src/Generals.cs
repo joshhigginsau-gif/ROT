@@ -254,8 +254,7 @@ namespace WardensAndDragons
 				return;
 			}
 			int days = Math.Max(3, Math.Min(8, (int)(p.GetPosition2D.Distance(first.GetPosition2D) / 40f) + 2));
-			Host.SetOrder(r, "feint", ((MBObjectBase)first).StringId);
-			SetState(r, ((MBObjectBase)then).StringId, (CourtBehavior.Today() + days).ToString());
+			Host.SetOrder(r, "feint", ((MBObjectBase)first).StringId, () => SetState(r, ((MBObjectBase)then).StringId, (CourtBehavior.Today() + days).ToString()));
 		}
 
 		// ------------------------------------------------------------------
@@ -633,6 +632,10 @@ namespace WardensAndDragons
 		private static int Cull(MobileParty p, float share)
 		{
 			int gone = 0;
+			if (Host.Busy(p))
+			{
+				return 0;
+			}
 			foreach (TroopRosterElement e in p.MemberRoster.GetTroopRoster().Where((TroopRosterElement t) => t.Character != null && !t.Character.IsHero).ToList())
 			{
 				int n = (int)(e.Number * share);
@@ -653,6 +656,11 @@ namespace WardensAndDragons
 		}
 
 		private static readonly HashSet<string> _askedThisSession = new HashSet<string>();
+
+		internal static void Reset()
+		{
+			_askedThisSession.Clear();
+		}
 
 		// Returns true if the host is gone.
 		internal static bool MyUpkeep(Host.Rec r, MobileParty p, Hero knight, int today)
@@ -778,6 +786,10 @@ namespace WardensAndDragons
 		// Unpaid men do not go home: they take to the roads.
 		internal static void Desert(Host.Rec r, MobileParty p, string why)
 		{
+			if (Host.Defer(r, p, "desert", why))
+			{
+				return;
+			}
 			int loose = 0;
 			int bands = 0;
 			try

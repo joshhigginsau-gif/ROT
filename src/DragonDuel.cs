@@ -156,7 +156,7 @@ namespace WardensAndDragons
 				Ravens.Popup("The Challenge Refused", foe.Name + " will not fly against you. The realm hears of it, and the word it uses is craven.");
 				return;
 			}
-			Inquiry.Confirm("The Challenge Accepted", Who(foe) + " accepts. They will meet you in the sky.\n\nWhoever falls will almost certainly die - " + Cfg.DragonDuelDeathPercent + "% - and so will their dragon.", "Take wing", "Not yet", () => Fly(foe, true), () =>
+			Inquiry.Confirm("The Challenge Accepted", Who(foe) + " accepts. They will meet you in the sky.\n\nWhoever falls will almost certainly die - " + Cfg.DragonDuelDeathPercent + "% - and so will their dragon.\n\nBacking out of your own challenge now costs " + Cfg.DragonDuelRefuseHonour + " Honour.", "Take wing", "Back out", () => Fly(foe, true), () =>
 			{
 				Standing.Change(-Cfg.DragonDuelRefuseHonour, 0, "called a rider out and did not come");
 				Log.Write("dragon duel: you did not come to your own challenge");
@@ -232,9 +232,9 @@ namespace WardensAndDragons
 				Flow.Notify("One of you no longer has a dragon to fly.");
 				return;
 			}
-			Store.Set(DuelKey, ((MBObjectBase)foe).StringId + "|" + (youCalled ? "you" : "them"));
+			Store.Set(DuelKey, ((MBObjectBase)foe).StringId + "|" + (youCalled ? "you" : "them") + "|" + CourtBehavior.Today());
 			string why;
-			if (RotDuel.Open(foe, out why, true))
+			if (RotDuel.Open(foe, out why, true, "dragon"))
 			{
 				Log.Write("dragon duel: in the sky with " + Who(foe));
 				return;
@@ -260,14 +260,34 @@ namespace WardensAndDragons
 					return;
 				}
 				bool won;
-				if (!RotDuel.TakeResult(out won))
+				if (!RotDuel.TakeResult(out won, "dragon"))
 				{
+					// A duel that never reported back (aborted, or saved mid-fight)
+					// is decided on skill after two days.
+					string[] dp = duel.Split('|');
+					int day;
+					Hero f = Law.Find(dp[0]);
+					if (dp.Length > 2 && int.TryParse(dp[2], out day) && CourtBehavior.Today() - day >= 2)
+					{
+						Store.Set(DuelKey, null);
+						Log.Write("dragon duel: no result came back - decided on skill");
+						if (f != null && f.IsAlive && Hero.MainHero.IsAlive)
+						{
+							bool w = MBRandom.RandomFloat < Odds(Hero.MainHero, f);
+							Aftermath(w ? Hero.MainHero : f, w ? f : Hero.MainHero);
+						}
+					}
+					else if (dp.Length < 3)
+					{
+						Store.Set(DuelKey, duel + "|" + CourtBehavior.Today());
+					}
 					return;
 				}
 				Store.Set(DuelKey, null);
 				Hero foe = Law.Find(duel.Split('|')[0]);
 				if (foe == null)
 				{
+					Log.Write("dragon duel: the result came back, but the foe is gone");
 					return;
 				}
 				Log.Write("dragon duel: " + (won ? "won" : "lost") + " against " + foe.Name);

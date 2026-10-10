@@ -190,6 +190,7 @@ internal static class Menus
 			return true;
 		}, (GameMenuOption.OnConsequenceDelegate)delegate
 		{
+			DragonMenu.FromCourt = true;
 			GameMenu.SwitchToMenu("wad_dragonmont");
 		}, false, 5, false, (object)null);
 		DragonMenu.Register(s);

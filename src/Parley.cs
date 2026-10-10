@@ -680,6 +680,7 @@ namespace WardensAndDragons
 			if (RotDuel.Open(foe, out why))
 			{
 				Store.Set(RotKey, "1");
+				Store.SetI("pa:duelday", CourtBehavior.Today());
 				return;
 			}
 			Log.Write("parley at " + s.Name + ": " + why);
@@ -707,6 +708,13 @@ namespace WardensAndDragons
 					Log.Write("rot duel: " + (rotWon ? "won" : "lost"));
 				}
 				string result = Store.Get(ResultKey);
+				if (Store.Get(RotKey) == "1" && string.IsNullOrEmpty(result) && !string.IsNullOrEmpty(duel) && CourtBehavior.Today() - Store.GetI("pa:duelday", CourtBehavior.Today()) >= 2)
+				{
+					// RoT's duel never reported back: decide it as if fought without the field.
+					Store.Set(RotKey, null);
+					Log.Write("parley: the duel never reported back - decided on skill");
+					FieldDuel.Failed = true;
+				}
 				if (FieldDuel.Failed && string.IsNullOrEmpty(result) && !string.IsNullOrEmpty(duel))
 				{
 					FieldDuel.Failed = false;

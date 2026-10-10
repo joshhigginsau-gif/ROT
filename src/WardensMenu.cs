@@ -303,7 +303,7 @@ internal static class WardensMenu
 			}
 			bool last = w.Fiefs.Count <= 2;
 			List<InquiryElement> cs = can.Select((Settlement x) => new InquiryElement(x, (x.IsTown ? "Town of " : "Castle of ") + x.Name, null, true,
-				"Prosperity " + ((x.Town != null) ? ((int)x.Town.Prosperity).ToString() : "?") + ", " + x.BoundVillages.Count + " village(s)." + (last ? " It is the last of your fiefs besides your seat." : ""))).ToList();
+				"Prosperity " + ((x.Town != null) ? ((int)x.Town.Prosperity).ToString() : "?") + ", " + x.BoundVillages.Count + " village(s)." + (last ? (" It is the last of " + ((w == Clan.PlayerClan) ? "your" : (w.Name + "'s")) + " fiefs besides " + ((w == Clan.PlayerClan) ? "your" : "its") + " seat.") : ""))).ToList();
 			Inquiry.Select("Grant a Fief", "Which?" + ((influence > 0) ? (" It costs you " + influence + " influence to bid it.") : ""), cs, 1, 1, "Grant it", "Cancel", delegate(List<InquiryElement> c2)
 			{
 				Settlement s2 = (c2 != null && c2.Count > 0) ? (c2[0].Identifier as Settlement) : null;

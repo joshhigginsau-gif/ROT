@@ -14,6 +14,8 @@ namespace WardensAndDragons
 {
 internal static class DragonMenu
 {
+	internal static bool FromCourt;
+
 	internal static void Register(CampaignGameStarter s)
 	{
 		//IL_0042: Unknown result type (might be due to invalid IL or missing references)
@@ -68,6 +70,8 @@ internal static class DragonMenu
 			//IL_008a: Unknown result type (might be due to invalid IL or missing references)
 			//IL_0094: Expected O, but got Unknown
 			a.optionLeaveType = (GameMenuOption.LeaveType)2;
+			try
+			{
 			if (!Dragons.All().Any((DragonRec r) => r.Claimable))
 			{
 				a.IsEnabled = false;
@@ -83,6 +87,13 @@ internal static class DragonMenu
 				float odds = Cfg.ClaimBase * Dragons.Crowding() * Dragons.Twilight();
 				a.Tooltip = Styles.Line("A claim would take at roughly " + odds.ToString("0") + "% today, before the claimant's own worth. Failing it is usually fatal.");
 			}
+			}
+			catch (Exception ex)
+			{
+				a.IsEnabled = false;
+				a.Tooltip = Styles.Line("Unavailable right now (see wardens_dragons.log).");
+				Log.Once("mountcond", "dragonmont option failed: " + ex.Message);
+			}
 			return true;
 		}, (GameMenuOption.OnConsequenceDelegate)delegate
 		{
@@ -96,6 +107,12 @@ internal static class DragonMenu
 		}, (GameMenuOption.OnConsequenceDelegate)delegate
 		{
 			Settlement currentSettlement = Settlement.CurrentSettlement;
+			if (FromCourt)
+			{
+				FromCourt = false;
+				GameMenu.SwitchToMenu("wad_court");
+				return;
+			}
 			GameMenu.SwitchToMenu((currentSettlement == null || !currentSettlement.IsTown) ? "castle" : "town");
 		}, true, 9, false, (object)null);
 	}
@@ -112,6 +129,16 @@ internal static class DragonMenu
 		{
 			if (item != null && item.IsAlive)
 			{
+				if (item.IsPrisoner)
+				{
+					list.Add(new KeyValuePair<Hero, string>(item, "a prisoner"));
+					continue;
+				}
+				if (item != Hero.MainHero && item.PartyBelongedTo != TaleWorlds.CampaignSystem.Party.MobileParty.MainParty && item.CurrentSettlement != Settlement.CurrentSettlement)
+				{
+					list.Add(new KeyValuePair<Hero, string>(item, "not here - they must ride with you or be at the seat"));
+					continue;
+				}
 				list.Add(new KeyValuePair<Hero, string>(item, (!Dragons.CanClaim(item, out var why)) ? why : null));
 			}
 		}

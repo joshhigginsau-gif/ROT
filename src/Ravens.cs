@@ -43,13 +43,36 @@ namespace WardensAndDragons
 		// who might lie to you
 
 		// The chance a letter from this lord is false, 2 to 40.
+		// A massacre's survivors want blood - for about three years, or until
+		// they come to like you again.
+		internal static bool Vengeful(Hero h)
+		{
+			string key = VengeancePrefix + ((MBObjectBase)h).StringId;
+			string v = Store.Get(key);
+			if (string.IsNullOrEmpty(v))
+			{
+				return false;
+			}
+			int day;
+			if (!h.IsAlive || h.GetRelationWithPlayer() > 30f || (int.TryParse(v, out day) && v != "1" && CourtBehavior.Today() - day > Cfg.DaysPerYear * 3))
+			{
+				Store.Set(key, null);
+				return false;
+			}
+			if (v == "1")
+			{
+				Store.Set(key, CourtBehavior.Today().ToString());
+			}
+			return true;
+		}
+
 		internal static int TrapChance(Hero from)
 		{
 			if (from == null)
 			{
 				return 0;
 			}
-			if (Store.Get(VengeancePrefix + ((MBObjectBase)from).StringId) == "1")
+			if (Vengeful(from))
 			{
 				return 100;
 			}
@@ -301,7 +324,7 @@ namespace WardensAndDragons
 		private static Hero Sender()
 		{
 			List<Hero> vengeful = Store.Keys(VengeancePrefix).Select((string k) => Law.Find(k.Substring(VengeancePrefix.Length)))
-				.Where((Hero h) => h != null && !h.IsPrisoner && Seat(h.Clan) != null).ToList();
+				.Where((Hero h) => h != null && Vengeful(h) && !h.IsPrisoner && Seat(h.Clan) != null).ToList();
 			if (vengeful.Count > 0 && MBRandom.RandomInt(100) < 50)
 			{
 				return vengeful[MBRandom.RandomInt(vengeful.Count)];
@@ -479,6 +502,11 @@ namespace WardensAndDragons
 				{
 					Popup("No Wedding", "The wedding at " + ((venue != null) ? venue.Name.ToString() : "their hall") + " did not take place: " + why);
 				}
+				return;
+			}
+			if (a[0] == Marriage)
+			{
+				Popup("No Wedding", "You did not ride to " + ((host != null) ? (host.Name + "'s hall") : "the wedding") + ", and the wedding never happened. Word comes later that the hall was full of armed men that night, and none of them were guests.");
 				return;
 			}
 			if (host != null && a[4] != "1")
@@ -659,6 +687,7 @@ namespace WardensAndDragons
 			{
 				theirs.Add(new HallSeat(elite[MBRandom.RandomInt(elite.Count)], false));
 			}
+			Store.SetI("rv:fightday", CourtBehavior.Today());
 			Store.Set(FightKey, "trap|" + ((MBObjectBase)venue).StringId + "|" + ((MBObjectBase)host).StringId + "|" +
 				Ids(ours.Select((HallSeat x) => x.Who)) + "|" + Ids(theirs.Select((HallSeat x) => x.Who)));
 			Store.Set(ApptKey, null);
@@ -691,6 +720,13 @@ namespace WardensAndDragons
 				}
 				string result = Store.Get(ResultKey);
 				string fight = Store.Get(FightKey);
+				if (string.IsNullOrEmpty(result) && !string.IsNullOrEmpty(fight) && CourtBehavior.Today() - Store.GetI("rv:fightday", CourtBehavior.Today()) >= 2)
+				{
+					// The hall fight never reported back: decided on strength.
+					bool w = MBRandom.RandomInt(100) < 50;
+					result = (w ? "1" : "0") + "|" + (w ? "" : ((MBObjectBase)CharacterObject.PlayerCharacter).StringId);
+					Log.Write("hall fight: no result came back - decided (" + (w ? "won" : "lost") + ")");
+				}
 				if (string.IsNullOrEmpty(result) || string.IsNullOrEmpty(fight))
 				{
 					return;
@@ -912,7 +948,7 @@ namespace WardensAndDragons
 			{
 				sb.Append("Since the last feast you held, nobody quite trusts your bread and salt.\n");
 			}
-			int vengeful = Store.Keys(VengeancePrefix).Count((string k) => Law.Find(k.Substring(VengeancePrefix.Length)) != null);
+			int vengeful = Store.Keys(VengeancePrefix).ToList().Count((string k) => { Hero h = Law.Find(k.Substring(VengeancePrefix.Length)); return h != null && Vengeful(h); });
 			if (vengeful > 0)
 			{
 				sb.Append(vengeful).Append((vengeful == 1) ? " survivor has" : " survivors have").Append(" sworn to pay you back in kind.\n");
@@ -980,6 +1016,7 @@ namespace WardensAndDragons
 		internal static void SetFight(string rec)
 		{
 			Store.Set(FightKey, rec);
+			Store.SetI("rv:fightday", CourtBehavior.Today());
 		}
 
 		internal static void SetResult(string rec)
@@ -1013,13 +1050,21 @@ namespace WardensAndDragons
 			Next();
 		}
 
+		private static DateTime _showingSince;
+
 		private static void Next()
 		{
+			if (_showing && (DateTime.UtcNow - _showingSince).TotalMinutes > 3)
+			{
+				// A popup closed without telling us: don't hold the rest forever.
+				_showing = false;
+			}
 			if (_showing || _queue.Count == 0)
 			{
 				return;
 			}
 			_showing = true;
+			_showingSince = DateTime.UtcNow;
 			Action<Action> a = _queue.Dequeue();
 			bool finished = false;
 			Action done = delegate

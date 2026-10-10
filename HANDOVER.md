@@ -474,3 +474,14 @@ done whose edits had never been written to disk. It is worth continuing.
 ## v2.17.1 — v2.18.x rolled back
 
 - Speeches, chronicle and scribe (BattleSpeech/Chronicle/Speeches.cs) removed to be redone; the v2.18.1 fixes kept on the v2.17.0 code. Old `hx:`/`sc:` keys in saves are ignored.
+
+## v2.17.2 — full-scan fixes
+
+- `CourtBehavior.Safe(name, action)` around every session-launch and daily step; `Log.ClearOnce()` and static resets
+  (`Generals/NavalRout/Scorpions.Reset`, `Host.Reset/ClearProtected`) in `OnGameStart`.
+- `Host.Busy/Defer` + `hpend:<party>` = kind|why: Desert/StandDown/Disperse wait out battles; `Host.Pending()` on Daily.
+- RotDuel `owner` (`rd:owner`); stale fallbacks: `dd:duel` 3rd field = day, `pa:duelday`, `rv:fightday` (2 days).
+- Law: forfeit when the opposing side is empty; no summons without a judge. Muster: lapse after Grace on failed raise;
+  `Raise` refuses busy/army parties. `Host.Orphan` strips raised men when the commander is lost.
+- `SetOrder(..., before)` for Feint state. `Host.HostsAndMustersOf` caps Iron Bank funding. `Ravens.Vengeful` expiry.
+- `Dragons.Kill` unmounts; Sworn follows on join only and marks `lw:exiled`; `DragonMenu.FromCourt`.

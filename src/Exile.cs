@@ -172,13 +172,19 @@ namespace WardensAndDragons
 			}
 		}
 
+		private static bool _asked;
+
 		private static void Beaten(Hero rival, Clan house)
 		{
 			IFaction mine = Clan.PlayerClan.MapFaction;
 			if (rival != null && rival.IsAlive && rival.IsPrisoner && rival.PartyBelongedToAsPrisoner != null && rival.PartyBelongedToAsPrisoner.MapFaction == mine)
 			{
-				// Yours to decide.
-				Store.Set(StateKey, "deciding");
+				// Yours to decide - asked once a session until answered.
+				if (_asked)
+				{
+					return;
+				}
+				_asked = true;
 				Inquiry.Confirm("The Claimant in Chains", rival.Name + " is your prisoner, and there is nothing left for him to be king of.\n\nThe axe would end it. Or you could let him take ship - and hope the sea keeps him.",
 					"Let him take ship", "The axe",
 					delegate
@@ -205,6 +211,10 @@ namespace WardensAndDragons
 				return;
 			}
 			if (State == "deciding")
+			{
+				Store.Set(StateKey, null);
+			}
+			if (rival != null && rival.PartyBelongedTo != null && rival.PartyBelongedTo.MapEvent != null)
 			{
 				return;
 			}
@@ -379,7 +389,17 @@ namespace WardensAndDragons
 				Bastard.Call(company, "CalculateMidSettlement");
 				Bastard.Announce(company);
 				TeleportHeroAction.ApplyImmediateTeleportToSettlement(captain, harbour);
-				if (son != null && son.IsAlive && son != captain)
+				if (son != null && son.IsAlive && son != captain && son.IsPrisoner)
+				{
+					try
+					{
+						EndCaptivityAction.ApplyByReleasedByChoice(son, Hero.MainHero);
+					}
+					catch
+					{
+					}
+				}
+				if (son != null && son.IsAlive && son != captain && !son.IsPrisoner)
 				{
 					TeleportHeroAction.ApplyImmediateTeleportToSettlement(son, harbour);
 				}
@@ -608,7 +628,7 @@ namespace WardensAndDragons
 					Host.Protect(((MBObjectBase)host).StringId);
 					Store.Set(PartyKey, ((MBObjectBase)host).StringId);
 				}
-				if (captain != null && captain.IsAlive && captain != son)
+				if (captain != null && captain.IsAlive && captain != son && !captain.IsPrisoner)
 				{
 					TeleportHeroAction.ApplyImmediateTeleportToSettlement(captain, seat);
 				}
@@ -669,6 +689,7 @@ namespace WardensAndDragons
 		internal static void Load()
 		{
 			Host.ClearProtected();
+			_asked = false;
 			string id = Store.Get(PartyKey);
 			if (!string.IsNullOrEmpty(id) && (State == "exiled" || State == "landed"))
 			{

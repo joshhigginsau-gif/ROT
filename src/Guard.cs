@@ -477,11 +477,11 @@ namespace WardensAndDragons
 			{
 				Hero h = HeroOf(k);
 				Drop(k);
-				Standing.Change(-Cfg.KgDismissHonour, 0, "Took back a white cloak");
-				if (h == null)
+				if (h == null || !h.IsAlive)
 				{
 					return;
 				}
+				Standing.Change(-Cfg.KgDismissHonour, 0, "Took back a white cloak");
 				string home = k.Origin.Contains(":") ? k.Origin.Substring(k.Origin.IndexOf(':') + 1) : null;
 				Clan back = string.IsNullOrEmpty(home) ? null : Clan.All.FirstOrDefault((Clan c) => ((MBObjectBase)c).StringId == home && !c.IsEliminated);
 				if (back != null)

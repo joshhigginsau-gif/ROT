@@ -20,7 +20,7 @@ public class SubModule : MBSubModuleBase
 		base.OnSubModuleLoad();
 		Log.Init();
 		Cfg.Load();
-		Log.Write("=== Wardens & Dragons v2.17.1 - dragon duels, weddings, upkeep and siege fixes ===");
+		Log.Write("=== Wardens & Dragons v2.17.2 - full-scan fixes ===");
 		Log.Write("config read from: " + Cfg.LoadedFrom);
 		Log.Write("config in effect: " + Cfg.Describe());
 		try
@@ -78,6 +78,12 @@ public class SubModule : MBSubModuleBase
 			if (game.GameType is Campaign && val != null)
 			{
 				Store.ResetForNewCampaign();
+				Log.ClearOnce();
+				Host.Reset();
+				Host.ClearProtected();
+				Generals.Reset();
+				NavalRout.Reset();
+				Scorpions.Reset();
 				Harrenhal.Reset();
 				Bellum.Reset();
 				Dragons.Reset();

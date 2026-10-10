@@ -313,7 +313,7 @@ namespace WardensAndDragons
 					string why;
 					bool can = Law.CanJudge(c, out why);
 					els.Add(new InquiryElement(c, Law.Describe(c) + (c.False ? "   - your own invention" : ""), null, can,
-						can ? ("Brought on day " + c.Day + ".") : (char.ToUpper(why[0]) + why.Substring(1) + ".")));
+						can ? ("Brought on day " + c.Day + ".") : (string.IsNullOrEmpty(why) ? "You cannot hear this charge." : (char.ToUpper(why[0]) + why.Substring(1) + "."))));
 				}
 				if (els.Count == 0)
 				{

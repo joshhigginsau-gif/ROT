@@ -129,12 +129,20 @@ namespace WardensAndDragons
 				}
 				catch
 				{
-					return false;
+					a.IsEnabled = false;
+					a.Tooltip = Styles.Line("Unavailable right now (see wardens_dragons.log).");
 				}
 				return true;
 			}, (GameMenuOption.OnConsequenceDelegate)delegate
 			{
-				act();
+				try
+				{
+					act();
+				}
+				catch (Exception ex)
+				{
+					Log.Write("menu action failed: " + ex);
+				}
 			}, false, order, false, (object)null);
 		}
 	}

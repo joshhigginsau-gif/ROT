@@ -35,6 +35,11 @@ namespace WardensAndDragons
 
 		private static readonly List<Fall> _falls = new List<Fall>();
 
+		internal static void Reset()
+		{
+			_falls.Clear();
+		}
+
 		// ------------------------------------------------------------------
 		// who can fly
 
@@ -144,7 +149,7 @@ namespace WardensAndDragons
 			{
 				List<string> escort = new List<string>();
 				int want = 50 + MBRandom.RandomInt(151);
-				if (escortFrom != null && escortFrom.IsActive)
+				if (escortFrom != null && escortFrom.IsActive && !Host.Busy(escortFrom))
 				{
 					foreach (TroopRosterElement e in escortFrom.MemberRoster.GetTroopRoster().Where((TroopRosterElement t) => t.Character != null && !t.Character.IsHero && t.Number > t.WoundedNumber)
 						.OrderByDescending((TroopRosterElement t) => t.Character.Tier).ToList())
@@ -212,6 +217,14 @@ namespace WardensAndDragons
 				}
 				if (now < land)
 				{
+					continue;
+				}
+				MobileParty tgt = (s.Length > 2) ? MobileParty.All.FirstOrDefault((MobileParty x) => ((MBObjectBase)x).StringId == s[2]) : null;
+				if (Host.Busy(tgt))
+				{
+					// The target is fighting: the dragon circles for an hour.
+					s[4] = (now + 1).ToString();
+					Store.Set(key, string.Join("|", s));
 					continue;
 				}
 				Store.Set(key, null);

@@ -231,6 +231,7 @@ namespace WardensAndDragons
 		internal static void Pardon(Rec r)
 		{
 			Store.Set(Prefix + r.House, null);
+			Store.Set("lw:exiled:" + r.House, null);
 			Clan c = r.Clan;
 			Log.Write("attainder: " + ((c != null) ? c.Name.ToString() : r.House) + " pardoned");
 			if (c != null)

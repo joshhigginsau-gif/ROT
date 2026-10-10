@@ -62,13 +62,16 @@ internal static class Bellum
 		_titleBehavior = null;
 	}
 
+	private static int _triedDay = -1;
+
 	internal static bool Init()
 	{
-		if (_tried)
+		if (_tried && (Ready || CourtBehavior.Today() == _triedDay))
 		{
 			return Ready;
 		}
 		_tried = true;
+		_triedDay = CourtBehavior.Today();
 		try
 		{
 			Campaign current = Campaign.Current;
@@ -89,7 +92,7 @@ internal static class Bellum
 			_titleBehavior = GetBehavior(current, type);
 			if (_titleBehavior == null)
 			{
-				Log.Write("FeudalTitleBehavior not active - inactive");
+				Log.Once("bellumbeh", "FeudalTitleBehavior not active yet - will try again tomorrow");
 				return false;
 			}
 			_getTitlesHeldByClan = AccessTools.Method(type, "GetTitlesHeldByClan", (Type[])null, (Type[])null);
@@ -236,7 +239,7 @@ internal static class Bellum
 		}
 		catch (Exception ex)
 		{
-			Log.Write("TitlesHeldBy failed: " + ex.Message);
+			Log.Once("titlesheld", "TitlesHeldBy failed: " + ex.Message);
 		}
 		return list;
 	}
