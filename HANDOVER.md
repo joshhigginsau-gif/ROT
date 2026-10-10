@@ -463,3 +463,10 @@ done whose edits had never been written to disk. It is worth continuing.
   scheduled in `hxe:<n>` and handled on the daily tick. Encyclopedia: postfix on
   `EncyclopediaHeroPageVM.UpdateInformationText` appends to `InformationText` for player-clan heroes.
 - Menu `wad_chronicle` under the court. Cheat `wad.chronicle`.
+
+## v2.18.1 — fixes
+
+- Ravens: `Wed(a, place, out why)` does the marriage and reports why not; `Lapse` performs honest weddings the player
+  missed. Generals: `_askedThisSession` re-asks lost upkeep questions; `TheirUpkeep` gives AI one season (`r.Warned`,
+  20% cull) before `Desert`. Host `Enforce` siege: `SetDoNotMakeNewDecisions(true)` while besieging; skip a settlement
+  besieged by another faction (AI -> free, player -> patrol near). Council `Watch()` logs seats that empty.

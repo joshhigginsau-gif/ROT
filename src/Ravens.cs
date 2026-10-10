@@ -467,6 +467,20 @@ namespace WardensAndDragons
 			}
 			Store.Set(ApptKey, null);
 			Hero host = Law.Find(a[1]);
+			if (a[0] == Marriage && a[4] != "1")
+			{
+				// The wedding goes ahead without you.
+				Settlement venue = Settlement.Find(a[2]);
+				if (Wed(a, (venue != null) ? venue.Name.ToString() : "their hall", out string why))
+				{
+					Popup("A Wedding Without You", "You did not come, but the wedding went ahead at " + ((venue != null) ? venue.Name.ToString() : "their hall") + ". " + why);
+				}
+				else
+				{
+					Popup("No Wedding", "The wedding at " + ((venue != null) ? venue.Name.ToString() : "their hall") + " did not take place: " + why);
+				}
+				return;
+			}
 			if (host != null && a[4] != "1")
 			{
 				ChangeRelationAction.ApplyPlayerRelation(host, -10, false, false);
@@ -551,14 +565,7 @@ namespace WardensAndDragons
 			}
 			if (kind == Marriage)
 			{
-				Hero ours = Law.Find(a[6]);
-				Hero theirs = Law.Find(a[7]);
-				if (ours != null && theirs != null && Suitable(ours) && Suitable(theirs))
-				{
-					MarriageAction.Apply(ours, theirs, true);
-					Store.AddDeed(Standing.Date() + "  " + ours.Name + " married " + theirs.Name + " at " + venue.Name + ".", "marriage");
-					text += "\n\n" + ours.Name + " and " + theirs.Name + " are married.";
-				}
+				text += "\n\n" + (Wed(a, venue.Name.ToString(), out string why) ? why : ("There was no wedding: " + why));
 			}
 			else if (kind == Peace && host.MapFaction != null && Clan.PlayerClan.MapFaction != null
 				&& FactionManager.IsAtWarAgainstFaction(host.MapFaction, Clan.PlayerClan.MapFaction) && Succession.Rules())
@@ -574,6 +581,48 @@ namespace WardensAndDragons
 				}
 			}
 			Popup("The Feast", text);
+		}
+
+		// The marriage itself; says why when it cannot be.
+		private static bool Wed(string[] a, string place, out string why)
+		{
+			Hero ours = Law.Find(a[6]);
+			Hero theirs = Law.Find(a[7]);
+			if (ours == null || theirs == null || !ours.IsAlive || !theirs.IsAlive)
+			{
+				why = "one of the pair is dead or gone.";
+			}
+			else if (ours.Spouse != null || theirs.Spouse != null)
+			{
+				why = ((ours.Spouse != null) ? ours.Name : theirs.Name) + " is already married.";
+			}
+			else if (ours.IsChild || theirs.IsChild)
+			{
+				why = ((ours.IsChild) ? ours.Name : theirs.Name) + " is still a child.";
+			}
+			else
+			{
+				try
+				{
+					MarriageAction.Apply(ours, theirs, true);
+				}
+				catch (Exception e)
+				{
+					why = "the game would not marry them (" + e.Message + ").";
+					Log.Write("wedding failed: " + ours.Name + " / " + theirs.Name + ": " + e);
+					return false;
+				}
+				if (ours.Spouse == theirs)
+				{
+					Store.AddDeed(Standing.Date() + "  " + ours.Name + " married " + theirs.Name + " at " + place + ".", "marriage");
+					Log.Write("wedding: " + ours.Name + " married " + theirs.Name + " at " + place);
+					why = ours.Name + " and " + theirs.Name + " are married.";
+					return true;
+				}
+				why = "the game would not marry them.";
+			}
+			Log.Write("wedding not held: " + why);
+			return false;
 		}
 
 		// The doors close.

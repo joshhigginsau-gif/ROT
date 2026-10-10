@@ -622,11 +622,39 @@ namespace WardensAndDragons
 					Flow.Notify("The small council has risen, and gone back to their own seats.");
 				}
 				HoldBanners();
+				Watch();
 			}
 			catch (Exception e)
 			{
 				Log.Once("cndaily", "the council's tick failed: " + e.Message);
 			}
+		}
+
+		// Who sits, day to day: when a seat empties, say why Bellum may have
+		// thought its holder unfit.
+		private static void Watch()
+		{
+			if (!Rules)
+			{
+				return;
+			}
+			List<string> now = new List<string>();
+			foreach (KeyValuePair<string, Clan> seat in Bellum.CouncilSeats(Clan.PlayerClan.Kingdom))
+			{
+				if (seat.Value != null)
+				{
+					now.Add(seat.Key + "=" + ((MBObjectBase)seat.Value).StringId);
+				}
+			}
+			string before = Store.Get("cn:watch") ?? "";
+			foreach (string was in before.Split(';').Where((string x) => x.Length > 0 && !now.Contains(x)))
+			{
+				string[] kv = was.Split('=');
+				Clan c = (kv.Length > 1) ? Clan.FindFirst((Clan x) => ((MBObjectBase)x).StringId == kv[1]) : null;
+				Log.Write("council: " + ((c != null) ? c.Name.ToString() : kv.Last()) + " no longer holds " + kv[0] + (c == null ? " (house gone)" :
+					(" - kingdom=" + ((c.Kingdom != null) ? c.Kingdom.Name.ToString() : "none") + " mercenary=" + c.IsUnderMercenaryService + " minor=" + c.IsMinorFaction + " leader=" + ((c.Leader != null) ? (c.Leader.Name + (c.Leader.IsAlive ? "" : " (dead)") + (c.Leader.IsPrisoner ? " (prisoner)" : "")) : "none") + " ruling=" + (Clan.PlayerClan.Kingdom.RulingClan == c))));
+			}
+			Store.Set("cn:watch", string.Join(";", now));
 		}
 
 		internal static string Summary()

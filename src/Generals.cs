@@ -630,12 +630,29 @@ namespace WardensAndDragons
 		// ------------------------------------------------------------------
 		// upkeep: a year's bread and pay
 
+		private static int Cull(MobileParty p, float share)
+		{
+			int gone = 0;
+			foreach (TroopRosterElement e in p.MemberRoster.GetTroopRoster().Where((TroopRosterElement t) => t.Character != null && !t.Character.IsHero).ToList())
+			{
+				int n = (int)(e.Number * share);
+				if (n > 0)
+				{
+					p.MemberRoster.AddToCounts(e.Character, -n, false, -Math.Min(n, e.WoundedNumber), 0, true, -1);
+					gone += n;
+				}
+			}
+			return gone;
+		}
+
 		internal static int UpkeepCost(Host.Rec r, MobileParty p)
 		{
 			int alive = Math.Max(0, ((p != null) ? p.MemberRoster.TotalManCount : 0) - r.Base);
 			long cost = (long)r.Price * Cfg.HostUpkeepPercent / 100 * alive / Math.Max(1, r.Raised);
 			return (int)Math.Min(int.MaxValue, Math.Max(0L, cost));
 		}
+
+		private static readonly HashSet<string> _askedThisSession = new HashSet<string>();
 
 		// Returns true if the host is gone.
 		internal static bool MyUpkeep(Host.Rec r, MobileParty p, Hero knight, int today)
@@ -650,6 +667,19 @@ namespace WardensAndDragons
 					Host.Save(r);
 				}
 				Store.Set(UpkeepPrefix + r.Party, "1");
+				_askedThisSession.Add(r.Party);
+				AskUpkeep(r, p, knight);
+				return false;
+			}
+			if (asked && !_askedThisSession.Contains(r.Party))
+			{
+				// The question may have been lost to a load; ask it again before they go.
+				_askedThisSession.Add(r.Party);
+				if (today >= r.End)
+				{
+					r.End = today + 3;
+					Host.Save(r);
+				}
 				AskUpkeep(r, p, knight);
 				return false;
 			}
@@ -726,8 +756,19 @@ namespace WardensAndDragons
 			{
 				ruler.ChangeHeroGold(-cost);
 				r.End = today + Cfg.DaysPerYear;
+				r.Warned = false;
 				Host.Save(r);
 				Log.Write("upkeep: " + ((k != null) ? k.Name.ToString() : "?") + " paid " + cost + " for " + p.Name);
+				return false;
+			}
+			if (!r.Warned)
+			{
+				// One more season of grace, on short rations: some go home.
+				r.Warned = true;
+				r.End = today + Cfg.DaysPerYear / 4;
+				Host.Save(r);
+				int gone = Cull(p, 0.2f);
+				Log.Write("upkeep: " + ((k != null) ? k.Name.ToString() : "?") + " could not pay " + cost + " for " + p.Name + " - " + gone + " men went home; a season's grace");
 				return false;
 			}
 			Desert(r, p, "their ruler could not pay them");

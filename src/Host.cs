@@ -1223,9 +1223,28 @@ namespace WardensAndDragons
 					}
 					if (p.BesiegedSettlement == s)
 					{
-						// The siege is laid; the game's own siege craft takes it
-						// from here.
-						p.Ai.SetDoNotMakeNewDecisions(false);
+						// The siege is laid. The game's own siege craft builds the
+						// engines and storms the walls, but left to its own counsel a
+						// lone host lifts the siege at the first excuse - so it stays
+						// under orders until the place falls or the order changes.
+						p.Ai.SetDoNotMakeNewDecisions(true);
+						return;
+					}
+					if (s.SiegeEvent != null && s.SiegeEvent.BesiegerCamp != null && s.SiegeEvent.BesiegerCamp.LeaderParty != null && s.SiegeEvent.BesiegerCamp.LeaderParty.MapFaction != p.MapFaction)
+					{
+						// Another realm's host already sits before it: the camp is theirs,
+						// and trying to share it only drives one of them off.
+						Log.Write("host: " + p.Name + " finds " + s.Name + " already besieged by " + s.SiegeEvent.BesiegerCamp.LeaderParty.Name + " - " + (r.Mine ? "waiting nearby" : "choosing another target"));
+						if (!r.Mine)
+						{
+							r.Order = "free";
+							r.Target = "";
+							Save(r);
+							p.Ai.SetDoNotMakeNewDecisions(false);
+							return;
+						}
+						p.Ai.SetDoNotMakeNewDecisions(true);
+						p.SetMovePatrolAroundSettlement(s, Nav(p, s), false);
 						return;
 					}
 					p.Ai.SetDoNotMakeNewDecisions(true);
@@ -1761,7 +1780,7 @@ namespace WardensAndDragons
 				return;
 			}
 			// An enemy host close by is worth more than a castle.
-			if (r.Order == "siege" && p.BesiegedSettlement == null)
+			if (r.Order == "siege" && p.BesiegedSettlement == null && p.SiegeEvent == null)
 			{
 				Vec2 at = p.GetPosition2D;
 				if (Foes(p.MapFaction, at).Any((MobileParty x) => Is(x) && x.GetPosition2D.Distance(at) < 100f))

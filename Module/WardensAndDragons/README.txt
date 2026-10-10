@@ -1,4 +1,22 @@
-Wardens & Dragons  v2.18.0  -  SPEECHES AND THE CHRONICLE
+Wardens & Dragons  v2.18.1  -  FIXES
+
+
+v2.18.1 - WEDDINGS, UPKEEP, SIEGES
+
+  - Weddings by raven: an honest wedding now goes ahead even if you do not
+    ride to the hall (you get a raven either way), and if it cannot happen
+    you are told why - already married, still a child, dead. The log says
+    "wedding:" or "wedding not held:".
+  - Your hosts' upkeep: if the question was lost (say, to a load), it is
+    asked again each session, with three more days, before anyone deserts.
+  - Other rulers' hosts: a ruler who cannot pay gets one season's grace -
+    a fifth of the men go home - before the host turns deserter.
+  - Sieges: a host that has laid a siege stays on it until the place falls
+    or its orders change (the game's own counsel used to make it walk off).
+    A host sent to a place another realm is already besieging no longer
+    crowds that siege - an AI host picks another target, yours waits nearby.
+  - The council: the log now notes when a seat empties and what state the
+    house was in ("council: ..."), to find what is unseating them.
 
 
 v2.18.0 - BATTLE SPEECHES AND THE CHRONICLE
